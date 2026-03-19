@@ -514,6 +514,24 @@ export default function ActivitiesPage() {
   }
 
   function applyVoiceResult(result: VoiceResult) {
+    // Detect useless results
+    if (result.kind === "workout") {
+      const w = result.workout
+      if (!w || (!w.name?.trim() && (!w.exercises || w.exercises.length === 0))) {
+        setVoiceError("empty"); return
+      }
+    } else if (result.kind === "cardio") {
+      const a = result.activity
+      if (!a || (!a.durationSec && !a.distanceM && !a.calories && !a.avgHeartRate)) {
+        setVoiceError("empty"); return
+      }
+    } else {
+      // ambiguous with nothing useful
+      const hasCardio = result.possibleCardioTypes && result.possibleCardioTypes.length > 0
+      const hasWorkout = result.workout?.exercises && result.workout.exercises.length > 0
+      if (!hasCardio && !hasWorkout) { setVoiceError("empty"); return }
+    }
+
     if (result.kind === "workout") {
       const w = result.workout
       if (!w) return
@@ -1221,6 +1239,13 @@ export default function ActivitiesPage() {
                   </svg>
                 </div>
                 <div>
+                  {voiceError === "empty" && (
+                    <>
+                      <p className="text-sm font-extrabold text-white mb-1">On n&apos;a pas compris</p>
+                      <p className="text-sm text-gray-400">Décris ton activité plus précisément et réessaie.</p>
+                      <p className="text-xs text-gray-500 mt-2">Ex : &ldquo;Course 10 km en 50 min&rdquo; ou &ldquo;Développé couché 3×10 à 80 kg&rdquo;</p>
+                    </>
+                  )}
                   {voiceError === "permission" && (
                     <>
                       <p className="text-sm font-extrabold text-white mb-1">Microphone bloqué</p>
