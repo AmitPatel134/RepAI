@@ -152,7 +152,6 @@ export default function ActivitiesPage() {
 
   // Cardio form
   const [cType, setCType] = useState("running")
-  const [cName, setCName] = useState("")
   const [cDate, setCDate] = useState(new Date().toISOString().slice(0, 10))
   const [cDurH, setCDurH] = useState("")
   const [cDurM, setCDurM] = useState("")
@@ -354,7 +353,6 @@ export default function ActivitiesPage() {
   function openEditActivity(act: Activity) {
     setEditingActivity(act)
     setCType(act.type)
-    setCName(act.name)
     setCDate(act.date.slice(0, 10))
     const h = act.durationSec ? Math.floor(act.durationSec / 3600) : 0
     const m = act.durationSec ? Math.floor((act.durationSec % 3600) / 60) : 0
@@ -375,12 +373,12 @@ export default function ActivitiesPage() {
   }
 
   async function handleSaveActivity() {
-    if (!cName.trim()) return
     setCSaving(true)
+    const autoName = CARDIO_TYPES.find(t => t.key === cType)?.label ?? cType
     const durationSec = cDurH || cDurM ? parseInt(cDurH || "0") * 3600 + parseInt(cDurM || "0") * 60 : null
     const distanceM = cDist ? parseFloat(cDist) * 1000 : null
     const body = {
-      type: cType, name: cName.trim(), date: cDate, durationSec, distanceM,
+      type: cType, name: autoName, date: cDate, durationSec, distanceM,
       elevationM: cElev ? parseFloat(cElev) : null,
       avgHeartRate: cHR ? parseInt(cHR) : null,
       calories: cCal ? parseInt(cCal) : null,
@@ -416,7 +414,7 @@ export default function ActivitiesPage() {
   }
 
   function resetCardioForm() {
-    setCType("running"); setCName(""); setCDate(new Date().toISOString().slice(0, 10))
+    setCType("running"); setCDate(new Date().toISOString().slice(0, 10))
     setCDurH(""); setCDurM(""); setCDist(""); setCElev(""); setCHR(""); setCCal(""); setCNotes("")
   }
 
@@ -610,11 +608,10 @@ export default function ActivitiesPage() {
                                     <span style={{ color: info.color }}><CardioIcon type={a.type} /></span>
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-white truncate">{a.name}</p>
+                                    <p className="text-sm font-bold truncate" style={{ color: info.color }}>{info.label}</p>
                                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                      <span className="text-[11px] font-bold" style={{ color: info.color }}>{info.label}</span>
-                                      {a.distanceM && <span className="text-[11px] text-gray-500">{fmtDist(a.distanceM)}</span>}
-                                      {a.durationSec && <span className="text-[11px] text-gray-500">{fmtDuration(a.durationSec)}</span>}
+                                      {a.distanceM && <span className="text-[11px] text-gray-400">{fmtDist(a.distanceM)}</span>}
+                                      {a.durationSec && <span className="text-[11px] text-gray-400">{fmtDuration(a.durationSec)}</span>}
                                       {a.avgPaceSecKm && <span className="text-[11px] text-gray-500">{fmtPace(a.avgPaceSecKm)}</span>}
                                       {!a.avgPaceSecKm && a.avgSpeedKmh && <span className="text-[11px] text-gray-500">{a.avgSpeedKmh.toFixed(1)} km/h</span>}
                                       {a.avgHeartRate && <span className="text-[11px] text-red-400">{a.avgHeartRate} bpm</span>}
@@ -847,7 +844,7 @@ export default function ActivitiesPage() {
               <div className="overflow-x-auto mb-4">
                 <div className="flex gap-2 w-max pb-1">
                   {CARDIO_TYPES.map(t => (
-                    <button key={t.key} onClick={() => { setCType(t.key); if (!editingActivity) setCName(t.label) }}
+                    <button key={t.key} onClick={() => setCType(t.key)}
                       className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl border transition-all"
                       style={cType === t.key
                         ? { backgroundColor: t.color + "22", borderColor: t.color + "66", color: t.color }
@@ -859,8 +856,6 @@ export default function ActivitiesPage() {
                 </div>
               </div>
               <div className="flex flex-col gap-3">
-                <input value={cName} onChange={e => setCName(e.target.value)} placeholder="Nom de l'activité"
-                  className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 outline-none focus:border-violet-500/50"/>
                 <input type="date" value={cDate} onChange={e => setCDate(e.target.value)}
                   className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-violet-500/50"/>
                 <div className="grid grid-cols-2 gap-3">
@@ -901,7 +896,7 @@ export default function ActivitiesPage() {
                 <textarea value={cNotes} onChange={e => setCNotes(e.target.value)} placeholder="Notes (optionnel)" rows={2}
                   className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 outline-none resize-none"/>
               </div>
-              <button onClick={handleSaveActivity} disabled={cSaving || !cName.trim()} className="w-full mt-5 py-3 bg-orange-500 rounded-xl text-sm font-bold text-white hover:bg-orange-400 transition-colors disabled:opacity-50">
+              <button onClick={handleSaveActivity} disabled={cSaving} className="w-full mt-5 py-3 bg-orange-500 rounded-xl text-sm font-bold text-white hover:bg-orange-400 transition-colors disabled:opacity-50">
                 {cSaving ? "..." : editingActivity ? "Enregistrer" : "Ajouter"}
               </button>
             </div>
