@@ -26,6 +26,15 @@ const navItems = [
     ),
   },
   {
+    href: "/app/progress",
+    label: "Progrès",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 18l4-8 4 5 3-4 4 7" />
+      </svg>
+    ),
+  },
+  {
     href: "/app/coach",
     label: "Coach IA",
     icon: (
@@ -47,8 +56,8 @@ const profil = {
   ),
 }
 
-// Left: Activités — Center: Accueil — Right: Coach IA, Profil
-const mobileNavSide = [navItems[1], navItems[2], profil]
+// Left: Activités, Progrès — Center: Accueil — Right: Coach IA, Profil
+const mobileNavSide = [navItems[1], navItems[2], navItems[3], profil]
 const mobileNavHome = navItems[0]
 
 export default function AppSidebar() {
@@ -132,9 +141,9 @@ export default function AppSidebar() {
           {/* Pill background — behind everything */}
           <div className="absolute inset-x-0 bottom-0 h-[52px] rounded-2xl bg-gray-900/90 backdrop-blur-md border border-white/10 shadow-2xl" />
 
-          {/* Left item: Activités */}
+          {/* Left items: Activités, Progrès */}
           <div className="relative flex flex-1 z-10">
-            {mobileNavSide.slice(0, 1).map(item => {
+            {mobileNavSide.slice(0, 2).map(item => {
               const active = isActive(item)
               return (
                 <a
@@ -177,7 +186,7 @@ export default function AppSidebar() {
 
           {/* Right items: Coach IA, Profil */}
           <div className="relative flex flex-1 z-10">
-            {mobileNavSide.slice(1).map(item => {
+            {mobileNavSide.slice(2).map(item => {
               const active = isActive(item)
               return (
                 <a
