@@ -38,13 +38,13 @@ export default function CoachPage() {
   const [question, setQuestion] = useState("")
   const [loading, setLoading] = useState(false)
   const [workoutContext, setWorkoutContext] = useState("")
+  const [activityContext, setActivityContext] = useState("")
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         setIsDemo(true)
         setSessions(DEMO_COACH_SESSIONS)
-        // Build demo context
         const ctx = DEMO_WORKOUTS.slice(0, 3).map(w =>
           `Séance: ${w.name} (${w.date.slice(0, 10)}) — ${w.exercises.map(e =>
             `${e.name}: ${e.sets.map(s => `${s.reps}×${s.weight}kg`).join(", ")}`
@@ -54,26 +54,37 @@ export default function CoachPage() {
         setReady(true)
         return
       }
-      authFetch("/api/workouts")
-        .then(r => r.json())
-        .then(d => {
-          const workouts = Array.isArray(d) ? d : DEMO_WORKOUTS
+
+      Promise.all([
+        authFetch("/api/workouts").then(r => r.json()).catch(() => []),
+        authFetch("/api/activities").then(r => r.json()).catch(() => []),
+        authFetch("/api/coach").then(r => r.json()).catch(() => DEMO_COACH_SESSIONS),
+      ]).then(([workouts, activities, coachSessions]) => {
+        if (Array.isArray(workouts) && workouts.length > 0) {
           const ctx = workouts.slice(0, 5).map((w: typeof DEMO_WORKOUTS[0]) =>
             `Séance: ${w.name} (${w.date.slice(0, 10)}) — ${w.exercises?.map(e =>
               `${e.name}: ${e.sets.map(s => `${s.reps}×${s.weight}kg`).join(", ")}`
             ).join(" | ") ?? ""}`
           ).join("\n")
           setWorkoutContext(ctx)
-        })
-        .catch(() => {
-          setIsDemo(true)
-        })
-
-      authFetch("/api/coach")
-        .then(r => r.json())
-        .then(d => setSessions(Array.isArray(d) ? d : DEMO_COACH_SESSIONS))
-        .catch(() => setSessions(DEMO_COACH_SESSIONS))
-        .finally(() => setReady(true))
+        }
+        if (Array.isArray(activities) && activities.length > 0) {
+          const ctx = activities.slice(0, 5).map((a: { type: string; name: string; date: string; distanceM: number | null; durationSec: number | null; avgHeartRate: number | null; avgPaceSecKm: number | null }) => {
+            const parts = [
+              a.distanceM ? `${(a.distanceM / 1000).toFixed(1)}km` : null,
+              a.durationSec ? `${Math.floor(a.durationSec / 60)}min` : null,
+              a.avgHeartRate ? `FC ${a.avgHeartRate}bpm` : null,
+              a.avgPaceSecKm ? `allure ${Math.floor(a.avgPaceSecKm / 60)}'${(a.avgPaceSecKm % 60).toString().padStart(2, "0")}"/km` : null,
+            ].filter(Boolean).join(", ")
+            return `${a.type} "${a.name}" (${a.date.slice(0, 10)})${parts ? ` : ${parts}` : ""}`
+          }).join("\n")
+          setActivityContext(ctx)
+        }
+        setSessions(Array.isArray(coachSessions) ? coachSessions : DEMO_COACH_SESSIONS)
+      }).catch(() => {
+        setIsDemo(true)
+        setSessions(DEMO_COACH_SESSIONS)
+      }).finally(() => setReady(true))
     })
   }, [])
 
@@ -121,7 +132,7 @@ En regardant tes séances récentes, voici mes observations :
       const r = await authFetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q, workoutContext }),
+        body: JSON.stringify({ question: q, workoutContext, activityContext }),
       })
       const data = await r.json()
       const newSession: Session = {

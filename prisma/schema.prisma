@@ -19,6 +19,46 @@ model User {
   createdAt     DateTime       @default(now())
   workouts      Workout[]
   coachSessions CoachSession[]
+  activities    Activity[]
+  stravaToken   StravaToken?
+}
+
+model Activity {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String    // "running" | "cycling" | "swimming" | "walking" | "hiking" | "rowing" | "elliptical" | "other"
+  name          String
+  date          DateTime  @default(now())
+  durationSec   Int?
+  distanceM     Float?
+  elevationM    Float?
+  avgHeartRate  Int?
+  maxHeartRate  Int?
+  calories      Int?
+  avgSpeedKmh   Float?
+  avgPaceSecKm  Int?
+  laps          Int?
+  poolLengthM   Int?
+  notes         String?
+  source        String    @default("manual")
+  stravaId      String?   @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId, date])
+}
+
+model StravaToken {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stravaAthleteId Int       @unique
+  accessToken     String
+  refreshToken    String
+  expiresAt       DateTime
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model Workout {
