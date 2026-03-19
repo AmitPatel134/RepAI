@@ -159,6 +159,7 @@ export default function ActivitiesPage() {
   const [voiceParsing, setVoiceParsing] = useState(false)
   const [voiceTranscript, setVoiceTranscript] = useState("")
   const [voiceResult, setVoiceResult] = useState<VoiceResult | null>(null)
+  const [voiceError, setVoiceError] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
 
@@ -444,6 +445,7 @@ export default function ActivitiesPage() {
 
   async function startVoice() {
     if (isDemo) return
+    setVoiceError(null)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const mimeType = ["audio/webm", "audio/mp4", "audio/ogg"].find(t => MediaRecorder.isTypeSupported(t)) ?? ""
@@ -461,8 +463,15 @@ export default function ActivitiesPage() {
       mediaRecorderRef.current = recorder
       setVoiceTranscript("")
       setVoiceRecording(true)
-    } catch {
-      alert("Impossible d'accéder au microphone. Vérifiez les permissions.")
+    } catch (err) {
+      const name = (err as { name?: string })?.name
+      if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+        setVoiceError("permission")
+      } else if (name === "NotFoundError") {
+        setVoiceError("notfound")
+      } else {
+        setVoiceError("unknown")
+      }
     }
   }
 
@@ -1194,6 +1203,51 @@ export default function ActivitiesPage() {
                   )
                 })}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Voice error overlay ── */}
+      {voiceError && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={() => setVoiceError(null)}>
+          <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-white/20" /></div>
+            <div className="px-5 pb-8 pt-3">
+              <div className="flex items-start gap-4 mb-5">
+                <div className="w-12 h-12 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                  </svg>
+                </div>
+                <div>
+                  {voiceError === "permission" && (
+                    <>
+                      <p className="text-sm font-extrabold text-white mb-1">Microphone bloqué</p>
+                      <p className="text-sm text-gray-400">Autorisez l&apos;accès au microphone dans les réglages de votre navigateur, puis réessayez.</p>
+                      <p className="text-xs text-gray-500 mt-2">Sur iOS : Réglages → Safari → Microphone → Autoriser</p>
+                    </>
+                  )}
+                  {voiceError === "notfound" && (
+                    <>
+                      <p className="text-sm font-extrabold text-white mb-1">Aucun microphone détecté</p>
+                      <p className="text-sm text-gray-400">Vérifiez qu&apos;un microphone est connecté et accessible.</p>
+                    </>
+                  )}
+                  {voiceError === "unknown" && (
+                    <>
+                      <p className="text-sm font-extrabold text-white mb-1">Erreur microphone</p>
+                      <p className="text-sm text-gray-400">Impossible d&apos;accéder au microphone. Vérifiez vos permissions et réessayez.</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setVoiceError(null)}
+                className="w-full py-3 bg-white/10 border border-white/20 rounded-xl text-sm font-bold text-white hover:bg-white/15 transition-colors"
+              >
+                OK
+              </button>
             </div>
           </div>
         </div>
