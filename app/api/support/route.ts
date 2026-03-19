@@ -1,13 +1,11 @@
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
-// TODO: Update these email addresses
 const SUPPORT_FROM = "RepAI Support <support@repai.fr>"
 const SUPPORT_TO = "support@repai.fr"
 const APP_NAME = "RepAI"
 
 export async function POST(request: Request) {
+  const resend = new Resend(process.env.RESEND_API_KEY)
   const { name, email, subject, message } = await request.json()
 
   const { data, error } = await resend.emails.send({
