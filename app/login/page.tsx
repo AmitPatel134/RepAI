@@ -3,7 +3,7 @@ import { useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 
 // TODO: Replace with your app name
-const APP_NAME = "MyApp"
+const APP_NAME = "RepAI"
 
 type View = "login" | "signup" | "forgot" | "forgot-sent" | "signup-sent"
 

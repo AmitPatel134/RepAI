@@ -90,7 +90,7 @@ export default function ProfilPage() {
   if (!ready) return <LoadingScreen />
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
       <nav className="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-40">
         <h1 className="text-lg font-extrabold text-gray-900">My profile</h1>
       </nav>

@@ -5,7 +5,7 @@ import LoadingScreen from "@/components/LoadingScreen"
 
 // TODO: Replace with your actual Stripe price ID
 const PRO_PRICE_ID = "price_YOUR_STRIPE_PRICE_ID"
-const APP_NAME = "MyApp"
+const APP_NAME = "RepAI"
 
 export default function PricingPage() {
   const [email, setEmail] = useState<string | null>(null)

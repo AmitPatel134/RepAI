@@ -9,7 +9,7 @@ const steps = [
       </svg>
     ),
     // TODO: Update with your app name and description
-    title: "Welcome to MyApp!",
+    title: "Welcome to RepAI!",
     description: "Your AI-powered platform. In a few steps, you'll be ready to manage your items and generate content efficiently.",
     cta: "Get started",
   },

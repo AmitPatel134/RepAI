@@ -4,15 +4,18 @@ import { useRef, useEffect, useState } from "react"
 import AppSidebar from "@/components/AppSidebar"
 
 const PAGE_ORDER = [
-  "/app",
-  "/app/workouts",
   "/app/progress",
+  "/app/workouts",
+  "/app",
   "/app/coach",
   "/app/profil",
 ]
 
 function getPageIndex(pathname: string) {
-  // Match /app/workouts/[id] → /app/workouts
+  // Disable swipe on sub-pages (e.g. /app/workouts/[id])
+  const isSubPage = PAGE_ORDER.some(p => p !== "/app" && pathname.startsWith(p + "/"))
+  if (isSubPage) return -1
+
   const base = PAGE_ORDER.find(p => p !== "/app" && pathname.startsWith(p))
     ?? (pathname === "/app" ? "/app" : null)
   return base ? PAGE_ORDER.indexOf(base) : -1
@@ -77,7 +80,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-950">
       <AppSidebar />
-      <div className={`flex-1 md:ml-52 overflow-y-auto min-w-0 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0 bg-gray-950 ${animClass}`}>
+      <div className={`flex-1 md:ml-52 overflow-y-auto min-w-0 bg-gray-950 ${animClass}`}>
         {children}
       </div>
     </div>

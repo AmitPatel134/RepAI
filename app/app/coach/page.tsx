@@ -38,7 +38,6 @@ export default function CoachPage() {
   const [question, setQuestion] = useState("")
   const [loading, setLoading] = useState(false)
   const [workoutContext, setWorkoutContext] = useState("")
-  const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -78,9 +77,6 @@ export default function CoachPage() {
     })
   }, [])
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [sessions])
 
   async function handleAsk() {
     if (!question.trim() || loading) return
@@ -281,7 +277,6 @@ En regardant tes séances récentes, voici mes observations :
             </div>
           )}
 
-          <div ref={bottomRef} />
         </div>
       </div>
     </div>

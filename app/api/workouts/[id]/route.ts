@@ -4,8 +4,9 @@ import { NextRequest } from "next/server"
 
 export const dynamic = "force-dynamic"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const authUser = await getAuthUser(request)
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     if (!user) return Response.json({ error: "Not found" }, { status: 404 })
 
     const workout = await prisma.workout.findFirst({
-      where: { id: params.id, userId: user.id },
+      where: { id, userId: user.id },
       include: {
         exercises: {
           orderBy: { order: "asc" },
@@ -29,15 +30,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const authUser = await getAuthUser(request)
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
     const user = await prisma.user.findUnique({ where: { email: authUser.email } })
     if (!user) return Response.json({ error: "Not found" }, { status: 404 })
 
-    const existing = await prisma.workout.findFirst({ where: { id: params.id, userId: user.id } })
+    const existing = await prisma.workout.findFirst({ where: { id, userId: user.id } })
     if (!existing) return Response.json({ error: "Not found" }, { status: 404 })
 
     const body = await request.json()
@@ -45,11 +47,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     // If exercises provided, replace them all
     if (exercises !== undefined) {
-      await prisma.exercise.deleteMany({ where: { workoutId: params.id } })
+      await prisma.exercise.deleteMany({ where: { workoutId: id } })
     }
 
     const workout = await prisma.workout.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(name !== undefined && { name }),
         ...(type !== undefined && { type }),
@@ -87,18 +89,19 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const authUser = await getAuthUser(request)
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
     const user = await prisma.user.findUnique({ where: { email: authUser.email } })
     if (!user) return Response.json({ error: "Not found" }, { status: 404 })
 
-    const existing = await prisma.workout.findFirst({ where: { id: params.id, userId: user.id } })
+    const existing = await prisma.workout.findFirst({ where: { id, userId: user.id } })
     if (!existing) return Response.json({ error: "Not found" }, { status: 404 })
 
-    await prisma.workout.delete({ where: { id: params.id } })
+    await prisma.workout.delete({ where: { id } })
     return Response.json({ success: true })
   } catch {
     return Response.json({ error: "Database error" }, { status: 500 })

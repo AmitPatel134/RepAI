@@ -1,64 +1,148 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
 import LoadingScreen from "@/components/LoadingScreen"
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, BarChart, Bar,
+  CartesianGrid, BarChart, Bar, Cell,
 } from "recharts"
-import {
-  DEMO_BENCH_PROGRESS, DEMO_SQUAT_PROGRESS, DEMO_DEADLIFT_PROGRESS, DEMO_WORKOUTS,
-} from "@/lib/demoData"
+import { DEMO_WORKOUTS } from "@/lib/demoData"
 
-const DEMO_EXERCISE_OPTIONS = [
-  { key: "bench", label: "Développé couché", data: DEMO_BENCH_PROGRESS, color: "#7c3aed" },
-  { key: "squat", label: "Squat", data: DEMO_SQUAT_PROGRESS, color: "#059669" },
-  { key: "deadlift", label: "Soulevé de terre", data: DEMO_DEADLIFT_PROGRESS, color: "#d97706" },
-]
+type ActivityPoint = { day: string; dateNum: number; dateStr: string; count: number; isToday: boolean }
+
+function computeWeekData(workouts: typeof DEMO_WORKOUTS): ActivityPoint[] {
+  const now = new Date()
+  const todayStr = now.toISOString().slice(0, 10)
+  const dayOfWeek = (now.getDay() + 6) % 7 // 0=Lun, 6=Dim
+  const monday = new Date(now)
+  monday.setDate(now.getDate() - dayOfWeek)
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    const dateStr = d.toISOString().slice(0, 10)
+    const count = workouts.filter(w => w.date.slice(0, 10) === dateStr).length
+    const day = d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "").slice(0, 3)
+    return { day: day.charAt(0).toUpperCase() + day.slice(1), dateNum: d.getDate(), dateStr, count, isToday: dateStr === todayStr }
+  })
+}
+
+function computeMonthDays(workouts: typeof DEMO_WORKOUTS, offset = 0): (ActivityPoint | null)[] {
+  const now = new Date()
+  const todayStr = now.toISOString().slice(0, 10)
+  const target = new Date(now.getFullYear(), now.getMonth() + offset, 1)
+  const year = target.getFullYear()
+  const month = target.getMonth()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const firstDayOffset = (new Date(year, month, 1).getDay() + 6) % 7
+  const cells: (ActivityPoint | null)[] = Array(firstDayOffset).fill(null)
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d)
+    const dateStr = date.toISOString().slice(0, 10)
+    const count = workouts.filter(w => w.date.slice(0, 10) === dateStr).length
+    const day = date.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "").slice(0, 3)
+    cells.push({ day: day.charAt(0).toUpperCase() + day.slice(1), dateNum: d, dateStr, count, isToday: dateStr === todayStr })
+  }
+  return cells
+}
+
+
+function SessionDots({ count, small }: { count: number; small?: boolean }) {
+  const dot = small ? "w-1.5 h-1.5" : "w-2 h-2"
+  const bigDot = small ? "w-2 h-2" : "w-3.5 h-3.5"
+  const gap = small ? "gap-0.5" : "gap-1"
+  if (count === 0) return null
+  if (count === 1) return <div className={`${bigDot} rounded-full bg-violet-500`} />
+  if (count === 2) return (
+    <div className={`flex ${gap}`}>
+      <div className={`${dot} rounded-full bg-violet-500`} />
+      <div className={`${dot} rounded-full bg-violet-500`} />
+    </div>
+  )
+  if (count === 3) return (
+    <div className={`flex flex-col ${gap} items-center`}>
+      <div className={`flex ${gap}`}>
+        <div className={`${dot} rounded-full bg-violet-500`} />
+        <div className={`${dot} rounded-full bg-violet-500`} />
+      </div>
+      <div className={`${dot} rounded-full bg-violet-500`} />
+    </div>
+  )
+  return (
+    <div className={`flex flex-col ${gap} items-center`}>
+      <div className={`flex ${gap}`}>
+        <div className={`${dot} rounded-full bg-violet-500`} />
+        <div className={`${dot} rounded-full bg-violet-500`} />
+      </div>
+      <div className={`flex ${gap}`}>
+        <div className={`${dot} rounded-full bg-violet-500`} />
+        <div className={`${dot} rounded-full bg-violet-400/60`} />
+      </div>
+    </div>
+  )
+}
+
+function DayCircle({ pt, small, showDay }: { pt: ActivityPoint; small?: boolean; showDay?: boolean }) {
+  const size = small ? "w-9 h-9" : "w-11 h-11"
+  return (
+    <div className="flex flex-col items-center gap-1">
+      {showDay && (
+        <span className={`text-[10px] font-bold leading-tight ${pt.isToday ? "text-violet-400" : "text-gray-500"}`}>
+          {pt.day}
+        </span>
+      )}
+      <div className={`${size} rounded-full flex items-center justify-center ${
+        pt.count > 0 ? "border border-violet-500/50 bg-violet-500/15" :
+        pt.isToday ? "border border-violet-500/30" : "border border-white/10"
+      }`}>
+        <SessionDots count={pt.count} small={small} />
+      </div>
+      <span className={`text-[10px] font-semibold leading-tight ${pt.isToday ? "text-violet-300" : "text-gray-600"}`}>
+        {pt.dateNum}
+      </span>
+    </div>
+  )
+}
 
 const CHART_COLORS = ["#7c3aed", "#059669", "#d97706", "#e11d48", "#0ea5e9", "#f59e0b"]
 
-type ExerciseOption = { key: string; label: string; data: { date: string; weight: number }[]; color: string }
+type ExerciseOption = { key: string; label: string; data: { date: string; weight: number }[]; color: string; sessions?: number }
 
 function computeProgressionByExercise(workouts: typeof DEMO_WORKOUTS): ExerciseOption[] {
-  // For each exercise, build max weight per workout date
-  const map: Record<string, { date: string; weight: number }[]> = {}
-
+  // For each exercise, build average weight per workout date
+  const map: Record<string, { date: string; weight: number; sessions: number }[]> = {}
   const sorted = [...workouts].sort((a, b) => a.date.localeCompare(b.date))
 
   for (const workout of sorted) {
     const dateStr = workout.date.slice(0, 10)
-    const d = new Date(dateStr)
-    const label = d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
+    const label = new Date(dateStr).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
 
     for (const ex of workout.exercises) {
-      const maxWeight = ex.sets.reduce((max, s) => {
-        const w = s.weight ?? 0
-        return w > max ? w : max
-      }, 0)
-      if (maxWeight === 0) continue
+      const setsWithWeight = ex.sets.filter(s => (s.weight ?? 0) > 0)
+      if (setsWithWeight.length === 0) continue
+      const avg = Math.round(setsWithWeight.reduce((sum, s) => sum + (s.weight ?? 0), 0) / setsWithWeight.length * 10) / 10
 
       if (!map[ex.name]) map[ex.name] = []
-      // Keep only max weight per date
       const existing = map[ex.name].find(p => p.date === label)
       if (existing) {
-        if (maxWeight > existing.weight) existing.weight = maxWeight
+        // Average across multiple sessions same day
+        existing.weight = Math.round(((existing.weight * existing.sessions) + avg) / (existing.sessions + 1) * 10) / 10
+        existing.sessions++
       } else {
-        map[ex.name].push({ date: label, weight: maxWeight })
+        map[ex.name].push({ date: label, weight: avg, sessions: 1 })
       }
     }
   }
 
-  // Sort exercises by frequency (most logged first), take top 5
+  // Sort by frequency (most sessions), expose all exercises with data
   return Object.entries(map)
-    .sort((a, b) => b[1].length - a[1].length)
-    .slice(0, 5)
+    .sort((a, b) => b[1].reduce((s, d) => s + d.sessions, 0) - a[1].reduce((s, d) => s + d.sessions, 0))
     .map(([name, data], i) => ({
       key: name,
       label: name,
-      data,
+      data: data.map(({ date, weight }) => ({ date, weight })),
       color: CHART_COLORS[i % CHART_COLORS.length],
+      sessions: data.reduce((s, d) => s + d.sessions, 0),
     }))
 }
 
@@ -109,17 +193,42 @@ function computeVolumeByExercise(workouts: typeof DEMO_WORKOUTS) {
 export default function ProgressPage() {
   const [ready, setReady] = useState(false)
   const [isDemo, setIsDemo] = useState(false)
-  const [exerciseOptions, setExerciseOptions] = useState<ExerciseOption[]>(DEMO_EXERCISE_OPTIONS)
-  const [selectedExercise, setSelectedExercise] = useState<ExerciseOption>(DEMO_EXERCISE_OPTIONS[0])
+  const [exerciseOptions, setExerciseOptions] = useState<ExerciseOption[]>([])
+  const [selectedExercise, setSelectedExercise] = useState<ExerciseOption | null>(null)
   const [prs, setPrs] = useState<PRData[]>([])
   const [volumeByEx, setVolumeByEx] = useState<{ name: string; volume: number }[]>([])
+  const [expanded, setExpanded] = useState(false)
+  const [showExPicker, setShowExPicker] = useState(false)
+  const [showEditor, setShowEditor] = useState(false)
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === "undefined") return { activity: true, progression: true, volume: true, prs: true }
+    try {
+      const saved = localStorage.getItem("progress-sections")
+      return saved ? JSON.parse(saved) : { activity: true, progression: true, volume: true, prs: true }
+    } catch { return { activity: true, progression: true, volume: true, prs: true } }
+  })
+
+  function toggleSection(key: string) {
+    setVisible((prev: Record<string, boolean>) => {
+      const next = { ...prev, [key]: !prev[key] }
+      localStorage.setItem("progress-sections", JSON.stringify(next))
+      return next
+    })
+  }
+  const [monthOffset, setMonthOffset] = useState(0)
+  const [rawWorkouts, setRawWorkouts] = useState<typeof DEMO_WORKOUTS>([])
+  const dragStartY = useRef(0)
+  const weekPanelRef = useRef<HTMLDivElement>(null)
+  const monthPanelRef = useRef<HTMLDivElement>(null)
+  const [panelH, setPanelH] = useState({ week: 0, month: 0 })
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         setIsDemo(true)
-        setExerciseOptions(DEMO_EXERCISE_OPTIONS)
-        setSelectedExercise(DEMO_EXERCISE_OPTIONS[0])
+        setRawWorkouts(DEMO_WORKOUTS)
+        setExerciseOptions([])
+        setSelectedExercise(null)
         setPrs(computePRs(DEMO_WORKOUTS))
         setVolumeByEx(computeVolumeByExercise(DEMO_WORKOUTS))
         setReady(true)
@@ -130,26 +239,37 @@ export default function ProgressPage() {
         .then(d => {
           const hasData = Array.isArray(d) && d.length > 0
           const workouts: typeof DEMO_WORKOUTS = hasData ? d : []
+          setRawWorkouts(workouts)
           const options = hasData ? computeProgressionByExercise(workouts) : []
-          const opts = options.length > 0 ? options : DEMO_EXERCISE_OPTIONS
-          setExerciseOptions(opts)
-          setSelectedExercise(opts[0])
+          setExerciseOptions(options)
+          setSelectedExercise(options[0] ?? null)
           setPrs(hasData ? computePRs(workouts) : [])
           setVolumeByEx(hasData ? computeVolumeByExercise(workouts) : [])
           setReady(true)
         })
         .catch(() => {
-          setExerciseOptions(DEMO_EXERCISE_OPTIONS)
-          setSelectedExercise(DEMO_EXERCISE_OPTIONS[0])
+          setExerciseOptions([])
+          setSelectedExercise(null)
           setReady(true)
         })
     })
   }, [])
 
+  // Measure panel heights whenever content changes
+  useEffect(() => {
+    if (!ready) return
+    const t = setTimeout(() => {
+      const w = weekPanelRef.current?.offsetHeight ?? 0
+      const m = monthPanelRef.current?.offsetHeight ?? 0
+      if (w > 0 && m > 0) setPanelH({ week: w, month: m })
+    }, 30)
+    return () => clearTimeout(t)
+  }, [ready, monthOffset, rawWorkouts])
+
   if (!ready) return <LoadingScreen />
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-950 text-white pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
       {isDemo && (
         <div className="bg-violet-600/20 border-b border-violet-500/30 px-6 py-2 flex items-center justify-between">
           <p className="text-xs font-semibold text-violet-300">
@@ -163,74 +283,269 @@ export default function ProgressPage() {
 
       <div className="max-w-5xl mx-auto px-4 py-6 md:px-6 md:py-8">
         {/* Header */}
-        <div className="mb-6 md:mb-8">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Analyse</p>
-          <h1 className="text-2xl font-extrabold text-white">Mes progrès</h1>
-        </div>
+        <div className="mb-6 md:mb-8 flex items-start justify-between">
+          <div>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Analyse</p>
+            <h1 className="text-2xl font-extrabold text-white">Mes progrès</h1>
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setShowEditor(v => !v)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-gray-400 hover:text-white transition-colors mt-1"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Modifier
+            </button>
 
-        {/* Progression chart */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-4 md:p-6 mb-3 md:mb-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Progression</p>
-              <p className="text-sm font-extrabold text-white">Charge maximale par séance</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {exerciseOptions.map(opt => (
+            <div
+              className="absolute right-0 top-full mt-2 z-50 bg-gray-900 border border-white/10 rounded-2xl shadow-2xl p-3 w-56 pointer-events-none"
+              style={{
+                opacity: showEditor ? 1 : 0,
+                transform: showEditor ? "translateY(0) scale(1)" : "translateY(-8px) scale(0.96)",
+                transition: "opacity 0.18s ease, transform 0.18s ease",
+                pointerEvents: showEditor ? "auto" : "none",
+              }}
+            >
+              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 px-1">Sections affichées</p>
+              {[
+                { key: "activity", label: "Activité" },
+                { key: "progression", label: "Progression" },
+                { key: "volume", label: "Volume par exercice" },
+                { key: "prs", label: "Personal Records" },
+              ].map(s => (
                 <button
-                  key={opt.key}
-                  onClick={() => setSelectedExercise(opt)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                    selectedExercise.key === opt.key
-                      ? "text-white"
-                      : "bg-white/10 text-gray-400 hover:text-white"
-                  }`}
-                  style={selectedExercise.key === opt.key ? { backgroundColor: opt.color } : {}}
+                  key={s.key}
+                  onClick={() => toggleSection(s.key)}
+                  className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-white/5 transition-colors"
                 >
-                  {opt.label}
+                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                    visible[s.key] ? "bg-violet-600 border-violet-600" : "border-white/20"
+                  }`}>
+                    {visible[s.key] && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold text-white text-left">{s.label}</span>
                 </button>
               ))}
             </div>
           </div>
-          {selectedExercise.data.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40 text-center">
-              <p className="text-3xl mb-3">📈</p>
-              <p className="text-gray-500 text-sm font-medium">Loggez vos premières séances pour voir votre progression</p>
-            </div>
-          ) : (
-          <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={selectedExercise.data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 11, fontWeight: 600 }} axisLine={false} tickLine={false} />
-              <YAxis
-                tick={{ fill: "#6b7280", fontSize: 11, fontWeight: 600 }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={v => `${v}kg`}
-                domain={["auto", "auto"]}
-              />
-              <Tooltip
-                contentStyle={{ background: "#1f2937", border: "none", borderRadius: "12px", fontSize: "12px", color: "#fff" }}
-                formatter={(v: number) => [`${v} kg`, "Charge"]}
-              />
-              <Line
-                type="monotone"
-                dataKey="weight"
-                stroke={selectedExercise.color}
-                strokeWidth={2.5}
-                dot={{ fill: selectedExercise.color, r: 4, strokeWidth: 0 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-          )}
         </div>
 
+        {showEditor && <div className="fixed inset-0 z-40" onClick={() => setShowEditor(false)} />}
+
+        {/* Activity chart */}
+        {visible.activity && ((() => {
+          const weekData = computeWeekData(rawWorkouts)
+          const monthData = computeMonthDays(rawWorkouts, monthOffset)
+          const weekTotal = weekData.reduce((s, d) => s + d.count, 0)
+          const monthTotal = monthData.reduce((s, d) => s + (d?.count ?? 0), 0)
+          const targetDate = new Date(new Date().getFullYear(), new Date().getMonth() + monthOffset, 1)
+          const monthName = targetDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+          const DAY_HEADERS = ["L", "M", "M", "J", "V", "S", "D"]
+          const canGoNext = monthOffset < 0
+          const slideY = expanded && panelH.week > 0 ? -panelH.week : 0
+          const containerH = panelH.week === 0 ? "auto" : expanded ? panelH.month : panelH.week
+
+          return (
+            <div className="bg-white/5 border border-white/10 rounded-3xl mb-3 md:mb-4">
+
+              {/* Sliding panels */}
+              <div
+                className="overflow-hidden"
+                style={{ height: containerH, transition: "height 0.38s cubic-bezier(0.4,0,0.2,1)" }}
+              >
+                <div style={{ transform: `translateY(${slideY}px)`, transition: "transform 0.38s cubic-bezier(0.4,0,0.2,1)" }}>
+
+                  {/* Week panel */}
+                  <div ref={weekPanelRef} className="p-4 md:p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Activité</p>
+                        <p className="text-sm font-extrabold text-white">Séances réalisées</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-black text-white">{weekTotal}</p>
+                        <p className="text-[10px] text-gray-500 font-medium">cette semaine</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between px-1">
+                      {weekData.map((pt, i) => (
+                        <DayCircle key={i} pt={pt} />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Month panel */}
+                  <div ref={monthPanelRef} className="px-4 pt-4 pb-2">
+                    <div className="flex items-center justify-between mb-4">
+                      <button
+                        onClick={() => setMonthOffset(o => o - 1)}
+                        className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <div className="text-center">
+                        <p className="text-sm font-extrabold text-white capitalize">{monthName}</p>
+                        <p className="text-[10px] text-gray-500">{monthTotal} séance{monthTotal > 1 ? "s" : ""}</p>
+                      </div>
+                      {canGoNext ? (
+                        <button
+                          onClick={() => setMonthOffset(o => o + 1)}
+                          className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      ) : (
+                        <div className="w-8 h-8" />
+                      )}
+                    </div>
+                    <div className="grid grid-cols-7 mb-1">
+                      {DAY_HEADERS.map((h, i) => (
+                        <p key={i} className="text-[10px] font-bold text-gray-600 text-center">{h}</p>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-7 gap-y-1 pb-2">
+                      {monthData.map((pt, i) =>
+                        pt ? (
+                          <div key={i} className="flex justify-center">
+                            <DayCircle pt={pt} small />
+                          </div>
+                        ) : <div key={i} />
+                      )}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Handle */}
+              <div
+                className="flex items-center justify-center py-2.5 border-t border-white/5 cursor-pointer select-none"
+                onTouchStart={e => { dragStartY.current = e.touches[0].clientY }}
+                onTouchEnd={e => {
+                  const dy = e.changedTouches[0].clientY - dragStartY.current
+                  if (dy > 30 && !expanded) setExpanded(true)
+                  else if (dy < -30 && expanded) { setExpanded(false); setMonthOffset(0) }
+                }}
+                onClick={() => { setExpanded(v => { if (v) setMonthOffset(0); return !v }) }}
+              >
+                <svg
+                  className="w-3.5 h-3.5 text-gray-600 transition-transform duration-300"
+                  style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          )
+        })())}
+
+        {/* Progression chart */}
+        {visible.progression && <div className="bg-white/5 border border-white/10 rounded-3xl p-4 md:p-6 mb-3 md:mb-4">
+          <div className="flex items-start justify-between gap-3 mb-5">
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Progression</p>
+              <p className="text-sm font-extrabold text-white">Charge moyenne par séance</p>
+            </div>
+            {selectedExercise && exerciseOptions.length > 0 && (
+              <button
+                onClick={() => setShowExPicker(true)}
+                className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 transition-colors"
+                style={{ borderLeft: `3px solid ${selectedExercise.color}` }}
+              >
+                <span className="text-xs font-bold text-white max-w-[120px] truncate">{selectedExercise.label}</span>
+                <svg className="w-3 h-3 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {!selectedExercise || selectedExercise.data.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-40 text-center">
+              <p className="text-gray-500 text-sm font-medium">Loggez des séances avec des poids pour voir votre progression</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={180}>
+              <LineChart data={selectedExercise.data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fill: "#6b7280", fontSize: 11, fontWeight: 600 }}
+                  axisLine={false} tickLine={false}
+                  tickFormatter={(v: string) => v.replace(/\s+\d{4}$/, "")}
+                />
+                <YAxis
+                  tick={{ fill: "#6b7280", fontSize: 11, fontWeight: 600 }}
+                  axisLine={false} tickLine={false}
+                  tickFormatter={v => `${v}kg`}
+                  domain={["auto", "auto"]}
+                />
+                <Tooltip
+                  contentStyle={{ background: "#1f2937", border: "none", borderRadius: "12px", fontSize: "12px", color: "#fff" }}
+                  formatter={(v: number) => [`${v} kg`, "Moy."]}
+                />
+                <Line
+                  type="monotone" dataKey="weight"
+                  stroke={selectedExercise.color} strokeWidth={2.5}
+                  dot={{ fill: selectedExercise.color, r: 4, strokeWidth: 0 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>}
+
+        {/* Exercise picker modal */}
+        {showExPicker && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center" onClick={() => setShowExPicker(false)}>
+            <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg flex flex-col" style={{ maxHeight: "85vh" }} onClick={e => e.stopPropagation()}>
+              <div className="flex justify-center pt-3 pb-1 shrink-0">
+                <div className="w-10 h-1 rounded-full bg-white/20" />
+              </div>
+              <div className="px-4 pt-2 pb-1 shrink-0">
+                <p className="text-sm font-extrabold text-white">Choisir un exercice</p>
+              </div>
+              <div className="overflow-y-auto px-4 pb-6 flex flex-col gap-2 mt-3">
+                  {exerciseOptions.map(opt => (
+                    <button
+                      key={opt.key}
+                      onClick={() => { setSelectedExercise(opt); setShowExPicker(false) }}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left ${
+                        selectedExercise?.key === opt.key ? "bg-white/10" : "bg-white/5 hover:bg-white/10"
+                      }`}
+                    >
+                      <div className="w-2 h-8 rounded-full shrink-0" style={{ backgroundColor: opt.color }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-white truncate">{opt.label}</p>
+                        <p className="text-[10px] text-gray-500 font-medium">{opt.sessions} séance{(opt.sessions ?? 0) > 1 ? "s" : ""} · {opt.data.length} point{opt.data.length > 1 ? "s" : ""} de données</p>
+                      </div>
+                      {selectedExercise?.key === opt.key && (
+                        <svg className="w-4 h-4 text-violet-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Bottom grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        {(visible.volume || visible.prs) && <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
 
           {/* Volume by exercise */}
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-4 md:p-6">
+          {visible.volume && <div className="bg-white/5 border border-white/10 rounded-3xl p-4 md:p-6">
             <div className="mb-4 md:mb-5">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Distribution</p>
               <p className="text-sm font-extrabold text-white">Volume total par exercice</p>
@@ -261,10 +576,10 @@ export default function ProgressPage() {
                 </BarChart>
               </ResponsiveContainer>
             )}
-          </div>
+          </div>}
 
           {/* PRs table */}
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-4 md:p-6">
+          {visible.prs && <div className="bg-white/5 border border-white/10 rounded-3xl p-4 md:p-6">
             <div className="mb-4 md:mb-5">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Records</p>
               <p className="text-sm font-extrabold text-white">Personal Records (1RM estimé)</p>
@@ -297,9 +612,9 @@ export default function ProgressPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </div>}
 
-        </div>
+        </div>}
       </div>
     </div>
   )

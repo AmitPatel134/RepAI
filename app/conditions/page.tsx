@@ -1,5 +1,5 @@
 // TODO: Update APP_NAME and contact email
-const APP_NAME = "MyApp"
+const APP_NAME = "RepAI"
 const CONTACT_EMAIL = "support@example.com"
 
 export default function ConditionsPage() {

@@ -115,31 +115,26 @@ export default function HomePage() {
     <main className="min-h-screen text-gray-900">
 
       {/* NAVBAR */}
-      <nav className="fixed top-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-6xl flex items-center justify-between px-5 py-3 rounded-2xl bg-white/70 backdrop-blur-md border border-white/30 shadow-md">
+      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl flex items-center justify-between px-4 py-2.5 rounded-2xl bg-gray-950/80 backdrop-blur-xl border border-white/[0.08] shadow-2xl shadow-black/30">
         <a href={email ? "/app" : "/"} className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-          </div>
-          <span className="text-lg font-extrabold tracking-tight text-gray-900">{APP_NAME}</span>
+          <span className="text-base font-extrabold tracking-tight text-white">{APP_NAME}</span>
         </a>
-        <div className="hidden md:flex items-center gap-6 text-sm font-semibold text-gray-500 absolute left-1/2 -translate-x-1/2">
-          <a href="#features" className="hover:text-gray-900 transition-colors">Fonctionnalités</a>
-          <a href="#pricing" className="hover:text-gray-900 transition-colors">Tarifs</a>
+        <div className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+          <a href="#features" className="px-3 py-1.5 text-sm font-semibold text-gray-400 hover:text-white rounded-xl hover:bg-white/5 transition-all">Fonctionnalités</a>
+          <a href="#pricing" className="px-3 py-1.5 text-sm font-semibold text-gray-400 hover:text-white rounded-xl hover:bg-white/5 transition-all">Tarifs</a>
         </div>
-        <div className="flex items-center gap-2 md:gap-3">
+        <div className="flex items-center gap-2">
           {email ? (
-            <button onClick={() => setConfirm(true)} className="text-sm font-bold text-gray-600 px-3 md:px-4 py-2 rounded-full border border-gray-200 hover:border-gray-400 hover:text-gray-900 transition-colors">
+            <button onClick={() => setConfirm(true)} className="text-sm font-bold text-gray-400 px-3 py-2 rounded-xl hover:text-white hover:bg-white/5 transition-all">
               Déconnexion
             </button>
           ) : (
-            <a href="/login" className="text-sm font-bold text-gray-600 px-3 md:px-4 py-2 rounded-full border border-gray-200 hover:border-gray-400 transition-colors">
+            <a href="/login" className="text-sm font-bold text-gray-400 px-3 py-2 rounded-xl hover:text-white hover:bg-white/5 transition-all">
               Connexion
             </a>
           )}
-          <a href={ctaHref} className="bg-violet-600 text-white font-bold text-sm px-4 md:px-5 py-2.5 rounded-full hover:bg-violet-700 transition-colors">
-            {email ? "Mon dashboard →" : "Commencer gratuitement →"}
+          <a href={ctaHref} className="bg-violet-600 text-white font-bold text-sm px-4 py-2 rounded-xl hover:bg-violet-500 transition-colors shadow-lg shadow-violet-900/40">
+            {email ? "Dashboard →" : "Commencer →"}
           </a>
         </div>
       </nav>
@@ -456,11 +451,6 @@ export default function HomePage() {
       {/* FOOTER */}
       <footer className="bg-gray-950 text-gray-500 px-4 md:px-10 py-8 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-white/5">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-violet-600 flex items-center justify-center">
-            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-          </div>
           <span className="text-white font-extrabold">{APP_NAME}</span>
         </div>
         <div className="flex gap-8 text-sm font-semibold">

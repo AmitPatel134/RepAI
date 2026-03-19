@@ -8,7 +8,7 @@ const APP_NAME = "RepAI"
 const navItems = [
   {
     href: "/app",
-    label: "Dashboard",
+    label: "Accueil",
     exact: true,
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -30,7 +30,7 @@ const navItems = [
     label: "Progrès",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 18l4-8 4 5 3-4 4 7" />
       </svg>
     ),
   },
@@ -45,22 +45,20 @@ const navItems = [
   },
 ]
 
-const mobileNavItems = [
-  navItems[0],
-  navItems[1],
-  navItems[2],
-  navItems[3],
-  {
-    href: "/app/profil",
-    label: "Profil",
-    exact: false,
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-    ),
-  },
-]
+const profil = {
+  href: "/app/profil",
+  label: "Profil",
+  exact: false,
+  icon: (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  ),
+}
+
+// Left: Séances, Progrès — Center: Accueil — Right: Coach IA, Profil
+const mobileNavSide = [navItems[2], navItems[1], navItems[3], profil]
+const mobileNavHome = navItems[0]
 
 export default function AppSidebar() {
   const pathname = usePathname()
@@ -83,15 +81,10 @@ export default function AppSidebar() {
 
         {/* Logo */}
         <div className="px-5 py-5 border-b border-gray-100">
-          <a href="/app" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
+          <a href="/app/workouts" className="flex items-center gap-2">
             <span className="font-extrabold text-lg tracking-tight text-gray-900">{APP_NAME}</span>
           </a>
-          <p className="text-xs text-gray-400 font-medium mt-1 ml-9">Suivi & Performance</p>
+          <p className="text-xs text-gray-400 font-medium mt-1">Suivi & Performance</p>
         </div>
 
         {/* Nav */}
@@ -138,46 +131,71 @@ export default function AppSidebar() {
 
       </aside>
 
-      {/* MOBILE BOTTOM NAV — floating pill */}
+      {/* MOBILE BOTTOM NAV */}
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4 bg-gray-950"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)", paddingTop: "8px" }}
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 10px)", paddingTop: "0px" }}
       >
-        <nav className="relative w-full max-w-sm rounded-2xl bg-gray-900/85 backdrop-blur-md border border-white/10 shadow-2xl overflow-hidden">
+        <nav className="relative w-full max-w-sm flex items-end">
 
-          {/* Sliding active bubble */}
-          {(() => {
-            const activeIndex = mobileNavItems.findIndex(item => isActive(item))
-            return activeIndex >= 0 ? (
-              <div
-                className="absolute top-1.5 bottom-1.5 pointer-events-none"
-                style={{
-                  width: `${100 / mobileNavItems.length}%`,
-                  transform: `translateX(${activeIndex * 100}%)`,
-                  transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                }}
-              >
-                <div className="h-full mx-1.5 rounded-xl bg-violet-600 shadow-lg shadow-violet-900/50" />
-              </div>
-            ) : null
-          })()}
+          {/* Pill background — behind everything */}
+          <div className="absolute inset-x-0 bottom-0 h-[52px] rounded-2xl bg-gray-900/90 backdrop-blur-md border border-white/10 shadow-2xl" />
 
-          {/* Items */}
-          <div className="relative flex">
-            {mobileNavItems.map(item => {
+          {/* Left items: Séances, Progrès */}
+          <div className="relative flex flex-1 z-10">
+            {mobileNavSide.slice(0, 2).map(item => {
               const active = isActive(item)
               return (
                 <a
                   key={item.href}
                   href={item.href}
-                  className="flex-1 flex flex-col items-center justify-center py-3 gap-0.5 z-10 transition-colors duration-200"
+                  className="flex-1 flex flex-col items-center justify-center h-[52px] gap-0.5 transition-colors duration-200"
                 >
-                  <span className={active ? "text-white" : "text-gray-500"}>
-                    {item.icon}
-                  </span>
-                  <span className={`text-[9px] font-bold leading-none ${active ? "text-white" : "text-gray-500"}`}>
-                    {item.label}
-                  </span>
+                  <span className={active ? "text-white" : "text-gray-500"}>{item.icon}</span>
+                  <span className={`text-[9px] font-bold leading-none ${active ? "text-white" : "text-gray-500"}`}>{item.label}</span>
+                </a>
+              )
+            })}
+          </div>
+
+          {/* Center: Accueil — circle floating above */}
+          {(() => {
+            const active = isActive(mobileNavHome)
+            return (
+              <a
+                href={mobileNavHome.href}
+                className="relative z-20 flex flex-col items-center gap-0.5 pb-1.5 w-16 shrink-0"
+                style={{ marginBottom: "0px" }}
+              >
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-colors duration-200 ${
+                    active
+                      ? "bg-violet-600 shadow-violet-900/60"
+                      : "bg-gray-700 border border-white/15"
+                  }`}
+                  style={{ marginBottom: "2px", marginTop: "-14px" }}
+                >
+                  <span className={active ? "text-white" : "text-gray-300"}>{mobileNavHome.icon}</span>
+                </div>
+                <span className={`text-[9px] font-bold leading-none ${active ? "text-violet-300" : "text-gray-500"}`}>
+                  {mobileNavHome.label}
+                </span>
+              </a>
+            )
+          })()}
+
+          {/* Right items: Coach IA, Profil */}
+          <div className="relative flex flex-1 z-10">
+            {mobileNavSide.slice(2).map(item => {
+              const active = isActive(item)
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="flex-1 flex flex-col items-center justify-center h-[52px] gap-0.5 transition-colors duration-200"
+                >
+                  <span className={active ? "text-white" : "text-gray-500"}>{item.icon}</span>
+                  <span className={`text-[9px] font-bold leading-none ${active ? "text-white" : "text-gray-500"}`}>{item.label}</span>
                 </a>
               )
             })}

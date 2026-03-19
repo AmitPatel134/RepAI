@@ -2,7 +2,7 @@ import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "MyApp"
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "RepAI"
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://example.com"
 const FROM_EMAIL = process.env.FROM_EMAIL ?? `noreply@example.com`
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL ?? `support@example.com`

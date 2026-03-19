@@ -3,9 +3,9 @@ import { Resend } from "resend"
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 // TODO: Update these email addresses
-const SUPPORT_FROM = "MyApp Support <support@example.com>"
+const SUPPORT_FROM = "RepAI Support <support@example.com>"
 const SUPPORT_TO = "your@email.com"
-const APP_NAME = "MyApp"
+const APP_NAME = "RepAI"
 
 export async function POST(request: Request) {
   const { name, email, subject, message } = await request.json()

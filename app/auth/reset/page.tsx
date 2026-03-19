@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 
 // TODO: Update APP_NAME
-const APP_NAME = "MyApp"
+const APP_NAME = "RepAI"
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("")

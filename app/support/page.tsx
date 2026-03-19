@@ -2,7 +2,7 @@
 import { useState } from "react"
 
 // TODO: Update APP_NAME and contact info
-const APP_NAME = "MyApp"
+const APP_NAME = "RepAI"
 const SUPPORT_EMAIL = "support@example.com"
 
 export default function SupportPage() {

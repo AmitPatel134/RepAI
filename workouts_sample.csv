@@ -1,0 +1,2521 @@
+date,workout_name,workout_type,notes,exercise_name,set_number,reps,weight_kg,rpe
+2024-01-08,Push A,push,,Développé couché barre,1,8,80,7
+2024-01-08,Push A,push,,Développé couché barre,2,8,80,8
+2024-01-08,Push A,push,,Développé couché barre,3,6,80,8.5
+2024-01-08,Push A,push,,Développé incliné haltères,1,10,22,7
+2024-01-08,Push A,push,,Développé incliné haltères,2,10,22,8
+2024-01-08,Push A,push,,Développé incliné haltères,3,8,22,8.5
+2024-01-08,Push A,push,,Dips,1,10,10,7
+2024-01-08,Push A,push,,Dips,2,8,10,8
+2024-01-08,Push A,push,,Dips,3,8,10,8.5
+2024-01-08,Push A,push,,Extension triceps poulie,1,12,22,6
+2024-01-08,Push A,push,,Extension triceps poulie,2,12,22,7
+2024-01-08,Push A,push,,Extension triceps poulie,3,10,22,8
+2024-01-10,Pull A,pull,,Tractions pronation,1,8,0,7.5
+2024-01-10,Pull A,pull,,Tractions pronation,2,7,0,8
+2024-01-10,Pull A,pull,,Tractions pronation,3,6,0,8.5
+2024-01-10,Pull A,pull,,Rowing barre,1,8,60,7
+2024-01-10,Pull A,pull,,Rowing barre,2,8,60,8
+2024-01-10,Pull A,pull,,Rowing barre,3,6,60,8.5
+2024-01-10,Pull A,pull,,Tirage vertical,1,10,55,7
+2024-01-10,Pull A,pull,,Tirage vertical,2,10,55,8
+2024-01-10,Pull A,pull,,Tirage vertical,3,8,55,8
+2024-01-10,Pull A,pull,,Curl barre,1,10,30,7
+2024-01-10,Pull A,pull,,Curl barre,2,10,30,8
+2024-01-10,Pull A,pull,,Curl barre,3,8,30,8.5
+2024-01-12,Legs A,legs,,Squat barre,1,6,90,7.5
+2024-01-12,Legs A,legs,,Squat barre,2,6,90,8
+2024-01-12,Legs A,legs,,Squat barre,3,5,90,8.5
+2024-01-12,Legs A,legs,,Presse à cuisses,1,10,120,7
+2024-01-12,Legs A,legs,,Presse à cuisses,2,10,120,8
+2024-01-12,Legs A,legs,,Presse à cuisses,3,8,120,8.5
+2024-01-12,Legs A,legs,,Leg curl,1,12,40,7
+2024-01-12,Legs A,legs,,Leg curl,2,10,40,8
+2024-01-12,Legs A,legs,,Leg curl,3,10,40,8.5
+2024-01-12,Legs A,legs,,Hip thrust,1,10,80,7
+2024-01-12,Legs A,legs,,Hip thrust,2,10,80,8
+2024-01-12,Legs A,legs,,Hip thrust,3,8,80,8
+2024-01-15,Push B,push,,Développé militaire,1,8,55,7
+2024-01-15,Push B,push,,Développé militaire,2,8,55,8
+2024-01-15,Push B,push,,Développé militaire,3,6,55,8.5
+2024-01-15,Push B,push,,Développé couché haltères,1,10,24,7
+2024-01-15,Push B,push,,Développé couché haltères,2,10,24,8
+2024-01-15,Push B,push,,Développé couché haltères,3,8,24,8.5
+2024-01-15,Push B,push,,Arnold press,1,10,18,7
+2024-01-15,Push B,push,,Arnold press,2,10,18,8
+2024-01-15,Push B,push,,Arnold press,3,8,18,8
+2024-01-15,Push B,push,,Écarté haltères,1,12,14,6
+2024-01-15,Push B,push,,Écarté haltères,2,12,14,7
+2024-01-15,Push B,push,,Écarté haltères,3,10,14,8
+2024-01-17,Pull B,pull,,Soulevé de terre,1,5,110,7.5
+2024-01-17,Pull B,pull,,Soulevé de terre,2,5,110,8
+2024-01-17,Pull B,pull,,Soulevé de terre,3,4,110,8.5
+2024-01-17,Pull B,pull,,Rowing haltère,1,10,26,7
+2024-01-17,Pull B,pull,,Rowing haltère,2,10,26,8
+2024-01-17,Pull B,pull,,Rowing haltère,3,8,26,8.5
+2024-01-17,Pull B,pull,,Tirage horizontal poulie,1,10,50,7
+2024-01-17,Pull B,pull,,Tirage horizontal poulie,2,10,50,8
+2024-01-17,Pull B,pull,,Tirage horizontal poulie,3,8,50,8
+2024-01-17,Pull B,pull,,Curl marteau,1,12,16,7
+2024-01-17,Pull B,pull,,Curl marteau,2,10,16,8
+2024-01-17,Pull B,pull,,Curl marteau,3,10,16,8.5
+2024-01-19,Legs B,legs,,Squat bulgare,1,10,18,7.5
+2024-01-19,Legs B,legs,,Squat bulgare,2,8,18,8
+2024-01-19,Legs B,legs,,Squat bulgare,3,8,18,8.5
+2024-01-19,Legs B,legs,,Soulevé de terre roumain,1,8,70,7
+2024-01-19,Legs B,legs,,Soulevé de terre roumain,2,8,70,8
+2024-01-19,Legs B,legs,,Soulevé de terre roumain,3,6,70,8.5
+2024-01-19,Legs B,legs,,Leg extension,1,15,45,7
+2024-01-19,Legs B,legs,,Leg extension,2,12,45,8
+2024-01-19,Legs B,legs,,Leg extension,3,12,45,8
+2024-01-19,Legs B,legs,,Fentes,1,12,18,7
+2024-01-19,Legs B,legs,,Fentes,2,10,18,8
+2024-01-19,Legs B,legs,,Fentes,3,10,18,8.5
+2024-01-22,Push A,push,,Développé couché barre,1,8,80,7
+2024-01-22,Push A,push,,Développé couché barre,2,8,80,8
+2024-01-22,Push A,push,,Développé couché barre,3,6,80,8.5
+2024-01-22,Push A,push,,Développé incliné haltères,1,10,22,7
+2024-01-22,Push A,push,,Développé incliné haltères,2,10,22,8
+2024-01-22,Push A,push,,Développé incliné haltères,3,8,22,8.5
+2024-01-22,Push A,push,,Dips,1,10,10,7
+2024-01-22,Push A,push,,Dips,2,8,10,8
+2024-01-22,Push A,push,,Dips,3,8,10,8.5
+2024-01-22,Push A,push,,Extension triceps poulie,1,12,22,6
+2024-01-22,Push A,push,,Extension triceps poulie,2,12,22,7
+2024-01-22,Push A,push,,Extension triceps poulie,3,10,22,8
+2024-01-24,Pull A,pull,,Tractions pronation,1,8,0,7.5
+2024-01-24,Pull A,pull,,Tractions pronation,2,7,0,8
+2024-01-24,Pull A,pull,,Tractions pronation,3,6,0,8.5
+2024-01-24,Pull A,pull,,Rowing barre,1,8,60,7
+2024-01-24,Pull A,pull,,Rowing barre,2,8,60,8
+2024-01-24,Pull A,pull,,Rowing barre,3,6,60,8.5
+2024-01-24,Pull A,pull,,Tirage vertical,1,10,55,7
+2024-01-24,Pull A,pull,,Tirage vertical,2,10,55,8
+2024-01-24,Pull A,pull,,Tirage vertical,3,8,55,8
+2024-01-24,Pull A,pull,,Curl barre,1,10,30,7
+2024-01-24,Pull A,pull,,Curl barre,2,10,30,8
+2024-01-24,Pull A,pull,,Curl barre,3,8,30,8.5
+2024-01-26,Legs A,legs,,Squat barre,1,6,90,7.5
+2024-01-26,Legs A,legs,,Squat barre,2,6,90,8
+2024-01-26,Legs A,legs,,Squat barre,3,5,90,8.5
+2024-01-26,Legs A,legs,,Presse à cuisses,1,10,120,7
+2024-01-26,Legs A,legs,,Presse à cuisses,2,10,120,8
+2024-01-26,Legs A,legs,,Presse à cuisses,3,8,120,8.5
+2024-01-26,Legs A,legs,,Leg curl,1,12,40,7
+2024-01-26,Legs A,legs,,Leg curl,2,10,40,8
+2024-01-26,Legs A,legs,,Leg curl,3,10,40,8.5
+2024-01-26,Legs A,legs,,Hip thrust,1,10,80,7
+2024-01-26,Legs A,legs,,Hip thrust,2,10,80,8
+2024-01-26,Legs A,legs,,Hip thrust,3,8,80,8
+2024-01-29,Push B,push,,Développé militaire,1,8,55,7
+2024-01-29,Push B,push,,Développé militaire,2,8,55,8
+2024-01-29,Push B,push,,Développé militaire,3,6,55,8.5
+2024-01-29,Push B,push,,Développé couché haltères,1,10,24,7
+2024-01-29,Push B,push,,Développé couché haltères,2,10,24,8
+2024-01-29,Push B,push,,Développé couché haltères,3,8,24,8.5
+2024-01-29,Push B,push,,Arnold press,1,10,18,7
+2024-01-29,Push B,push,,Arnold press,2,10,18,8
+2024-01-29,Push B,push,,Arnold press,3,8,18,8
+2024-01-29,Push B,push,,Écarté haltères,1,12,14,6
+2024-01-29,Push B,push,,Écarté haltères,2,12,14,7
+2024-01-29,Push B,push,,Écarté haltères,3,10,14,8
+2024-01-31,Pull B,pull,,Soulevé de terre,1,5,110,7.5
+2024-01-31,Pull B,pull,,Soulevé de terre,2,5,110,8
+2024-01-31,Pull B,pull,,Soulevé de terre,3,4,110,8.5
+2024-01-31,Pull B,pull,,Rowing haltère,1,10,26,7
+2024-01-31,Pull B,pull,,Rowing haltère,2,10,26,8
+2024-01-31,Pull B,pull,,Rowing haltère,3,8,26,8.5
+2024-01-31,Pull B,pull,,Tirage horizontal poulie,1,10,50,7
+2024-01-31,Pull B,pull,,Tirage horizontal poulie,2,10,50,8
+2024-01-31,Pull B,pull,,Tirage horizontal poulie,3,8,50,8
+2024-01-31,Pull B,pull,,Curl marteau,1,12,16,7
+2024-01-31,Pull B,pull,,Curl marteau,2,10,16,8
+2024-01-31,Pull B,pull,,Curl marteau,3,10,16,8.5
+2024-02-02,Legs B,legs,,Squat bulgare,1,10,18,7.5
+2024-02-02,Legs B,legs,,Squat bulgare,2,8,18,8
+2024-02-02,Legs B,legs,,Squat bulgare,3,8,18,8.5
+2024-02-02,Legs B,legs,,Soulevé de terre roumain,1,8,70,7
+2024-02-02,Legs B,legs,,Soulevé de terre roumain,2,8,70,8
+2024-02-02,Legs B,legs,,Soulevé de terre roumain,3,6,70,8.5
+2024-02-02,Legs B,legs,,Leg extension,1,15,45,7
+2024-02-02,Legs B,legs,,Leg extension,2,12,45,8
+2024-02-02,Legs B,legs,,Leg extension,3,12,45,8
+2024-02-02,Legs B,legs,,Fentes,1,12,18,7
+2024-02-02,Legs B,legs,,Fentes,2,10,18,8
+2024-02-02,Legs B,legs,,Fentes,3,10,18,8.5
+2024-02-05,Push A,push,,Développé couché barre,1,8,82.5,7
+2024-02-05,Push A,push,,Développé couché barre,2,8,82.5,8
+2024-02-05,Push A,push,,Développé couché barre,3,6,82.5,8.5
+2024-02-05,Push A,push,,Développé incliné haltères,1,10,23,7
+2024-02-05,Push A,push,,Développé incliné haltères,2,10,23,8
+2024-02-05,Push A,push,,Développé incliné haltères,3,8,23,8.5
+2024-02-05,Push A,push,,Dips,1,10,12.5,7
+2024-02-05,Push A,push,,Dips,2,8,12.5,8
+2024-02-05,Push A,push,,Dips,3,8,12.5,8.5
+2024-02-05,Push A,push,,Extension triceps poulie,1,12,24.5,6
+2024-02-05,Push A,push,,Extension triceps poulie,2,12,24.5,7
+2024-02-05,Push A,push,,Extension triceps poulie,3,10,24.5,8
+2024-02-07,Pull A,pull,,Tractions pronation,1,8,2.5,7.5
+2024-02-07,Pull A,pull,,Tractions pronation,2,7,2.5,8
+2024-02-07,Pull A,pull,,Tractions pronation,3,6,2.5,8.5
+2024-02-07,Pull A,pull,,Rowing barre,1,8,62.5,7
+2024-02-07,Pull A,pull,,Rowing barre,2,8,62.5,8
+2024-02-07,Pull A,pull,,Rowing barre,3,6,62.5,8.5
+2024-02-07,Pull A,pull,,Tirage vertical,1,10,57.5,7
+2024-02-07,Pull A,pull,,Tirage vertical,2,10,57.5,8
+2024-02-07,Pull A,pull,,Tirage vertical,3,8,57.5,8
+2024-02-07,Pull A,pull,,Curl barre,1,10,31,7
+2024-02-07,Pull A,pull,,Curl barre,2,10,31,8
+2024-02-07,Pull A,pull,,Curl barre,3,8,31,8.5
+2024-02-09,Legs A,legs,,Squat barre,1,6,92.5,7.5
+2024-02-09,Legs A,legs,,Squat barre,2,6,92.5,8
+2024-02-09,Legs A,legs,,Squat barre,3,5,92.5,8.5
+2024-02-09,Legs A,legs,,Presse à cuisses,1,10,125,7
+2024-02-09,Legs A,legs,,Presse à cuisses,2,10,125,8
+2024-02-09,Legs A,legs,,Presse à cuisses,3,8,125,8.5
+2024-02-09,Legs A,legs,,Leg curl,1,12,42.5,7
+2024-02-09,Legs A,legs,,Leg curl,2,10,42.5,8
+2024-02-09,Legs A,legs,,Leg curl,3,10,42.5,8.5
+2024-02-09,Legs A,legs,,Hip thrust,1,10,85,7
+2024-02-09,Legs A,legs,,Hip thrust,2,10,85,8
+2024-02-09,Legs A,legs,,Hip thrust,3,8,85,8
+2024-02-12,Push B,push,,Développé militaire,1,8,57.5,7
+2024-02-12,Push B,push,,Développé militaire,2,8,57.5,8
+2024-02-12,Push B,push,,Développé militaire,3,6,57.5,8.5
+2024-02-12,Push B,push,,Développé couché haltères,1,10,25,7
+2024-02-12,Push B,push,,Développé couché haltères,2,10,25,8
+2024-02-12,Push B,push,,Développé couché haltères,3,8,25,8.5
+2024-02-12,Push B,push,,Arnold press,1,10,19,7
+2024-02-12,Push B,push,,Arnold press,2,10,19,8
+2024-02-12,Push B,push,,Arnold press,3,8,19,8
+2024-02-12,Push B,push,,Écarté haltères,1,12,15,6
+2024-02-12,Push B,push,,Écarté haltères,2,12,15,7
+2024-02-12,Push B,push,,Écarté haltères,3,10,15,8
+2024-02-14,Pull B,pull,,Soulevé de terre,1,5,115,7.5
+2024-02-14,Pull B,pull,,Soulevé de terre,2,5,115,8
+2024-02-14,Pull B,pull,,Soulevé de terre,3,4,115,8.5
+2024-02-14,Pull B,pull,,Rowing haltère,1,10,28,7
+2024-02-14,Pull B,pull,,Rowing haltère,2,10,28,8
+2024-02-14,Pull B,pull,,Rowing haltère,3,8,28,8.5
+2024-02-14,Pull B,pull,,Tirage horizontal poulie,1,10,52.5,7
+2024-02-14,Pull B,pull,,Tirage horizontal poulie,2,10,52.5,8
+2024-02-14,Pull B,pull,,Tirage horizontal poulie,3,8,52.5,8
+2024-02-14,Pull B,pull,,Curl marteau,1,12,17,7
+2024-02-14,Pull B,pull,,Curl marteau,2,10,17,8
+2024-02-14,Pull B,pull,,Curl marteau,3,10,17,8.5
+2024-02-16,Legs B,legs,,Squat bulgare,1,10,20,7.5
+2024-02-16,Legs B,legs,,Squat bulgare,2,8,20,8
+2024-02-16,Legs B,legs,,Squat bulgare,3,8,20,8.5
+2024-02-16,Legs B,legs,,Soulevé de terre roumain,1,8,72.5,7
+2024-02-16,Legs B,legs,,Soulevé de terre roumain,2,8,72.5,8
+2024-02-16,Legs B,legs,,Soulevé de terre roumain,3,6,72.5,8.5
+2024-02-16,Legs B,legs,,Leg extension,1,15,47.5,7
+2024-02-16,Legs B,legs,,Leg extension,2,12,47.5,8
+2024-02-16,Legs B,legs,,Leg extension,3,12,47.5,8
+2024-02-16,Legs B,legs,,Fentes,1,12,19,7
+2024-02-16,Legs B,legs,,Fentes,2,10,19,8
+2024-02-16,Legs B,legs,,Fentes,3,10,19,8.5
+2024-02-19,Push A,push,,Développé couché barre,1,8,82.5,7
+2024-02-19,Push A,push,,Développé couché barre,2,8,82.5,8
+2024-02-19,Push A,push,,Développé couché barre,3,6,82.5,8.5
+2024-02-19,Push A,push,,Développé incliné haltères,1,10,23,7
+2024-02-19,Push A,push,,Développé incliné haltères,2,10,23,8
+2024-02-19,Push A,push,,Développé incliné haltères,3,8,23,8.5
+2024-02-19,Push A,push,,Dips,1,10,12.5,7
+2024-02-19,Push A,push,,Dips,2,8,12.5,8
+2024-02-19,Push A,push,,Dips,3,8,12.5,8.5
+2024-02-19,Push A,push,,Extension triceps poulie,1,12,24.5,6
+2024-02-19,Push A,push,,Extension triceps poulie,2,12,24.5,7
+2024-02-19,Push A,push,,Extension triceps poulie,3,10,24.5,8
+2024-02-21,Pull A,pull,,Tractions pronation,1,8,2.5,7.5
+2024-02-21,Pull A,pull,,Tractions pronation,2,7,2.5,8
+2024-02-21,Pull A,pull,,Tractions pronation,3,6,2.5,8.5
+2024-02-21,Pull A,pull,,Rowing barre,1,8,62.5,7
+2024-02-21,Pull A,pull,,Rowing barre,2,8,62.5,8
+2024-02-21,Pull A,pull,,Rowing barre,3,6,62.5,8.5
+2024-02-21,Pull A,pull,,Tirage vertical,1,10,57.5,7
+2024-02-21,Pull A,pull,,Tirage vertical,2,10,57.5,8
+2024-02-21,Pull A,pull,,Tirage vertical,3,8,57.5,8
+2024-02-21,Pull A,pull,,Curl barre,1,10,31,7
+2024-02-21,Pull A,pull,,Curl barre,2,10,31,8
+2024-02-21,Pull A,pull,,Curl barre,3,8,31,8.5
+2024-02-23,Legs A,legs,,Squat barre,1,6,92.5,7.5
+2024-02-23,Legs A,legs,,Squat barre,2,6,92.5,8
+2024-02-23,Legs A,legs,,Squat barre,3,5,92.5,8.5
+2024-02-23,Legs A,legs,,Presse à cuisses,1,10,125,7
+2024-02-23,Legs A,legs,,Presse à cuisses,2,10,125,8
+2024-02-23,Legs A,legs,,Presse à cuisses,3,8,125,8.5
+2024-02-23,Legs A,legs,,Leg curl,1,12,42.5,7
+2024-02-23,Legs A,legs,,Leg curl,2,10,42.5,8
+2024-02-23,Legs A,legs,,Leg curl,3,10,42.5,8.5
+2024-02-23,Legs A,legs,,Hip thrust,1,10,85,7
+2024-02-23,Legs A,legs,,Hip thrust,2,10,85,8
+2024-02-23,Legs A,legs,,Hip thrust,3,8,85,8
+2024-02-26,Push B,push,,Développé militaire,1,8,57.5,7
+2024-02-26,Push B,push,,Développé militaire,2,8,57.5,8
+2024-02-26,Push B,push,,Développé militaire,3,6,57.5,8.5
+2024-02-26,Push B,push,,Développé couché haltères,1,10,25,7
+2024-02-26,Push B,push,,Développé couché haltères,2,10,25,8
+2024-02-26,Push B,push,,Développé couché haltères,3,8,25,8.5
+2024-02-26,Push B,push,,Arnold press,1,10,19,7
+2024-02-26,Push B,push,,Arnold press,2,10,19,8
+2024-02-26,Push B,push,,Arnold press,3,8,19,8
+2024-02-26,Push B,push,,Écarté haltères,1,12,15,6
+2024-02-26,Push B,push,,Écarté haltères,2,12,15,7
+2024-02-26,Push B,push,,Écarté haltères,3,10,15,8
+2024-02-28,Pull B,pull,,Soulevé de terre,1,5,115,7.5
+2024-02-28,Pull B,pull,,Soulevé de terre,2,5,115,8
+2024-02-28,Pull B,pull,,Soulevé de terre,3,4,115,8.5
+2024-02-28,Pull B,pull,,Rowing haltère,1,10,28,7
+2024-02-28,Pull B,pull,,Rowing haltère,2,10,28,8
+2024-02-28,Pull B,pull,,Rowing haltère,3,8,28,8.5
+2024-02-28,Pull B,pull,,Tirage horizontal poulie,1,10,52.5,7
+2024-02-28,Pull B,pull,,Tirage horizontal poulie,2,10,52.5,8
+2024-02-28,Pull B,pull,,Tirage horizontal poulie,3,8,52.5,8
+2024-02-28,Pull B,pull,,Curl marteau,1,12,17,7
+2024-02-28,Pull B,pull,,Curl marteau,2,10,17,8
+2024-02-28,Pull B,pull,,Curl marteau,3,10,17,8.5
+2024-03-01,Legs B,legs,,Squat bulgare,1,10,20,7.5
+2024-03-01,Legs B,legs,,Squat bulgare,2,8,20,8
+2024-03-01,Legs B,legs,,Squat bulgare,3,8,20,8.5
+2024-03-01,Legs B,legs,,Soulevé de terre roumain,1,8,72.5,7
+2024-03-01,Legs B,legs,,Soulevé de terre roumain,2,8,72.5,8
+2024-03-01,Legs B,legs,,Soulevé de terre roumain,3,6,72.5,8.5
+2024-03-01,Legs B,legs,,Leg extension,1,15,47.5,7
+2024-03-01,Legs B,legs,,Leg extension,2,12,47.5,8
+2024-03-01,Legs B,legs,,Leg extension,3,12,47.5,8
+2024-03-01,Legs B,legs,,Fentes,1,12,19,7
+2024-03-01,Legs B,legs,,Fentes,2,10,19,8
+2024-03-01,Legs B,legs,,Fentes,3,10,19,8.5
+2024-03-04,Push A,push,,Développé couché barre,1,8,85,7
+2024-03-04,Push A,push,,Développé couché barre,2,8,85,8
+2024-03-04,Push A,push,,Développé couché barre,3,6,85,8.5
+2024-03-04,Push A,push,,Développé incliné haltères,1,10,24,7
+2024-03-04,Push A,push,,Développé incliné haltères,2,10,24,8
+2024-03-04,Push A,push,,Développé incliné haltères,3,8,24,8.5
+2024-03-04,Push A,push,,Dips,1,10,15,7
+2024-03-04,Push A,push,,Dips,2,8,15,8
+2024-03-04,Push A,push,,Dips,3,8,15,8.5
+2024-03-04,Push A,push,,Extension triceps poulie,1,12,27,6
+2024-03-04,Push A,push,,Extension triceps poulie,2,12,27,7
+2024-03-04,Push A,push,,Extension triceps poulie,3,10,27,8
+2024-03-06,Pull A,pull,,Tractions pronation,1,8,5,7.5
+2024-03-06,Pull A,pull,,Tractions pronation,2,7,5,8
+2024-03-06,Pull A,pull,,Tractions pronation,3,6,5,8.5
+2024-03-06,Pull A,pull,,Rowing barre,1,8,65,7
+2024-03-06,Pull A,pull,,Rowing barre,2,8,65,8
+2024-03-06,Pull A,pull,,Rowing barre,3,6,65,8.5
+2024-03-06,Pull A,pull,,Tirage vertical,1,10,60,7
+2024-03-06,Pull A,pull,,Tirage vertical,2,10,60,8
+2024-03-06,Pull A,pull,,Tirage vertical,3,8,60,8
+2024-03-06,Pull A,pull,,Curl barre,1,10,32,7
+2024-03-06,Pull A,pull,,Curl barre,2,10,32,8
+2024-03-06,Pull A,pull,,Curl barre,3,8,32,8.5
+2024-03-08,Legs A,legs,,Squat barre,1,6,95,7.5
+2024-03-08,Legs A,legs,,Squat barre,2,6,95,8
+2024-03-08,Legs A,legs,,Squat barre,3,5,95,8.5
+2024-03-08,Legs A,legs,,Presse à cuisses,1,10,130,7
+2024-03-08,Legs A,legs,,Presse à cuisses,2,10,130,8
+2024-03-08,Legs A,legs,,Presse à cuisses,3,8,130,8.5
+2024-03-08,Legs A,legs,,Leg curl,1,12,45,7
+2024-03-08,Legs A,legs,,Leg curl,2,10,45,8
+2024-03-08,Legs A,legs,,Leg curl,3,10,45,8.5
+2024-03-08,Legs A,legs,,Hip thrust,1,10,90,7
+2024-03-08,Legs A,legs,,Hip thrust,2,10,90,8
+2024-03-08,Legs A,legs,,Hip thrust,3,8,90,8
+2024-03-11,Push B,push,,Développé militaire,1,8,60,7
+2024-03-11,Push B,push,,Développé militaire,2,8,60,8
+2024-03-11,Push B,push,,Développé militaire,3,6,60,8.5
+2024-03-11,Push B,push,,Développé couché haltères,1,10,26,7
+2024-03-11,Push B,push,,Développé couché haltères,2,10,26,8
+2024-03-11,Push B,push,,Développé couché haltères,3,8,26,8.5
+2024-03-11,Push B,push,,Arnold press,1,10,20,7
+2024-03-11,Push B,push,,Arnold press,2,10,20,8
+2024-03-11,Push B,push,,Arnold press,3,8,20,8
+2024-03-11,Push B,push,,Écarté haltères,1,12,16,6
+2024-03-11,Push B,push,,Écarté haltères,2,12,16,7
+2024-03-11,Push B,push,,Écarté haltères,3,10,16,8
+2024-03-13,Pull B,pull,,Soulevé de terre,1,5,120,7.5
+2024-03-13,Pull B,pull,,Soulevé de terre,2,5,120,8
+2024-03-13,Pull B,pull,,Soulevé de terre,3,4,120,8.5
+2024-03-13,Pull B,pull,,Rowing haltère,1,10,30,7
+2024-03-13,Pull B,pull,,Rowing haltère,2,10,30,8
+2024-03-13,Pull B,pull,,Rowing haltère,3,8,30,8.5
+2024-03-13,Pull B,pull,,Tirage horizontal poulie,1,10,55,7
+2024-03-13,Pull B,pull,,Tirage horizontal poulie,2,10,55,8
+2024-03-13,Pull B,pull,,Tirage horizontal poulie,3,8,55,8
+2024-03-13,Pull B,pull,,Curl marteau,1,12,18,7
+2024-03-13,Pull B,pull,,Curl marteau,2,10,18,8
+2024-03-13,Pull B,pull,,Curl marteau,3,10,18,8.5
+2024-03-15,Legs B,legs,,Squat bulgare,1,10,22,7.5
+2024-03-15,Legs B,legs,,Squat bulgare,2,8,22,8
+2024-03-15,Legs B,legs,,Squat bulgare,3,8,22,8.5
+2024-03-15,Legs B,legs,,Soulevé de terre roumain,1,8,75,7
+2024-03-15,Legs B,legs,,Soulevé de terre roumain,2,8,75,8
+2024-03-15,Legs B,legs,,Soulevé de terre roumain,3,6,75,8.5
+2024-03-15,Legs B,legs,,Leg extension,1,15,50,7
+2024-03-15,Legs B,legs,,Leg extension,2,12,50,8
+2024-03-15,Legs B,legs,,Leg extension,3,12,50,8
+2024-03-15,Legs B,legs,,Fentes,1,12,20,7
+2024-03-15,Legs B,legs,,Fentes,2,10,20,8
+2024-03-15,Legs B,legs,,Fentes,3,10,20,8.5
+2024-03-18,Push A,push,,Développé couché barre,1,8,85,7
+2024-03-18,Push A,push,,Développé couché barre,2,8,85,8
+2024-03-18,Push A,push,,Développé couché barre,3,6,85,8.5
+2024-03-18,Push A,push,,Développé incliné haltères,1,10,24,7
+2024-03-18,Push A,push,,Développé incliné haltères,2,10,24,8
+2024-03-18,Push A,push,,Développé incliné haltères,3,8,24,8.5
+2024-03-18,Push A,push,,Dips,1,10,15,7
+2024-03-18,Push A,push,,Dips,2,8,15,8
+2024-03-18,Push A,push,,Dips,3,8,15,8.5
+2024-03-18,Push A,push,,Extension triceps poulie,1,12,27,6
+2024-03-18,Push A,push,,Extension triceps poulie,2,12,27,7
+2024-03-18,Push A,push,,Extension triceps poulie,3,10,27,8
+2024-03-20,Pull A,pull,,Tractions pronation,1,8,5,7.5
+2024-03-20,Pull A,pull,,Tractions pronation,2,7,5,8
+2024-03-20,Pull A,pull,,Tractions pronation,3,6,5,8.5
+2024-03-20,Pull A,pull,,Rowing barre,1,8,65,7
+2024-03-20,Pull A,pull,,Rowing barre,2,8,65,8
+2024-03-20,Pull A,pull,,Rowing barre,3,6,65,8.5
+2024-03-20,Pull A,pull,,Tirage vertical,1,10,60,7
+2024-03-20,Pull A,pull,,Tirage vertical,2,10,60,8
+2024-03-20,Pull A,pull,,Tirage vertical,3,8,60,8
+2024-03-20,Pull A,pull,,Curl barre,1,10,32,7
+2024-03-20,Pull A,pull,,Curl barre,2,10,32,8
+2024-03-20,Pull A,pull,,Curl barre,3,8,32,8.5
+2024-03-22,Legs A,legs,,Squat barre,1,6,95,7.5
+2024-03-22,Legs A,legs,,Squat barre,2,6,95,8
+2024-03-22,Legs A,legs,,Squat barre,3,5,95,8.5
+2024-03-22,Legs A,legs,,Presse à cuisses,1,10,130,7
+2024-03-22,Legs A,legs,,Presse à cuisses,2,10,130,8
+2024-03-22,Legs A,legs,,Presse à cuisses,3,8,130,8.5
+2024-03-22,Legs A,legs,,Leg curl,1,12,45,7
+2024-03-22,Legs A,legs,,Leg curl,2,10,45,8
+2024-03-22,Legs A,legs,,Leg curl,3,10,45,8.5
+2024-03-22,Legs A,legs,,Hip thrust,1,10,90,7
+2024-03-22,Legs A,legs,,Hip thrust,2,10,90,8
+2024-03-22,Legs A,legs,,Hip thrust,3,8,90,8
+2024-03-25,Push B,push,,Développé militaire,1,8,60,7
+2024-03-25,Push B,push,,Développé militaire,2,8,60,8
+2024-03-25,Push B,push,,Développé militaire,3,6,60,8.5
+2024-03-25,Push B,push,,Développé couché haltères,1,10,26,7
+2024-03-25,Push B,push,,Développé couché haltères,2,10,26,8
+2024-03-25,Push B,push,,Développé couché haltères,3,8,26,8.5
+2024-03-25,Push B,push,,Arnold press,1,10,20,7
+2024-03-25,Push B,push,,Arnold press,2,10,20,8
+2024-03-25,Push B,push,,Arnold press,3,8,20,8
+2024-03-25,Push B,push,,Écarté haltères,1,12,16,6
+2024-03-25,Push B,push,,Écarté haltères,2,12,16,7
+2024-03-25,Push B,push,,Écarté haltères,3,10,16,8
+2024-03-27,Pull B,pull,,Soulevé de terre,1,5,120,7.5
+2024-03-27,Pull B,pull,,Soulevé de terre,2,5,120,8
+2024-03-27,Pull B,pull,,Soulevé de terre,3,4,120,8.5
+2024-03-27,Pull B,pull,,Rowing haltère,1,10,30,7
+2024-03-27,Pull B,pull,,Rowing haltère,2,10,30,8
+2024-03-27,Pull B,pull,,Rowing haltère,3,8,30,8.5
+2024-03-27,Pull B,pull,,Tirage horizontal poulie,1,10,55,7
+2024-03-27,Pull B,pull,,Tirage horizontal poulie,2,10,55,8
+2024-03-27,Pull B,pull,,Tirage horizontal poulie,3,8,55,8
+2024-03-27,Pull B,pull,,Curl marteau,1,12,18,7
+2024-03-27,Pull B,pull,,Curl marteau,2,10,18,8
+2024-03-27,Pull B,pull,,Curl marteau,3,10,18,8.5
+2024-03-29,Legs B,legs,,Squat bulgare,1,10,22,7.5
+2024-03-29,Legs B,legs,,Squat bulgare,2,8,22,8
+2024-03-29,Legs B,legs,,Squat bulgare,3,8,22,8.5
+2024-03-29,Legs B,legs,,Soulevé de terre roumain,1,8,75,7
+2024-03-29,Legs B,legs,,Soulevé de terre roumain,2,8,75,8
+2024-03-29,Legs B,legs,,Soulevé de terre roumain,3,6,75,8.5
+2024-03-29,Legs B,legs,,Leg extension,1,15,50,7
+2024-03-29,Legs B,legs,,Leg extension,2,12,50,8
+2024-03-29,Legs B,legs,,Leg extension,3,12,50,8
+2024-03-29,Legs B,legs,,Fentes,1,12,20,7
+2024-03-29,Legs B,legs,,Fentes,2,10,20,8
+2024-03-29,Legs B,legs,,Fentes,3,10,20,8.5
+2024-03-31,Push A,push,,Développé couché barre,1,8,87.5,7
+2024-03-31,Push A,push,,Développé couché barre,2,8,87.5,8
+2024-03-31,Push A,push,,Développé couché barre,3,6,87.5,8.5
+2024-03-31,Push A,push,,Développé incliné haltères,1,10,25,7
+2024-03-31,Push A,push,,Développé incliné haltères,2,10,25,8
+2024-03-31,Push A,push,,Développé incliné haltères,3,8,25,8.5
+2024-03-31,Push A,push,,Dips,1,10,17.5,7
+2024-03-31,Push A,push,,Dips,2,8,17.5,8
+2024-03-31,Push A,push,,Dips,3,8,17.5,8.5
+2024-03-31,Push A,push,,Extension triceps poulie,1,12,29.5,6
+2024-03-31,Push A,push,,Extension triceps poulie,2,12,29.5,7
+2024-03-31,Push A,push,,Extension triceps poulie,3,10,29.5,8
+2024-04-02,Pull A,pull,,Tractions pronation,1,8,7.5,7.5
+2024-04-02,Pull A,pull,,Tractions pronation,2,7,7.5,8
+2024-04-02,Pull A,pull,,Tractions pronation,3,6,7.5,8.5
+2024-04-02,Pull A,pull,,Rowing barre,1,8,67.5,7
+2024-04-02,Pull A,pull,,Rowing barre,2,8,67.5,8
+2024-04-02,Pull A,pull,,Rowing barre,3,6,67.5,8.5
+2024-04-02,Pull A,pull,,Tirage vertical,1,10,62.5,7
+2024-04-02,Pull A,pull,,Tirage vertical,2,10,62.5,8
+2024-04-02,Pull A,pull,,Tirage vertical,3,8,62.5,8
+2024-04-02,Pull A,pull,,Curl barre,1,10,33,7
+2024-04-02,Pull A,pull,,Curl barre,2,10,33,8
+2024-04-02,Pull A,pull,,Curl barre,3,8,33,8.5
+2024-04-04,Legs A,legs,,Squat barre,1,6,97.5,7.5
+2024-04-04,Legs A,legs,,Squat barre,2,6,97.5,8
+2024-04-04,Legs A,legs,,Squat barre,3,5,97.5,8.5
+2024-04-04,Legs A,legs,,Presse à cuisses,1,10,135,7
+2024-04-04,Legs A,legs,,Presse à cuisses,2,10,135,8
+2024-04-04,Legs A,legs,,Presse à cuisses,3,8,135,8.5
+2024-04-04,Legs A,legs,,Leg curl,1,12,47.5,7
+2024-04-04,Legs A,legs,,Leg curl,2,10,47.5,8
+2024-04-04,Legs A,legs,,Leg curl,3,10,47.5,8.5
+2024-04-04,Legs A,legs,,Hip thrust,1,10,95,7
+2024-04-04,Legs A,legs,,Hip thrust,2,10,95,8
+2024-04-04,Legs A,legs,,Hip thrust,3,8,95,8
+2024-04-07,Push B,push,,Développé militaire,1,8,62.5,7
+2024-04-07,Push B,push,,Développé militaire,2,8,62.5,8
+2024-04-07,Push B,push,,Développé militaire,3,6,62.5,8.5
+2024-04-07,Push B,push,,Développé couché haltères,1,10,27,7
+2024-04-07,Push B,push,,Développé couché haltères,2,10,27,8
+2024-04-07,Push B,push,,Développé couché haltères,3,8,27,8.5
+2024-04-07,Push B,push,,Arnold press,1,10,21,7
+2024-04-07,Push B,push,,Arnold press,2,10,21,8
+2024-04-07,Push B,push,,Arnold press,3,8,21,8
+2024-04-07,Push B,push,,Écarté haltères,1,12,17,6
+2024-04-07,Push B,push,,Écarté haltères,2,12,17,7
+2024-04-07,Push B,push,,Écarté haltères,3,10,17,8
+2024-04-09,Pull B,pull,,Soulevé de terre,1,5,125,7.5
+2024-04-09,Pull B,pull,,Soulevé de terre,2,5,125,8
+2024-04-09,Pull B,pull,,Soulevé de terre,3,4,125,8.5
+2024-04-09,Pull B,pull,,Rowing haltère,1,10,32,7
+2024-04-09,Pull B,pull,,Rowing haltère,2,10,32,8
+2024-04-09,Pull B,pull,,Rowing haltère,3,8,32,8.5
+2024-04-09,Pull B,pull,,Tirage horizontal poulie,1,10,57.5,7
+2024-04-09,Pull B,pull,,Tirage horizontal poulie,2,10,57.5,8
+2024-04-09,Pull B,pull,,Tirage horizontal poulie,3,8,57.5,8
+2024-04-09,Pull B,pull,,Curl marteau,1,12,19,7
+2024-04-09,Pull B,pull,,Curl marteau,2,10,19,8
+2024-04-09,Pull B,pull,,Curl marteau,3,10,19,8.5
+2024-04-11,Legs B,legs,,Squat bulgare,1,10,24,7.5
+2024-04-11,Legs B,legs,,Squat bulgare,2,8,24,8
+2024-04-11,Legs B,legs,,Squat bulgare,3,8,24,8.5
+2024-04-11,Legs B,legs,,Soulevé de terre roumain,1,8,77.5,7
+2024-04-11,Legs B,legs,,Soulevé de terre roumain,2,8,77.5,8
+2024-04-11,Legs B,legs,,Soulevé de terre roumain,3,6,77.5,8.5
+2024-04-11,Legs B,legs,,Leg extension,1,15,52.5,7
+2024-04-11,Legs B,legs,,Leg extension,2,12,52.5,8
+2024-04-11,Legs B,legs,,Leg extension,3,12,52.5,8
+2024-04-11,Legs B,legs,,Fentes,1,12,21,7
+2024-04-11,Legs B,legs,,Fentes,2,10,21,8
+2024-04-11,Legs B,legs,,Fentes,3,10,21,8.5
+2024-04-14,Push A,push,,Développé couché barre,1,8,87.5,7
+2024-04-14,Push A,push,,Développé couché barre,2,8,87.5,8
+2024-04-14,Push A,push,,Développé couché barre,3,6,87.5,8.5
+2024-04-14,Push A,push,,Développé incliné haltères,1,10,25,7
+2024-04-14,Push A,push,,Développé incliné haltères,2,10,25,8
+2024-04-14,Push A,push,,Développé incliné haltères,3,8,25,8.5
+2024-04-14,Push A,push,,Dips,1,10,17.5,7
+2024-04-14,Push A,push,,Dips,2,8,17.5,8
+2024-04-14,Push A,push,,Dips,3,8,17.5,8.5
+2024-04-14,Push A,push,,Extension triceps poulie,1,12,29.5,6
+2024-04-14,Push A,push,,Extension triceps poulie,2,12,29.5,7
+2024-04-14,Push A,push,,Extension triceps poulie,3,10,29.5,8
+2024-04-16,Pull A,pull,,Tractions pronation,1,8,7.5,7.5
+2024-04-16,Pull A,pull,,Tractions pronation,2,7,7.5,8
+2024-04-16,Pull A,pull,,Tractions pronation,3,6,7.5,8.5
+2024-04-16,Pull A,pull,,Rowing barre,1,8,67.5,7
+2024-04-16,Pull A,pull,,Rowing barre,2,8,67.5,8
+2024-04-16,Pull A,pull,,Rowing barre,3,6,67.5,8.5
+2024-04-16,Pull A,pull,,Tirage vertical,1,10,62.5,7
+2024-04-16,Pull A,pull,,Tirage vertical,2,10,62.5,8
+2024-04-16,Pull A,pull,,Tirage vertical,3,8,62.5,8
+2024-04-16,Pull A,pull,,Curl barre,1,10,33,7
+2024-04-16,Pull A,pull,,Curl barre,2,10,33,8
+2024-04-16,Pull A,pull,,Curl barre,3,8,33,8.5
+2024-04-18,Legs A,legs,,Squat barre,1,6,97.5,7.5
+2024-04-18,Legs A,legs,,Squat barre,2,6,97.5,8
+2024-04-18,Legs A,legs,,Squat barre,3,5,97.5,8.5
+2024-04-18,Legs A,legs,,Presse à cuisses,1,10,135,7
+2024-04-18,Legs A,legs,,Presse à cuisses,2,10,135,8
+2024-04-18,Legs A,legs,,Presse à cuisses,3,8,135,8.5
+2024-04-18,Legs A,legs,,Leg curl,1,12,47.5,7
+2024-04-18,Legs A,legs,,Leg curl,2,10,47.5,8
+2024-04-18,Legs A,legs,,Leg curl,3,10,47.5,8.5
+2024-04-18,Legs A,legs,,Hip thrust,1,10,95,7
+2024-04-18,Legs A,legs,,Hip thrust,2,10,95,8
+2024-04-18,Legs A,legs,,Hip thrust,3,8,95,8
+2024-04-21,Push B,push,,Développé militaire,1,8,62.5,7
+2024-04-21,Push B,push,,Développé militaire,2,8,62.5,8
+2024-04-21,Push B,push,,Développé militaire,3,6,62.5,8.5
+2024-04-21,Push B,push,,Développé couché haltères,1,10,27,7
+2024-04-21,Push B,push,,Développé couché haltères,2,10,27,8
+2024-04-21,Push B,push,,Développé couché haltères,3,8,27,8.5
+2024-04-21,Push B,push,,Arnold press,1,10,21,7
+2024-04-21,Push B,push,,Arnold press,2,10,21,8
+2024-04-21,Push B,push,,Arnold press,3,8,21,8
+2024-04-21,Push B,push,,Écarté haltères,1,12,17,6
+2024-04-21,Push B,push,,Écarté haltères,2,12,17,7
+2024-04-21,Push B,push,,Écarté haltères,3,10,17,8
+2024-04-23,Pull B,pull,,Soulevé de terre,1,5,125,7.5
+2024-04-23,Pull B,pull,,Soulevé de terre,2,5,125,8
+2024-04-23,Pull B,pull,,Soulevé de terre,3,4,125,8.5
+2024-04-23,Pull B,pull,,Rowing haltère,1,10,32,7
+2024-04-23,Pull B,pull,,Rowing haltère,2,10,32,8
+2024-04-23,Pull B,pull,,Rowing haltère,3,8,32,8.5
+2024-04-23,Pull B,pull,,Tirage horizontal poulie,1,10,57.5,7
+2024-04-23,Pull B,pull,,Tirage horizontal poulie,2,10,57.5,8
+2024-04-23,Pull B,pull,,Tirage horizontal poulie,3,8,57.5,8
+2024-04-23,Pull B,pull,,Curl marteau,1,12,19,7
+2024-04-23,Pull B,pull,,Curl marteau,2,10,19,8
+2024-04-23,Pull B,pull,,Curl marteau,3,10,19,8.5
+2024-04-25,Legs B,legs,,Squat bulgare,1,10,24,7.5
+2024-04-25,Legs B,legs,,Squat bulgare,2,8,24,8
+2024-04-25,Legs B,legs,,Squat bulgare,3,8,24,8.5
+2024-04-25,Legs B,legs,,Soulevé de terre roumain,1,8,77.5,7
+2024-04-25,Legs B,legs,,Soulevé de terre roumain,2,8,77.5,8
+2024-04-25,Legs B,legs,,Soulevé de terre roumain,3,6,77.5,8.5
+2024-04-25,Legs B,legs,,Leg extension,1,15,52.5,7
+2024-04-25,Legs B,legs,,Leg extension,2,12,52.5,8
+2024-04-25,Legs B,legs,,Leg extension,3,12,52.5,8
+2024-04-25,Legs B,legs,,Fentes,1,12,21,7
+2024-04-25,Legs B,legs,,Fentes,2,10,21,8
+2024-04-25,Legs B,legs,,Fentes,3,10,21,8.5
+2024-04-28,Push A,push,,Développé couché barre,1,8,90,7
+2024-04-28,Push A,push,,Développé couché barre,2,8,90,8
+2024-04-28,Push A,push,,Développé couché barre,3,6,90,8.5
+2024-04-28,Push A,push,,Développé incliné haltères,1,10,26,7
+2024-04-28,Push A,push,,Développé incliné haltères,2,10,26,8
+2024-04-28,Push A,push,,Développé incliné haltères,3,8,26,8.5
+2024-04-28,Push A,push,,Dips,1,10,20,7
+2024-04-28,Push A,push,,Dips,2,8,20,8
+2024-04-28,Push A,push,,Dips,3,8,20,8.5
+2024-04-28,Push A,push,,Extension triceps poulie,1,12,32,6
+2024-04-28,Push A,push,,Extension triceps poulie,2,12,32,7
+2024-04-28,Push A,push,,Extension triceps poulie,3,10,32,8
+2024-04-30,Pull A,pull,,Tractions pronation,1,8,10,7.5
+2024-04-30,Pull A,pull,,Tractions pronation,2,7,10,8
+2024-04-30,Pull A,pull,,Tractions pronation,3,6,10,8.5
+2024-04-30,Pull A,pull,,Rowing barre,1,8,70,7
+2024-04-30,Pull A,pull,,Rowing barre,2,8,70,8
+2024-04-30,Pull A,pull,,Rowing barre,3,6,70,8.5
+2024-04-30,Pull A,pull,,Tirage vertical,1,10,65,7
+2024-04-30,Pull A,pull,,Tirage vertical,2,10,65,8
+2024-04-30,Pull A,pull,,Tirage vertical,3,8,65,8
+2024-04-30,Pull A,pull,,Curl barre,1,10,34,7
+2024-04-30,Pull A,pull,,Curl barre,2,10,34,8
+2024-04-30,Pull A,pull,,Curl barre,3,8,34,8.5
+2024-05-02,Legs A,legs,,Squat barre,1,6,100,7.5
+2024-05-02,Legs A,legs,,Squat barre,2,6,100,8
+2024-05-02,Legs A,legs,,Squat barre,3,5,100,8.5
+2024-05-02,Legs A,legs,,Presse à cuisses,1,10,140,7
+2024-05-02,Legs A,legs,,Presse à cuisses,2,10,140,8
+2024-05-02,Legs A,legs,,Presse à cuisses,3,8,140,8.5
+2024-05-02,Legs A,legs,,Leg curl,1,12,50,7
+2024-05-02,Legs A,legs,,Leg curl,2,10,50,8
+2024-05-02,Legs A,legs,,Leg curl,3,10,50,8.5
+2024-05-02,Legs A,legs,,Hip thrust,1,10,100,7
+2024-05-02,Legs A,legs,,Hip thrust,2,10,100,8
+2024-05-02,Legs A,legs,,Hip thrust,3,8,100,8
+2024-05-05,Push B,push,,Développé militaire,1,8,65,7
+2024-05-05,Push B,push,,Développé militaire,2,8,65,8
+2024-05-05,Push B,push,,Développé militaire,3,6,65,8.5
+2024-05-05,Push B,push,,Développé couché haltères,1,10,28,7
+2024-05-05,Push B,push,,Développé couché haltères,2,10,28,8
+2024-05-05,Push B,push,,Développé couché haltères,3,8,28,8.5
+2024-05-05,Push B,push,,Arnold press,1,10,22,7
+2024-05-05,Push B,push,,Arnold press,2,10,22,8
+2024-05-05,Push B,push,,Arnold press,3,8,22,8
+2024-05-05,Push B,push,,Écarté haltères,1,12,18,6
+2024-05-05,Push B,push,,Écarté haltères,2,12,18,7
+2024-05-05,Push B,push,,Écarté haltères,3,10,18,8
+2024-05-07,Pull B,pull,,Soulevé de terre,1,5,130,7.5
+2024-05-07,Pull B,pull,,Soulevé de terre,2,5,130,8
+2024-05-07,Pull B,pull,,Soulevé de terre,3,4,130,8.5
+2024-05-07,Pull B,pull,,Rowing haltère,1,10,34,7
+2024-05-07,Pull B,pull,,Rowing haltère,2,10,34,8
+2024-05-07,Pull B,pull,,Rowing haltère,3,8,34,8.5
+2024-05-07,Pull B,pull,,Tirage horizontal poulie,1,10,60,7
+2024-05-07,Pull B,pull,,Tirage horizontal poulie,2,10,60,8
+2024-05-07,Pull B,pull,,Tirage horizontal poulie,3,8,60,8
+2024-05-07,Pull B,pull,,Curl marteau,1,12,20,7
+2024-05-07,Pull B,pull,,Curl marteau,2,10,20,8
+2024-05-07,Pull B,pull,,Curl marteau,3,10,20,8.5
+2024-05-09,Legs B,legs,,Squat bulgare,1,10,26,7.5
+2024-05-09,Legs B,legs,,Squat bulgare,2,8,26,8
+2024-05-09,Legs B,legs,,Squat bulgare,3,8,26,8.5
+2024-05-09,Legs B,legs,,Soulevé de terre roumain,1,8,80,7
+2024-05-09,Legs B,legs,,Soulevé de terre roumain,2,8,80,8
+2024-05-09,Legs B,legs,,Soulevé de terre roumain,3,6,80,8.5
+2024-05-09,Legs B,legs,,Leg extension,1,15,55,7
+2024-05-09,Legs B,legs,,Leg extension,2,12,55,8
+2024-05-09,Legs B,legs,,Leg extension,3,12,55,8
+2024-05-09,Legs B,legs,,Fentes,1,12,22,7
+2024-05-09,Legs B,legs,,Fentes,2,10,22,8
+2024-05-09,Legs B,legs,,Fentes,3,10,22,8.5
+2024-05-12,Push A,push,,Développé couché barre,1,8,90,7
+2024-05-12,Push A,push,,Développé couché barre,2,8,90,8
+2024-05-12,Push A,push,,Développé couché barre,3,6,90,8.5
+2024-05-12,Push A,push,,Développé incliné haltères,1,10,26,7
+2024-05-12,Push A,push,,Développé incliné haltères,2,10,26,8
+2024-05-12,Push A,push,,Développé incliné haltères,3,8,26,8.5
+2024-05-12,Push A,push,,Dips,1,10,20,7
+2024-05-12,Push A,push,,Dips,2,8,20,8
+2024-05-12,Push A,push,,Dips,3,8,20,8.5
+2024-05-12,Push A,push,,Extension triceps poulie,1,12,32,6
+2024-05-12,Push A,push,,Extension triceps poulie,2,12,32,7
+2024-05-12,Push A,push,,Extension triceps poulie,3,10,32,8
+2024-05-14,Pull A,pull,,Tractions pronation,1,8,10,7.5
+2024-05-14,Pull A,pull,,Tractions pronation,2,7,10,8
+2024-05-14,Pull A,pull,,Tractions pronation,3,6,10,8.5
+2024-05-14,Pull A,pull,,Rowing barre,1,8,70,7
+2024-05-14,Pull A,pull,,Rowing barre,2,8,70,8
+2024-05-14,Pull A,pull,,Rowing barre,3,6,70,8.5
+2024-05-14,Pull A,pull,,Tirage vertical,1,10,65,7
+2024-05-14,Pull A,pull,,Tirage vertical,2,10,65,8
+2024-05-14,Pull A,pull,,Tirage vertical,3,8,65,8
+2024-05-14,Pull A,pull,,Curl barre,1,10,34,7
+2024-05-14,Pull A,pull,,Curl barre,2,10,34,8
+2024-05-14,Pull A,pull,,Curl barre,3,8,34,8.5
+2024-05-16,Legs A,legs,,Squat barre,1,6,100,7.5
+2024-05-16,Legs A,legs,,Squat barre,2,6,100,8
+2024-05-16,Legs A,legs,,Squat barre,3,5,100,8.5
+2024-05-16,Legs A,legs,,Presse à cuisses,1,10,140,7
+2024-05-16,Legs A,legs,,Presse à cuisses,2,10,140,8
+2024-05-16,Legs A,legs,,Presse à cuisses,3,8,140,8.5
+2024-05-16,Legs A,legs,,Leg curl,1,12,50,7
+2024-05-16,Legs A,legs,,Leg curl,2,10,50,8
+2024-05-16,Legs A,legs,,Leg curl,3,10,50,8.5
+2024-05-16,Legs A,legs,,Hip thrust,1,10,100,7
+2024-05-16,Legs A,legs,,Hip thrust,2,10,100,8
+2024-05-16,Legs A,legs,,Hip thrust,3,8,100,8
+2024-05-19,Push B,push,,Développé militaire,1,8,65,7
+2024-05-19,Push B,push,,Développé militaire,2,8,65,8
+2024-05-19,Push B,push,,Développé militaire,3,6,65,8.5
+2024-05-19,Push B,push,,Développé couché haltères,1,10,28,7
+2024-05-19,Push B,push,,Développé couché haltères,2,10,28,8
+2024-05-19,Push B,push,,Développé couché haltères,3,8,28,8.5
+2024-05-19,Push B,push,,Arnold press,1,10,22,7
+2024-05-19,Push B,push,,Arnold press,2,10,22,8
+2024-05-19,Push B,push,,Arnold press,3,8,22,8
+2024-05-19,Push B,push,,Écarté haltères,1,12,18,6
+2024-05-19,Push B,push,,Écarté haltères,2,12,18,7
+2024-05-19,Push B,push,,Écarté haltères,3,10,18,8
+2024-05-21,Pull B,pull,,Soulevé de terre,1,5,130,7.5
+2024-05-21,Pull B,pull,,Soulevé de terre,2,5,130,8
+2024-05-21,Pull B,pull,,Soulevé de terre,3,4,130,8.5
+2024-05-21,Pull B,pull,,Rowing haltère,1,10,34,7
+2024-05-21,Pull B,pull,,Rowing haltère,2,10,34,8
+2024-05-21,Pull B,pull,,Rowing haltère,3,8,34,8.5
+2024-05-21,Pull B,pull,,Tirage horizontal poulie,1,10,60,7
+2024-05-21,Pull B,pull,,Tirage horizontal poulie,2,10,60,8
+2024-05-21,Pull B,pull,,Tirage horizontal poulie,3,8,60,8
+2024-05-21,Pull B,pull,,Curl marteau,1,12,20,7
+2024-05-21,Pull B,pull,,Curl marteau,2,10,20,8
+2024-05-21,Pull B,pull,,Curl marteau,3,10,20,8.5
+2024-05-23,Legs B,legs,,Squat bulgare,1,10,26,7.5
+2024-05-23,Legs B,legs,,Squat bulgare,2,8,26,8
+2024-05-23,Legs B,legs,,Squat bulgare,3,8,26,8.5
+2024-05-23,Legs B,legs,,Soulevé de terre roumain,1,8,80,7
+2024-05-23,Legs B,legs,,Soulevé de terre roumain,2,8,80,8
+2024-05-23,Legs B,legs,,Soulevé de terre roumain,3,6,80,8.5
+2024-05-23,Legs B,legs,,Leg extension,1,15,55,7
+2024-05-23,Legs B,legs,,Leg extension,2,12,55,8
+2024-05-23,Legs B,legs,,Leg extension,3,12,55,8
+2024-05-23,Legs B,legs,,Fentes,1,12,22,7
+2024-05-23,Legs B,legs,,Fentes,2,10,22,8
+2024-05-23,Legs B,legs,,Fentes,3,10,22,8.5
+2024-05-26,Push A,push,,Développé couché barre,1,8,92.5,7
+2024-05-26,Push A,push,,Développé couché barre,2,8,92.5,8
+2024-05-26,Push A,push,,Développé couché barre,3,6,92.5,8.5
+2024-05-26,Push A,push,,Développé incliné haltères,1,10,27,7
+2024-05-26,Push A,push,,Développé incliné haltères,2,10,27,8
+2024-05-26,Push A,push,,Développé incliné haltères,3,8,27,8.5
+2024-05-26,Push A,push,,Dips,1,10,22.5,7
+2024-05-26,Push A,push,,Dips,2,8,22.5,8
+2024-05-26,Push A,push,,Dips,3,8,22.5,8.5
+2024-05-26,Push A,push,,Extension triceps poulie,1,12,34.5,6
+2024-05-26,Push A,push,,Extension triceps poulie,2,12,34.5,7
+2024-05-26,Push A,push,,Extension triceps poulie,3,10,34.5,8
+2024-05-28,Pull A,pull,,Tractions pronation,1,8,12.5,7.5
+2024-05-28,Pull A,pull,,Tractions pronation,2,7,12.5,8
+2024-05-28,Pull A,pull,,Tractions pronation,3,6,12.5,8.5
+2024-05-28,Pull A,pull,,Rowing barre,1,8,72.5,7
+2024-05-28,Pull A,pull,,Rowing barre,2,8,72.5,8
+2024-05-28,Pull A,pull,,Rowing barre,3,6,72.5,8.5
+2024-05-28,Pull A,pull,,Tirage vertical,1,10,67.5,7
+2024-05-28,Pull A,pull,,Tirage vertical,2,10,67.5,8
+2024-05-28,Pull A,pull,,Tirage vertical,3,8,67.5,8
+2024-05-28,Pull A,pull,,Curl barre,1,10,35,7
+2024-05-28,Pull A,pull,,Curl barre,2,10,35,8
+2024-05-28,Pull A,pull,,Curl barre,3,8,35,8.5
+2024-05-30,Legs A,legs,,Squat barre,1,6,102.5,7.5
+2024-05-30,Legs A,legs,,Squat barre,2,6,102.5,8
+2024-05-30,Legs A,legs,,Squat barre,3,5,102.5,8.5
+2024-05-30,Legs A,legs,,Presse à cuisses,1,10,145,7
+2024-05-30,Legs A,legs,,Presse à cuisses,2,10,145,8
+2024-05-30,Legs A,legs,,Presse à cuisses,3,8,145,8.5
+2024-05-30,Legs A,legs,,Leg curl,1,12,52.5,7
+2024-05-30,Legs A,legs,,Leg curl,2,10,52.5,8
+2024-05-30,Legs A,legs,,Leg curl,3,10,52.5,8.5
+2024-05-30,Legs A,legs,,Hip thrust,1,10,105,7
+2024-05-30,Legs A,legs,,Hip thrust,2,10,105,8
+2024-05-30,Legs A,legs,,Hip thrust,3,8,105,8
+2024-06-02,Push B,push,,Développé militaire,1,8,67.5,7
+2024-06-02,Push B,push,,Développé militaire,2,8,67.5,8
+2024-06-02,Push B,push,,Développé militaire,3,6,67.5,8.5
+2024-06-02,Push B,push,,Développé couché haltères,1,10,29,7
+2024-06-02,Push B,push,,Développé couché haltères,2,10,29,8
+2024-06-02,Push B,push,,Développé couché haltères,3,8,29,8.5
+2024-06-02,Push B,push,,Arnold press,1,10,23,7
+2024-06-02,Push B,push,,Arnold press,2,10,23,8
+2024-06-02,Push B,push,,Arnold press,3,8,23,8
+2024-06-02,Push B,push,,Écarté haltères,1,12,19,6
+2024-06-02,Push B,push,,Écarté haltères,2,12,19,7
+2024-06-02,Push B,push,,Écarté haltères,3,10,19,8
+2024-06-04,Pull B,pull,,Soulevé de terre,1,5,135,7.5
+2024-06-04,Pull B,pull,,Soulevé de terre,2,5,135,8
+2024-06-04,Pull B,pull,,Soulevé de terre,3,4,135,8.5
+2024-06-04,Pull B,pull,,Rowing haltère,1,10,36,7
+2024-06-04,Pull B,pull,,Rowing haltère,2,10,36,8
+2024-06-04,Pull B,pull,,Rowing haltère,3,8,36,8.5
+2024-06-04,Pull B,pull,,Tirage horizontal poulie,1,10,62.5,7
+2024-06-04,Pull B,pull,,Tirage horizontal poulie,2,10,62.5,8
+2024-06-04,Pull B,pull,,Tirage horizontal poulie,3,8,62.5,8
+2024-06-04,Pull B,pull,,Curl marteau,1,12,21,7
+2024-06-04,Pull B,pull,,Curl marteau,2,10,21,8
+2024-06-04,Pull B,pull,,Curl marteau,3,10,21,8.5
+2024-06-06,Legs B,legs,,Squat bulgare,1,10,28,7.5
+2024-06-06,Legs B,legs,,Squat bulgare,2,8,28,8
+2024-06-06,Legs B,legs,,Squat bulgare,3,8,28,8.5
+2024-06-06,Legs B,legs,,Soulevé de terre roumain,1,8,82.5,7
+2024-06-06,Legs B,legs,,Soulevé de terre roumain,2,8,82.5,8
+2024-06-06,Legs B,legs,,Soulevé de terre roumain,3,6,82.5,8.5
+2024-06-06,Legs B,legs,,Leg extension,1,15,57.5,7
+2024-06-06,Legs B,legs,,Leg extension,2,12,57.5,8
+2024-06-06,Legs B,legs,,Leg extension,3,12,57.5,8
+2024-06-06,Legs B,legs,,Fentes,1,12,23,7
+2024-06-06,Legs B,legs,,Fentes,2,10,23,8
+2024-06-06,Legs B,legs,,Fentes,3,10,23,8.5
+2024-06-09,Push A,push,,Développé couché barre,1,8,92.5,7
+2024-06-09,Push A,push,,Développé couché barre,2,8,92.5,8
+2024-06-09,Push A,push,,Développé couché barre,3,6,92.5,8.5
+2024-06-09,Push A,push,,Développé incliné haltères,1,10,27,7
+2024-06-09,Push A,push,,Développé incliné haltères,2,10,27,8
+2024-06-09,Push A,push,,Développé incliné haltères,3,8,27,8.5
+2024-06-09,Push A,push,,Dips,1,10,22.5,7
+2024-06-09,Push A,push,,Dips,2,8,22.5,8
+2024-06-09,Push A,push,,Dips,3,8,22.5,8.5
+2024-06-09,Push A,push,,Extension triceps poulie,1,12,34.5,6
+2024-06-09,Push A,push,,Extension triceps poulie,2,12,34.5,7
+2024-06-09,Push A,push,,Extension triceps poulie,3,10,34.5,8
+2024-06-11,Pull A,pull,,Tractions pronation,1,8,12.5,7.5
+2024-06-11,Pull A,pull,,Tractions pronation,2,7,12.5,8
+2024-06-11,Pull A,pull,,Tractions pronation,3,6,12.5,8.5
+2024-06-11,Pull A,pull,,Rowing barre,1,8,72.5,7
+2024-06-11,Pull A,pull,,Rowing barre,2,8,72.5,8
+2024-06-11,Pull A,pull,,Rowing barre,3,6,72.5,8.5
+2024-06-11,Pull A,pull,,Tirage vertical,1,10,67.5,7
+2024-06-11,Pull A,pull,,Tirage vertical,2,10,67.5,8
+2024-06-11,Pull A,pull,,Tirage vertical,3,8,67.5,8
+2024-06-11,Pull A,pull,,Curl barre,1,10,35,7
+2024-06-11,Pull A,pull,,Curl barre,2,10,35,8
+2024-06-11,Pull A,pull,,Curl barre,3,8,35,8.5
+2024-06-13,Legs A,legs,,Squat barre,1,6,102.5,7.5
+2024-06-13,Legs A,legs,,Squat barre,2,6,102.5,8
+2024-06-13,Legs A,legs,,Squat barre,3,5,102.5,8.5
+2024-06-13,Legs A,legs,,Presse à cuisses,1,10,145,7
+2024-06-13,Legs A,legs,,Presse à cuisses,2,10,145,8
+2024-06-13,Legs A,legs,,Presse à cuisses,3,8,145,8.5
+2024-06-13,Legs A,legs,,Leg curl,1,12,52.5,7
+2024-06-13,Legs A,legs,,Leg curl,2,10,52.5,8
+2024-06-13,Legs A,legs,,Leg curl,3,10,52.5,8.5
+2024-06-13,Legs A,legs,,Hip thrust,1,10,105,7
+2024-06-13,Legs A,legs,,Hip thrust,2,10,105,8
+2024-06-13,Legs A,legs,,Hip thrust,3,8,105,8
+2024-06-16,Push B,push,,Développé militaire,1,8,67.5,7
+2024-06-16,Push B,push,,Développé militaire,2,8,67.5,8
+2024-06-16,Push B,push,,Développé militaire,3,6,67.5,8.5
+2024-06-16,Push B,push,,Développé couché haltères,1,10,29,7
+2024-06-16,Push B,push,,Développé couché haltères,2,10,29,8
+2024-06-16,Push B,push,,Développé couché haltères,3,8,29,8.5
+2024-06-16,Push B,push,,Arnold press,1,10,23,7
+2024-06-16,Push B,push,,Arnold press,2,10,23,8
+2024-06-16,Push B,push,,Arnold press,3,8,23,8
+2024-06-16,Push B,push,,Écarté haltères,1,12,19,6
+2024-06-16,Push B,push,,Écarté haltères,2,12,19,7
+2024-06-16,Push B,push,,Écarté haltères,3,10,19,8
+2024-06-18,Pull B,pull,,Soulevé de terre,1,5,135,7.5
+2024-06-18,Pull B,pull,,Soulevé de terre,2,5,135,8
+2024-06-18,Pull B,pull,,Soulevé de terre,3,4,135,8.5
+2024-06-18,Pull B,pull,,Rowing haltère,1,10,36,7
+2024-06-18,Pull B,pull,,Rowing haltère,2,10,36,8
+2024-06-18,Pull B,pull,,Rowing haltère,3,8,36,8.5
+2024-06-18,Pull B,pull,,Tirage horizontal poulie,1,10,62.5,7
+2024-06-18,Pull B,pull,,Tirage horizontal poulie,2,10,62.5,8
+2024-06-18,Pull B,pull,,Tirage horizontal poulie,3,8,62.5,8
+2024-06-18,Pull B,pull,,Curl marteau,1,12,21,7
+2024-06-18,Pull B,pull,,Curl marteau,2,10,21,8
+2024-06-18,Pull B,pull,,Curl marteau,3,10,21,8.5
+2024-06-20,Legs B,legs,,Squat bulgare,1,10,28,7.5
+2024-06-20,Legs B,legs,,Squat bulgare,2,8,28,8
+2024-06-20,Legs B,legs,,Squat bulgare,3,8,28,8.5
+2024-06-20,Legs B,legs,,Soulevé de terre roumain,1,8,82.5,7
+2024-06-20,Legs B,legs,,Soulevé de terre roumain,2,8,82.5,8
+2024-06-20,Legs B,legs,,Soulevé de terre roumain,3,6,82.5,8.5
+2024-06-20,Legs B,legs,,Leg extension,1,15,57.5,7
+2024-06-20,Legs B,legs,,Leg extension,2,12,57.5,8
+2024-06-20,Legs B,legs,,Leg extension,3,12,57.5,8
+2024-06-20,Legs B,legs,,Fentes,1,12,23,7
+2024-06-20,Legs B,legs,,Fentes,2,10,23,8
+2024-06-20,Legs B,legs,,Fentes,3,10,23,8.5
+2024-06-23,Push A,push,,Développé couché barre,1,8,95,7
+2024-06-23,Push A,push,,Développé couché barre,2,8,95,8
+2024-06-23,Push A,push,,Développé couché barre,3,6,95,8.5
+2024-06-23,Push A,push,,Développé incliné haltères,1,10,28,7
+2024-06-23,Push A,push,,Développé incliné haltères,2,10,28,8
+2024-06-23,Push A,push,,Développé incliné haltères,3,8,28,8.5
+2024-06-23,Push A,push,,Dips,1,10,25,7
+2024-06-23,Push A,push,,Dips,2,8,25,8
+2024-06-23,Push A,push,,Dips,3,8,25,8.5
+2024-06-23,Push A,push,,Extension triceps poulie,1,12,37,6
+2024-06-23,Push A,push,,Extension triceps poulie,2,12,37,7
+2024-06-23,Push A,push,,Extension triceps poulie,3,10,37,8
+2024-06-25,Pull A,pull,,Tractions pronation,1,8,15,7.5
+2024-06-25,Pull A,pull,,Tractions pronation,2,7,15,8
+2024-06-25,Pull A,pull,,Tractions pronation,3,6,15,8.5
+2024-06-25,Pull A,pull,,Rowing barre,1,8,75,7
+2024-06-25,Pull A,pull,,Rowing barre,2,8,75,8
+2024-06-25,Pull A,pull,,Rowing barre,3,6,75,8.5
+2024-06-25,Pull A,pull,,Tirage vertical,1,10,70,7
+2024-06-25,Pull A,pull,,Tirage vertical,2,10,70,8
+2024-06-25,Pull A,pull,,Tirage vertical,3,8,70,8
+2024-06-25,Pull A,pull,,Curl barre,1,10,36,7
+2024-06-25,Pull A,pull,,Curl barre,2,10,36,8
+2024-06-25,Pull A,pull,,Curl barre,3,8,36,8.5
+2024-06-27,Legs A,legs,,Squat barre,1,6,105,7.5
+2024-06-27,Legs A,legs,,Squat barre,2,6,105,8
+2024-06-27,Legs A,legs,,Squat barre,3,5,105,8.5
+2024-06-27,Legs A,legs,,Presse à cuisses,1,10,150,7
+2024-06-27,Legs A,legs,,Presse à cuisses,2,10,150,8
+2024-06-27,Legs A,legs,,Presse à cuisses,3,8,150,8.5
+2024-06-27,Legs A,legs,,Leg curl,1,12,55,7
+2024-06-27,Legs A,legs,,Leg curl,2,10,55,8
+2024-06-27,Legs A,legs,,Leg curl,3,10,55,8.5
+2024-06-27,Legs A,legs,,Hip thrust,1,10,110,7
+2024-06-27,Legs A,legs,,Hip thrust,2,10,110,8
+2024-06-27,Legs A,legs,,Hip thrust,3,8,110,8
+2024-06-30,Push B,push,,Développé militaire,1,8,70,7
+2024-06-30,Push B,push,,Développé militaire,2,8,70,8
+2024-06-30,Push B,push,,Développé militaire,3,6,70,8.5
+2024-06-30,Push B,push,,Développé couché haltères,1,10,30,7
+2024-06-30,Push B,push,,Développé couché haltères,2,10,30,8
+2024-06-30,Push B,push,,Développé couché haltères,3,8,30,8.5
+2024-06-30,Push B,push,,Arnold press,1,10,24,7
+2024-06-30,Push B,push,,Arnold press,2,10,24,8
+2024-06-30,Push B,push,,Arnold press,3,8,24,8
+2024-06-30,Push B,push,,Écarté haltères,1,12,20,6
+2024-06-30,Push B,push,,Écarté haltères,2,12,20,7
+2024-06-30,Push B,push,,Écarté haltères,3,10,20,8
+2024-07-02,Pull B,pull,,Soulevé de terre,1,5,140,7.5
+2024-07-02,Pull B,pull,,Soulevé de terre,2,5,140,8
+2024-07-02,Pull B,pull,,Soulevé de terre,3,4,140,8.5
+2024-07-02,Pull B,pull,,Rowing haltère,1,10,38,7
+2024-07-02,Pull B,pull,,Rowing haltère,2,10,38,8
+2024-07-02,Pull B,pull,,Rowing haltère,3,8,38,8.5
+2024-07-02,Pull B,pull,,Tirage horizontal poulie,1,10,65,7
+2024-07-02,Pull B,pull,,Tirage horizontal poulie,2,10,65,8
+2024-07-02,Pull B,pull,,Tirage horizontal poulie,3,8,65,8
+2024-07-02,Pull B,pull,,Curl marteau,1,12,22,7
+2024-07-02,Pull B,pull,,Curl marteau,2,10,22,8
+2024-07-02,Pull B,pull,,Curl marteau,3,10,22,8.5
+2024-07-04,Legs B,legs,,Squat bulgare,1,10,30,7.5
+2024-07-04,Legs B,legs,,Squat bulgare,2,8,30,8
+2024-07-04,Legs B,legs,,Squat bulgare,3,8,30,8.5
+2024-07-04,Legs B,legs,,Soulevé de terre roumain,1,8,85,7
+2024-07-04,Legs B,legs,,Soulevé de terre roumain,2,8,85,8
+2024-07-04,Legs B,legs,,Soulevé de terre roumain,3,6,85,8.5
+2024-07-04,Legs B,legs,,Leg extension,1,15,60,7
+2024-07-04,Legs B,legs,,Leg extension,2,12,60,8
+2024-07-04,Legs B,legs,,Leg extension,3,12,60,8
+2024-07-04,Legs B,legs,,Fentes,1,12,24,7
+2024-07-04,Legs B,legs,,Fentes,2,10,24,8
+2024-07-04,Legs B,legs,,Fentes,3,10,24,8.5
+2024-07-07,Push A,push,,Développé couché barre,1,8,95,7
+2024-07-07,Push A,push,,Développé couché barre,2,8,95,8
+2024-07-07,Push A,push,,Développé couché barre,3,6,95,8.5
+2024-07-07,Push A,push,,Développé incliné haltères,1,10,28,7
+2024-07-07,Push A,push,,Développé incliné haltères,2,10,28,8
+2024-07-07,Push A,push,,Développé incliné haltères,3,8,28,8.5
+2024-07-07,Push A,push,,Dips,1,10,25,7
+2024-07-07,Push A,push,,Dips,2,8,25,8
+2024-07-07,Push A,push,,Dips,3,8,25,8.5
+2024-07-07,Push A,push,,Extension triceps poulie,1,12,37,6
+2024-07-07,Push A,push,,Extension triceps poulie,2,12,37,7
+2024-07-07,Push A,push,,Extension triceps poulie,3,10,37,8
+2024-07-09,Pull A,pull,,Tractions pronation,1,8,15,7.5
+2024-07-09,Pull A,pull,,Tractions pronation,2,7,15,8
+2024-07-09,Pull A,pull,,Tractions pronation,3,6,15,8.5
+2024-07-09,Pull A,pull,,Rowing barre,1,8,75,7
+2024-07-09,Pull A,pull,,Rowing barre,2,8,75,8
+2024-07-09,Pull A,pull,,Rowing barre,3,6,75,8.5
+2024-07-09,Pull A,pull,,Tirage vertical,1,10,70,7
+2024-07-09,Pull A,pull,,Tirage vertical,2,10,70,8
+2024-07-09,Pull A,pull,,Tirage vertical,3,8,70,8
+2024-07-09,Pull A,pull,,Curl barre,1,10,36,7
+2024-07-09,Pull A,pull,,Curl barre,2,10,36,8
+2024-07-09,Pull A,pull,,Curl barre,3,8,36,8.5
+2024-07-11,Legs A,legs,,Squat barre,1,6,105,7.5
+2024-07-11,Legs A,legs,,Squat barre,2,6,105,8
+2024-07-11,Legs A,legs,,Squat barre,3,5,105,8.5
+2024-07-11,Legs A,legs,,Presse à cuisses,1,10,150,7
+2024-07-11,Legs A,legs,,Presse à cuisses,2,10,150,8
+2024-07-11,Legs A,legs,,Presse à cuisses,3,8,150,8.5
+2024-07-11,Legs A,legs,,Leg curl,1,12,55,7
+2024-07-11,Legs A,legs,,Leg curl,2,10,55,8
+2024-07-11,Legs A,legs,,Leg curl,3,10,55,8.5
+2024-07-11,Legs A,legs,,Hip thrust,1,10,110,7
+2024-07-11,Legs A,legs,,Hip thrust,2,10,110,8
+2024-07-11,Legs A,legs,,Hip thrust,3,8,110,8
+2024-07-14,Push B,push,,Développé militaire,1,8,70,7
+2024-07-14,Push B,push,,Développé militaire,2,8,70,8
+2024-07-14,Push B,push,,Développé militaire,3,6,70,8.5
+2024-07-14,Push B,push,,Développé couché haltères,1,10,30,7
+2024-07-14,Push B,push,,Développé couché haltères,2,10,30,8
+2024-07-14,Push B,push,,Développé couché haltères,3,8,30,8.5
+2024-07-14,Push B,push,,Arnold press,1,10,24,7
+2024-07-14,Push B,push,,Arnold press,2,10,24,8
+2024-07-14,Push B,push,,Arnold press,3,8,24,8
+2024-07-14,Push B,push,,Écarté haltères,1,12,20,6
+2024-07-14,Push B,push,,Écarté haltères,2,12,20,7
+2024-07-14,Push B,push,,Écarté haltères,3,10,20,8
+2024-07-16,Pull B,pull,,Soulevé de terre,1,5,140,7.5
+2024-07-16,Pull B,pull,,Soulevé de terre,2,5,140,8
+2024-07-16,Pull B,pull,,Soulevé de terre,3,4,140,8.5
+2024-07-16,Pull B,pull,,Rowing haltère,1,10,38,7
+2024-07-16,Pull B,pull,,Rowing haltère,2,10,38,8
+2024-07-16,Pull B,pull,,Rowing haltère,3,8,38,8.5
+2024-07-16,Pull B,pull,,Tirage horizontal poulie,1,10,65,7
+2024-07-16,Pull B,pull,,Tirage horizontal poulie,2,10,65,8
+2024-07-16,Pull B,pull,,Tirage horizontal poulie,3,8,65,8
+2024-07-16,Pull B,pull,,Curl marteau,1,12,22,7
+2024-07-16,Pull B,pull,,Curl marteau,2,10,22,8
+2024-07-16,Pull B,pull,,Curl marteau,3,10,22,8.5
+2024-07-18,Legs B,legs,,Squat bulgare,1,10,30,7.5
+2024-07-18,Legs B,legs,,Squat bulgare,2,8,30,8
+2024-07-18,Legs B,legs,,Squat bulgare,3,8,30,8.5
+2024-07-18,Legs B,legs,,Soulevé de terre roumain,1,8,85,7
+2024-07-18,Legs B,legs,,Soulevé de terre roumain,2,8,85,8
+2024-07-18,Legs B,legs,,Soulevé de terre roumain,3,6,85,8.5
+2024-07-18,Legs B,legs,,Leg extension,1,15,60,7
+2024-07-18,Legs B,legs,,Leg extension,2,12,60,8
+2024-07-18,Legs B,legs,,Leg extension,3,12,60,8
+2024-07-18,Legs B,legs,,Fentes,1,12,24,7
+2024-07-18,Legs B,legs,,Fentes,2,10,24,8
+2024-07-18,Legs B,legs,,Fentes,3,10,24,8.5
+2024-07-21,Push A,push,,Développé couché barre,1,8,97.5,7
+2024-07-21,Push A,push,,Développé couché barre,2,8,97.5,8
+2024-07-21,Push A,push,,Développé couché barre,3,6,97.5,8.5
+2024-07-21,Push A,push,,Développé incliné haltères,1,10,29,7
+2024-07-21,Push A,push,,Développé incliné haltères,2,10,29,8
+2024-07-21,Push A,push,,Développé incliné haltères,3,8,29,8.5
+2024-07-21,Push A,push,,Dips,1,10,27.5,7
+2024-07-21,Push A,push,,Dips,2,8,27.5,8
+2024-07-21,Push A,push,,Dips,3,8,27.5,8.5
+2024-07-21,Push A,push,,Extension triceps poulie,1,12,39.5,6
+2024-07-21,Push A,push,,Extension triceps poulie,2,12,39.5,7
+2024-07-21,Push A,push,,Extension triceps poulie,3,10,39.5,8
+2024-07-23,Pull A,pull,,Tractions pronation,1,8,17.5,7.5
+2024-07-23,Pull A,pull,,Tractions pronation,2,7,17.5,8
+2024-07-23,Pull A,pull,,Tractions pronation,3,6,17.5,8.5
+2024-07-23,Pull A,pull,,Rowing barre,1,8,77.5,7
+2024-07-23,Pull A,pull,,Rowing barre,2,8,77.5,8
+2024-07-23,Pull A,pull,,Rowing barre,3,6,77.5,8.5
+2024-07-23,Pull A,pull,,Tirage vertical,1,10,72.5,7
+2024-07-23,Pull A,pull,,Tirage vertical,2,10,72.5,8
+2024-07-23,Pull A,pull,,Tirage vertical,3,8,72.5,8
+2024-07-23,Pull A,pull,,Curl barre,1,10,37,7
+2024-07-23,Pull A,pull,,Curl barre,2,10,37,8
+2024-07-23,Pull A,pull,,Curl barre,3,8,37,8.5
+2024-07-25,Legs A,legs,,Squat barre,1,6,107.5,7.5
+2024-07-25,Legs A,legs,,Squat barre,2,6,107.5,8
+2024-07-25,Legs A,legs,,Squat barre,3,5,107.5,8.5
+2024-07-25,Legs A,legs,,Presse à cuisses,1,10,155,7
+2024-07-25,Legs A,legs,,Presse à cuisses,2,10,155,8
+2024-07-25,Legs A,legs,,Presse à cuisses,3,8,155,8.5
+2024-07-25,Legs A,legs,,Leg curl,1,12,57.5,7
+2024-07-25,Legs A,legs,,Leg curl,2,10,57.5,8
+2024-07-25,Legs A,legs,,Leg curl,3,10,57.5,8.5
+2024-07-25,Legs A,legs,,Hip thrust,1,10,115,7
+2024-07-25,Legs A,legs,,Hip thrust,2,10,115,8
+2024-07-25,Legs A,legs,,Hip thrust,3,8,115,8
+2024-07-28,Push B,push,,Développé militaire,1,8,72.5,7
+2024-07-28,Push B,push,,Développé militaire,2,8,72.5,8
+2024-07-28,Push B,push,,Développé militaire,3,6,72.5,8.5
+2024-07-28,Push B,push,,Développé couché haltères,1,10,31,7
+2024-07-28,Push B,push,,Développé couché haltères,2,10,31,8
+2024-07-28,Push B,push,,Développé couché haltères,3,8,31,8.5
+2024-07-28,Push B,push,,Arnold press,1,10,25,7
+2024-07-28,Push B,push,,Arnold press,2,10,25,8
+2024-07-28,Push B,push,,Arnold press,3,8,25,8
+2024-07-28,Push B,push,,Écarté haltères,1,12,21,6
+2024-07-28,Push B,push,,Écarté haltères,2,12,21,7
+2024-07-28,Push B,push,,Écarté haltères,3,10,21,8
+2024-07-30,Pull B,pull,,Soulevé de terre,1,5,145,7.5
+2024-07-30,Pull B,pull,,Soulevé de terre,2,5,145,8
+2024-07-30,Pull B,pull,,Soulevé de terre,3,4,145,8.5
+2024-07-30,Pull B,pull,,Rowing haltère,1,10,40,7
+2024-07-30,Pull B,pull,,Rowing haltère,2,10,40,8
+2024-07-30,Pull B,pull,,Rowing haltère,3,8,40,8.5
+2024-07-30,Pull B,pull,,Tirage horizontal poulie,1,10,67.5,7
+2024-07-30,Pull B,pull,,Tirage horizontal poulie,2,10,67.5,8
+2024-07-30,Pull B,pull,,Tirage horizontal poulie,3,8,67.5,8
+2024-07-30,Pull B,pull,,Curl marteau,1,12,23,7
+2024-07-30,Pull B,pull,,Curl marteau,2,10,23,8
+2024-07-30,Pull B,pull,,Curl marteau,3,10,23,8.5
+2024-08-01,Legs B,legs,,Squat bulgare,1,10,32,7.5
+2024-08-01,Legs B,legs,,Squat bulgare,2,8,32,8
+2024-08-01,Legs B,legs,,Squat bulgare,3,8,32,8.5
+2024-08-01,Legs B,legs,,Soulevé de terre roumain,1,8,87.5,7
+2024-08-01,Legs B,legs,,Soulevé de terre roumain,2,8,87.5,8
+2024-08-01,Legs B,legs,,Soulevé de terre roumain,3,6,87.5,8.5
+2024-08-01,Legs B,legs,,Leg extension,1,15,62.5,7
+2024-08-01,Legs B,legs,,Leg extension,2,12,62.5,8
+2024-08-01,Legs B,legs,,Leg extension,3,12,62.5,8
+2024-08-01,Legs B,legs,,Fentes,1,12,25,7
+2024-08-01,Legs B,legs,,Fentes,2,10,25,8
+2024-08-01,Legs B,legs,,Fentes,3,10,25,8.5
+2024-08-04,Push A,push,,Développé couché barre,1,8,97.5,7
+2024-08-04,Push A,push,,Développé couché barre,2,8,97.5,8
+2024-08-04,Push A,push,,Développé couché barre,3,6,97.5,8.5
+2024-08-04,Push A,push,,Développé incliné haltères,1,10,29,7
+2024-08-04,Push A,push,,Développé incliné haltères,2,10,29,8
+2024-08-04,Push A,push,,Développé incliné haltères,3,8,29,8.5
+2024-08-04,Push A,push,,Dips,1,10,27.5,7
+2024-08-04,Push A,push,,Dips,2,8,27.5,8
+2024-08-04,Push A,push,,Dips,3,8,27.5,8.5
+2024-08-04,Push A,push,,Extension triceps poulie,1,12,39.5,6
+2024-08-04,Push A,push,,Extension triceps poulie,2,12,39.5,7
+2024-08-04,Push A,push,,Extension triceps poulie,3,10,39.5,8
+2024-08-06,Pull A,pull,,Tractions pronation,1,8,17.5,7.5
+2024-08-06,Pull A,pull,,Tractions pronation,2,7,17.5,8
+2024-08-06,Pull A,pull,,Tractions pronation,3,6,17.5,8.5
+2024-08-06,Pull A,pull,,Rowing barre,1,8,77.5,7
+2024-08-06,Pull A,pull,,Rowing barre,2,8,77.5,8
+2024-08-06,Pull A,pull,,Rowing barre,3,6,77.5,8.5
+2024-08-06,Pull A,pull,,Tirage vertical,1,10,72.5,7
+2024-08-06,Pull A,pull,,Tirage vertical,2,10,72.5,8
+2024-08-06,Pull A,pull,,Tirage vertical,3,8,72.5,8
+2024-08-06,Pull A,pull,,Curl barre,1,10,37,7
+2024-08-06,Pull A,pull,,Curl barre,2,10,37,8
+2024-08-06,Pull A,pull,,Curl barre,3,8,37,8.5
+2024-08-08,Legs A,legs,,Squat barre,1,6,107.5,7.5
+2024-08-08,Legs A,legs,,Squat barre,2,6,107.5,8
+2024-08-08,Legs A,legs,,Squat barre,3,5,107.5,8.5
+2024-08-08,Legs A,legs,,Presse à cuisses,1,10,155,7
+2024-08-08,Legs A,legs,,Presse à cuisses,2,10,155,8
+2024-08-08,Legs A,legs,,Presse à cuisses,3,8,155,8.5
+2024-08-08,Legs A,legs,,Leg curl,1,12,57.5,7
+2024-08-08,Legs A,legs,,Leg curl,2,10,57.5,8
+2024-08-08,Legs A,legs,,Leg curl,3,10,57.5,8.5
+2024-08-08,Legs A,legs,,Hip thrust,1,10,115,7
+2024-08-08,Legs A,legs,,Hip thrust,2,10,115,8
+2024-08-08,Legs A,legs,,Hip thrust,3,8,115,8
+2024-08-11,Push B,push,,Développé militaire,1,8,72.5,7
+2024-08-11,Push B,push,,Développé militaire,2,8,72.5,8
+2024-08-11,Push B,push,,Développé militaire,3,6,72.5,8.5
+2024-08-11,Push B,push,,Développé couché haltères,1,10,31,7
+2024-08-11,Push B,push,,Développé couché haltères,2,10,31,8
+2024-08-11,Push B,push,,Développé couché haltères,3,8,31,8.5
+2024-08-11,Push B,push,,Arnold press,1,10,25,7
+2024-08-11,Push B,push,,Arnold press,2,10,25,8
+2024-08-11,Push B,push,,Arnold press,3,8,25,8
+2024-08-11,Push B,push,,Écarté haltères,1,12,21,6
+2024-08-11,Push B,push,,Écarté haltères,2,12,21,7
+2024-08-11,Push B,push,,Écarté haltères,3,10,21,8
+2024-08-13,Pull B,pull,,Soulevé de terre,1,5,145,7.5
+2024-08-13,Pull B,pull,,Soulevé de terre,2,5,145,8
+2024-08-13,Pull B,pull,,Soulevé de terre,3,4,145,8.5
+2024-08-13,Pull B,pull,,Rowing haltère,1,10,40,7
+2024-08-13,Pull B,pull,,Rowing haltère,2,10,40,8
+2024-08-13,Pull B,pull,,Rowing haltère,3,8,40,8.5
+2024-08-13,Pull B,pull,,Tirage horizontal poulie,1,10,67.5,7
+2024-08-13,Pull B,pull,,Tirage horizontal poulie,2,10,67.5,8
+2024-08-13,Pull B,pull,,Tirage horizontal poulie,3,8,67.5,8
+2024-08-13,Pull B,pull,,Curl marteau,1,12,23,7
+2024-08-13,Pull B,pull,,Curl marteau,2,10,23,8
+2024-08-13,Pull B,pull,,Curl marteau,3,10,23,8.5
+2024-08-15,Legs B,legs,,Squat bulgare,1,10,32,7.5
+2024-08-15,Legs B,legs,,Squat bulgare,2,8,32,8
+2024-08-15,Legs B,legs,,Squat bulgare,3,8,32,8.5
+2024-08-15,Legs B,legs,,Soulevé de terre roumain,1,8,87.5,7
+2024-08-15,Legs B,legs,,Soulevé de terre roumain,2,8,87.5,8
+2024-08-15,Legs B,legs,,Soulevé de terre roumain,3,6,87.5,8.5
+2024-08-15,Legs B,legs,,Leg extension,1,15,62.5,7
+2024-08-15,Legs B,legs,,Leg extension,2,12,62.5,8
+2024-08-15,Legs B,legs,,Leg extension,3,12,62.5,8
+2024-08-15,Legs B,legs,,Fentes,1,12,25,7
+2024-08-15,Legs B,legs,,Fentes,2,10,25,8
+2024-08-15,Legs B,legs,,Fentes,3,10,25,8.5
+2024-08-18,Push A,push,,Développé couché barre,1,8,100,7
+2024-08-18,Push A,push,,Développé couché barre,2,8,100,8
+2024-08-18,Push A,push,,Développé couché barre,3,6,100,8.5
+2024-08-18,Push A,push,,Développé incliné haltères,1,10,30,7
+2024-08-18,Push A,push,,Développé incliné haltères,2,10,30,8
+2024-08-18,Push A,push,,Développé incliné haltères,3,8,30,8.5
+2024-08-18,Push A,push,,Dips,1,10,30,7
+2024-08-18,Push A,push,,Dips,2,8,30,8
+2024-08-18,Push A,push,,Dips,3,8,30,8.5
+2024-08-18,Push A,push,,Extension triceps poulie,1,12,42,6
+2024-08-18,Push A,push,,Extension triceps poulie,2,12,42,7
+2024-08-18,Push A,push,,Extension triceps poulie,3,10,42,8
+2024-08-20,Pull A,pull,,Tractions pronation,1,8,20,7.5
+2024-08-20,Pull A,pull,,Tractions pronation,2,7,20,8
+2024-08-20,Pull A,pull,,Tractions pronation,3,6,20,8.5
+2024-08-20,Pull A,pull,,Rowing barre,1,8,80,7
+2024-08-20,Pull A,pull,,Rowing barre,2,8,80,8
+2024-08-20,Pull A,pull,,Rowing barre,3,6,80,8.5
+2024-08-20,Pull A,pull,,Tirage vertical,1,10,75,7
+2024-08-20,Pull A,pull,,Tirage vertical,2,10,75,8
+2024-08-20,Pull A,pull,,Tirage vertical,3,8,75,8
+2024-08-20,Pull A,pull,,Curl barre,1,10,38,7
+2024-08-20,Pull A,pull,,Curl barre,2,10,38,8
+2024-08-20,Pull A,pull,,Curl barre,3,8,38,8.5
+2024-08-22,Legs A,legs,,Squat barre,1,6,110,7.5
+2024-08-22,Legs A,legs,,Squat barre,2,6,110,8
+2024-08-22,Legs A,legs,,Squat barre,3,5,110,8.5
+2024-08-22,Legs A,legs,,Presse à cuisses,1,10,160,7
+2024-08-22,Legs A,legs,,Presse à cuisses,2,10,160,8
+2024-08-22,Legs A,legs,,Presse à cuisses,3,8,160,8.5
+2024-08-22,Legs A,legs,,Leg curl,1,12,60,7
+2024-08-22,Legs A,legs,,Leg curl,2,10,60,8
+2024-08-22,Legs A,legs,,Leg curl,3,10,60,8.5
+2024-08-22,Legs A,legs,,Hip thrust,1,10,120,7
+2024-08-22,Legs A,legs,,Hip thrust,2,10,120,8
+2024-08-22,Legs A,legs,,Hip thrust,3,8,120,8
+2024-08-25,Push B,push,,Développé militaire,1,8,75,7
+2024-08-25,Push B,push,,Développé militaire,2,8,75,8
+2024-08-25,Push B,push,,Développé militaire,3,6,75,8.5
+2024-08-25,Push B,push,,Développé couché haltères,1,10,32,7
+2024-08-25,Push B,push,,Développé couché haltères,2,10,32,8
+2024-08-25,Push B,push,,Développé couché haltères,3,8,32,8.5
+2024-08-25,Push B,push,,Arnold press,1,10,26,7
+2024-08-25,Push B,push,,Arnold press,2,10,26,8
+2024-08-25,Push B,push,,Arnold press,3,8,26,8
+2024-08-25,Push B,push,,Écarté haltères,1,12,22,6
+2024-08-25,Push B,push,,Écarté haltères,2,12,22,7
+2024-08-25,Push B,push,,Écarté haltères,3,10,22,8
+2024-08-27,Pull B,pull,,Soulevé de terre,1,5,150,7.5
+2024-08-27,Pull B,pull,,Soulevé de terre,2,5,150,8
+2024-08-27,Pull B,pull,,Soulevé de terre,3,4,150,8.5
+2024-08-27,Pull B,pull,,Rowing haltère,1,10,42,7
+2024-08-27,Pull B,pull,,Rowing haltère,2,10,42,8
+2024-08-27,Pull B,pull,,Rowing haltère,3,8,42,8.5
+2024-08-27,Pull B,pull,,Tirage horizontal poulie,1,10,70,7
+2024-08-27,Pull B,pull,,Tirage horizontal poulie,2,10,70,8
+2024-08-27,Pull B,pull,,Tirage horizontal poulie,3,8,70,8
+2024-08-27,Pull B,pull,,Curl marteau,1,12,24,7
+2024-08-27,Pull B,pull,,Curl marteau,2,10,24,8
+2024-08-27,Pull B,pull,,Curl marteau,3,10,24,8.5
+2024-08-29,Legs B,legs,,Squat bulgare,1,10,34,7.5
+2024-08-29,Legs B,legs,,Squat bulgare,2,8,34,8
+2024-08-29,Legs B,legs,,Squat bulgare,3,8,34,8.5
+2024-08-29,Legs B,legs,,Soulevé de terre roumain,1,8,90,7
+2024-08-29,Legs B,legs,,Soulevé de terre roumain,2,8,90,8
+2024-08-29,Legs B,legs,,Soulevé de terre roumain,3,6,90,8.5
+2024-08-29,Legs B,legs,,Leg extension,1,15,65,7
+2024-08-29,Legs B,legs,,Leg extension,2,12,65,8
+2024-08-29,Legs B,legs,,Leg extension,3,12,65,8
+2024-08-29,Legs B,legs,,Fentes,1,12,26,7
+2024-08-29,Legs B,legs,,Fentes,2,10,26,8
+2024-08-29,Legs B,legs,,Fentes,3,10,26,8.5
+2024-09-01,Push A,push,,Développé couché barre,1,8,100,7
+2024-09-01,Push A,push,,Développé couché barre,2,8,100,8
+2024-09-01,Push A,push,,Développé couché barre,3,6,100,8.5
+2024-09-01,Push A,push,,Développé incliné haltères,1,10,30,7
+2024-09-01,Push A,push,,Développé incliné haltères,2,10,30,8
+2024-09-01,Push A,push,,Développé incliné haltères,3,8,30,8.5
+2024-09-01,Push A,push,,Dips,1,10,30,7
+2024-09-01,Push A,push,,Dips,2,8,30,8
+2024-09-01,Push A,push,,Dips,3,8,30,8.5
+2024-09-01,Push A,push,,Extension triceps poulie,1,12,42,6
+2024-09-01,Push A,push,,Extension triceps poulie,2,12,42,7
+2024-09-01,Push A,push,,Extension triceps poulie,3,10,42,8
+2024-09-03,Pull A,pull,,Tractions pronation,1,8,20,7.5
+2024-09-03,Pull A,pull,,Tractions pronation,2,7,20,8
+2024-09-03,Pull A,pull,,Tractions pronation,3,6,20,8.5
+2024-09-03,Pull A,pull,,Rowing barre,1,8,80,7
+2024-09-03,Pull A,pull,,Rowing barre,2,8,80,8
+2024-09-03,Pull A,pull,,Rowing barre,3,6,80,8.5
+2024-09-03,Pull A,pull,,Tirage vertical,1,10,75,7
+2024-09-03,Pull A,pull,,Tirage vertical,2,10,75,8
+2024-09-03,Pull A,pull,,Tirage vertical,3,8,75,8
+2024-09-03,Pull A,pull,,Curl barre,1,10,38,7
+2024-09-03,Pull A,pull,,Curl barre,2,10,38,8
+2024-09-03,Pull A,pull,,Curl barre,3,8,38,8.5
+2024-09-05,Legs A,legs,,Squat barre,1,6,110,7.5
+2024-09-05,Legs A,legs,,Squat barre,2,6,110,8
+2024-09-05,Legs A,legs,,Squat barre,3,5,110,8.5
+2024-09-05,Legs A,legs,,Presse à cuisses,1,10,160,7
+2024-09-05,Legs A,legs,,Presse à cuisses,2,10,160,8
+2024-09-05,Legs A,legs,,Presse à cuisses,3,8,160,8.5
+2024-09-05,Legs A,legs,,Leg curl,1,12,60,7
+2024-09-05,Legs A,legs,,Leg curl,2,10,60,8
+2024-09-05,Legs A,legs,,Leg curl,3,10,60,8.5
+2024-09-05,Legs A,legs,,Hip thrust,1,10,120,7
+2024-09-05,Legs A,legs,,Hip thrust,2,10,120,8
+2024-09-05,Legs A,legs,,Hip thrust,3,8,120,8
+2024-09-08,Push B,push,,Développé militaire,1,8,75,7
+2024-09-08,Push B,push,,Développé militaire,2,8,75,8
+2024-09-08,Push B,push,,Développé militaire,3,6,75,8.5
+2024-09-08,Push B,push,,Développé couché haltères,1,10,32,7
+2024-09-08,Push B,push,,Développé couché haltères,2,10,32,8
+2024-09-08,Push B,push,,Développé couché haltères,3,8,32,8.5
+2024-09-08,Push B,push,,Arnold press,1,10,26,7
+2024-09-08,Push B,push,,Arnold press,2,10,26,8
+2024-09-08,Push B,push,,Arnold press,3,8,26,8
+2024-09-08,Push B,push,,Écarté haltères,1,12,22,6
+2024-09-08,Push B,push,,Écarté haltères,2,12,22,7
+2024-09-08,Push B,push,,Écarté haltères,3,10,22,8
+2024-09-10,Pull B,pull,,Soulevé de terre,1,5,150,7.5
+2024-09-10,Pull B,pull,,Soulevé de terre,2,5,150,8
+2024-09-10,Pull B,pull,,Soulevé de terre,3,4,150,8.5
+2024-09-10,Pull B,pull,,Rowing haltère,1,10,42,7
+2024-09-10,Pull B,pull,,Rowing haltère,2,10,42,8
+2024-09-10,Pull B,pull,,Rowing haltère,3,8,42,8.5
+2024-09-10,Pull B,pull,,Tirage horizontal poulie,1,10,70,7
+2024-09-10,Pull B,pull,,Tirage horizontal poulie,2,10,70,8
+2024-09-10,Pull B,pull,,Tirage horizontal poulie,3,8,70,8
+2024-09-10,Pull B,pull,,Curl marteau,1,12,24,7
+2024-09-10,Pull B,pull,,Curl marteau,2,10,24,8
+2024-09-10,Pull B,pull,,Curl marteau,3,10,24,8.5
+2024-09-12,Legs B,legs,,Squat bulgare,1,10,34,7.5
+2024-09-12,Legs B,legs,,Squat bulgare,2,8,34,8
+2024-09-12,Legs B,legs,,Squat bulgare,3,8,34,8.5
+2024-09-12,Legs B,legs,,Soulevé de terre roumain,1,8,90,7
+2024-09-12,Legs B,legs,,Soulevé de terre roumain,2,8,90,8
+2024-09-12,Legs B,legs,,Soulevé de terre roumain,3,6,90,8.5
+2024-09-12,Legs B,legs,,Leg extension,1,15,65,7
+2024-09-12,Legs B,legs,,Leg extension,2,12,65,8
+2024-09-12,Legs B,legs,,Leg extension,3,12,65,8
+2024-09-12,Legs B,legs,,Fentes,1,12,26,7
+2024-09-12,Legs B,legs,,Fentes,2,10,26,8
+2024-09-12,Legs B,legs,,Fentes,3,10,26,8.5
+2024-09-15,Push A,push,,Développé couché barre,1,8,102.5,7
+2024-09-15,Push A,push,,Développé couché barre,2,8,102.5,8
+2024-09-15,Push A,push,,Développé couché barre,3,6,102.5,8.5
+2024-09-15,Push A,push,,Développé incliné haltères,1,10,31,7
+2024-09-15,Push A,push,,Développé incliné haltères,2,10,31,8
+2024-09-15,Push A,push,,Développé incliné haltères,3,8,31,8.5
+2024-09-15,Push A,push,,Dips,1,10,32.5,7
+2024-09-15,Push A,push,,Dips,2,8,32.5,8
+2024-09-15,Push A,push,,Dips,3,8,32.5,8.5
+2024-09-15,Push A,push,,Extension triceps poulie,1,12,44.5,6
+2024-09-15,Push A,push,,Extension triceps poulie,2,12,44.5,7
+2024-09-15,Push A,push,,Extension triceps poulie,3,10,44.5,8
+2024-09-17,Pull A,pull,,Tractions pronation,1,8,22.5,7.5
+2024-09-17,Pull A,pull,,Tractions pronation,2,7,22.5,8
+2024-09-17,Pull A,pull,,Tractions pronation,3,6,22.5,8.5
+2024-09-17,Pull A,pull,,Rowing barre,1,8,82.5,7
+2024-09-17,Pull A,pull,,Rowing barre,2,8,82.5,8
+2024-09-17,Pull A,pull,,Rowing barre,3,6,82.5,8.5
+2024-09-17,Pull A,pull,,Tirage vertical,1,10,77.5,7
+2024-09-17,Pull A,pull,,Tirage vertical,2,10,77.5,8
+2024-09-17,Pull A,pull,,Tirage vertical,3,8,77.5,8
+2024-09-17,Pull A,pull,,Curl barre,1,10,39,7
+2024-09-17,Pull A,pull,,Curl barre,2,10,39,8
+2024-09-17,Pull A,pull,,Curl barre,3,8,39,8.5
+2024-09-19,Legs A,legs,,Squat barre,1,6,112.5,7.5
+2024-09-19,Legs A,legs,,Squat barre,2,6,112.5,8
+2024-09-19,Legs A,legs,,Squat barre,3,5,112.5,8.5
+2024-09-19,Legs A,legs,,Presse à cuisses,1,10,165,7
+2024-09-19,Legs A,legs,,Presse à cuisses,2,10,165,8
+2024-09-19,Legs A,legs,,Presse à cuisses,3,8,165,8.5
+2024-09-19,Legs A,legs,,Leg curl,1,12,62.5,7
+2024-09-19,Legs A,legs,,Leg curl,2,10,62.5,8
+2024-09-19,Legs A,legs,,Leg curl,3,10,62.5,8.5
+2024-09-19,Legs A,legs,,Hip thrust,1,10,125,7
+2024-09-19,Legs A,legs,,Hip thrust,2,10,125,8
+2024-09-19,Legs A,legs,,Hip thrust,3,8,125,8
+2024-09-22,Push B,push,,Développé militaire,1,8,77.5,7
+2024-09-22,Push B,push,,Développé militaire,2,8,77.5,8
+2024-09-22,Push B,push,,Développé militaire,3,6,77.5,8.5
+2024-09-22,Push B,push,,Développé couché haltères,1,10,33,7
+2024-09-22,Push B,push,,Développé couché haltères,2,10,33,8
+2024-09-22,Push B,push,,Développé couché haltères,3,8,33,8.5
+2024-09-22,Push B,push,,Arnold press,1,10,27,7
+2024-09-22,Push B,push,,Arnold press,2,10,27,8
+2024-09-22,Push B,push,,Arnold press,3,8,27,8
+2024-09-22,Push B,push,,Écarté haltères,1,12,23,6
+2024-09-22,Push B,push,,Écarté haltères,2,12,23,7
+2024-09-22,Push B,push,,Écarté haltères,3,10,23,8
+2024-09-24,Pull B,pull,,Soulevé de terre,1,5,155,7.5
+2024-09-24,Pull B,pull,,Soulevé de terre,2,5,155,8
+2024-09-24,Pull B,pull,,Soulevé de terre,3,4,155,8.5
+2024-09-24,Pull B,pull,,Rowing haltère,1,10,44,7
+2024-09-24,Pull B,pull,,Rowing haltère,2,10,44,8
+2024-09-24,Pull B,pull,,Rowing haltère,3,8,44,8.5
+2024-09-24,Pull B,pull,,Tirage horizontal poulie,1,10,72.5,7
+2024-09-24,Pull B,pull,,Tirage horizontal poulie,2,10,72.5,8
+2024-09-24,Pull B,pull,,Tirage horizontal poulie,3,8,72.5,8
+2024-09-24,Pull B,pull,,Curl marteau,1,12,25,7
+2024-09-24,Pull B,pull,,Curl marteau,2,10,25,8
+2024-09-24,Pull B,pull,,Curl marteau,3,10,25,8.5
+2024-09-26,Legs B,legs,,Squat bulgare,1,10,36,7.5
+2024-09-26,Legs B,legs,,Squat bulgare,2,8,36,8
+2024-09-26,Legs B,legs,,Squat bulgare,3,8,36,8.5
+2024-09-26,Legs B,legs,,Soulevé de terre roumain,1,8,92.5,7
+2024-09-26,Legs B,legs,,Soulevé de terre roumain,2,8,92.5,8
+2024-09-26,Legs B,legs,,Soulevé de terre roumain,3,6,92.5,8.5
+2024-09-26,Legs B,legs,,Leg extension,1,15,67.5,7
+2024-09-26,Legs B,legs,,Leg extension,2,12,67.5,8
+2024-09-26,Legs B,legs,,Leg extension,3,12,67.5,8
+2024-09-26,Legs B,legs,,Fentes,1,12,27,7
+2024-09-26,Legs B,legs,,Fentes,2,10,27,8
+2024-09-26,Legs B,legs,,Fentes,3,10,27,8.5
+2024-09-29,Push A,push,,Développé couché barre,1,8,102.5,7
+2024-09-29,Push A,push,,Développé couché barre,2,8,102.5,8
+2024-09-29,Push A,push,,Développé couché barre,3,6,102.5,8.5
+2024-09-29,Push A,push,,Développé incliné haltères,1,10,31,7
+2024-09-29,Push A,push,,Développé incliné haltères,2,10,31,8
+2024-09-29,Push A,push,,Développé incliné haltères,3,8,31,8.5
+2024-09-29,Push A,push,,Dips,1,10,32.5,7
+2024-09-29,Push A,push,,Dips,2,8,32.5,8
+2024-09-29,Push A,push,,Dips,3,8,32.5,8.5
+2024-09-29,Push A,push,,Extension triceps poulie,1,12,44.5,6
+2024-09-29,Push A,push,,Extension triceps poulie,2,12,44.5,7
+2024-09-29,Push A,push,,Extension triceps poulie,3,10,44.5,8
+2024-10-01,Pull A,pull,,Tractions pronation,1,8,22.5,7.5
+2024-10-01,Pull A,pull,,Tractions pronation,2,7,22.5,8
+2024-10-01,Pull A,pull,,Tractions pronation,3,6,22.5,8.5
+2024-10-01,Pull A,pull,,Rowing barre,1,8,82.5,7
+2024-10-01,Pull A,pull,,Rowing barre,2,8,82.5,8
+2024-10-01,Pull A,pull,,Rowing barre,3,6,82.5,8.5
+2024-10-01,Pull A,pull,,Tirage vertical,1,10,77.5,7
+2024-10-01,Pull A,pull,,Tirage vertical,2,10,77.5,8
+2024-10-01,Pull A,pull,,Tirage vertical,3,8,77.5,8
+2024-10-01,Pull A,pull,,Curl barre,1,10,39,7
+2024-10-01,Pull A,pull,,Curl barre,2,10,39,8
+2024-10-01,Pull A,pull,,Curl barre,3,8,39,8.5
+2024-10-03,Legs A,legs,,Squat barre,1,6,112.5,7.5
+2024-10-03,Legs A,legs,,Squat barre,2,6,112.5,8
+2024-10-03,Legs A,legs,,Squat barre,3,5,112.5,8.5
+2024-10-03,Legs A,legs,,Presse à cuisses,1,10,165,7
+2024-10-03,Legs A,legs,,Presse à cuisses,2,10,165,8
+2024-10-03,Legs A,legs,,Presse à cuisses,3,8,165,8.5
+2024-10-03,Legs A,legs,,Leg curl,1,12,62.5,7
+2024-10-03,Legs A,legs,,Leg curl,2,10,62.5,8
+2024-10-03,Legs A,legs,,Leg curl,3,10,62.5,8.5
+2024-10-03,Legs A,legs,,Hip thrust,1,10,125,7
+2024-10-03,Legs A,legs,,Hip thrust,2,10,125,8
+2024-10-03,Legs A,legs,,Hip thrust,3,8,125,8
+2024-10-06,Push B,push,,Développé militaire,1,8,77.5,7
+2024-10-06,Push B,push,,Développé militaire,2,8,77.5,8
+2024-10-06,Push B,push,,Développé militaire,3,6,77.5,8.5
+2024-10-06,Push B,push,,Développé couché haltères,1,10,33,7
+2024-10-06,Push B,push,,Développé couché haltères,2,10,33,8
+2024-10-06,Push B,push,,Développé couché haltères,3,8,33,8.5
+2024-10-06,Push B,push,,Arnold press,1,10,27,7
+2024-10-06,Push B,push,,Arnold press,2,10,27,8
+2024-10-06,Push B,push,,Arnold press,3,8,27,8
+2024-10-06,Push B,push,,Écarté haltères,1,12,23,6
+2024-10-06,Push B,push,,Écarté haltères,2,12,23,7
+2024-10-06,Push B,push,,Écarté haltères,3,10,23,8
+2024-10-08,Pull B,pull,,Soulevé de terre,1,5,155,7.5
+2024-10-08,Pull B,pull,,Soulevé de terre,2,5,155,8
+2024-10-08,Pull B,pull,,Soulevé de terre,3,4,155,8.5
+2024-10-08,Pull B,pull,,Rowing haltère,1,10,44,7
+2024-10-08,Pull B,pull,,Rowing haltère,2,10,44,8
+2024-10-08,Pull B,pull,,Rowing haltère,3,8,44,8.5
+2024-10-08,Pull B,pull,,Tirage horizontal poulie,1,10,72.5,7
+2024-10-08,Pull B,pull,,Tirage horizontal poulie,2,10,72.5,8
+2024-10-08,Pull B,pull,,Tirage horizontal poulie,3,8,72.5,8
+2024-10-08,Pull B,pull,,Curl marteau,1,12,25,7
+2024-10-08,Pull B,pull,,Curl marteau,2,10,25,8
+2024-10-08,Pull B,pull,,Curl marteau,3,10,25,8.5
+2024-10-10,Legs B,legs,,Squat bulgare,1,10,36,7.5
+2024-10-10,Legs B,legs,,Squat bulgare,2,8,36,8
+2024-10-10,Legs B,legs,,Squat bulgare,3,8,36,8.5
+2024-10-10,Legs B,legs,,Soulevé de terre roumain,1,8,92.5,7
+2024-10-10,Legs B,legs,,Soulevé de terre roumain,2,8,92.5,8
+2024-10-10,Legs B,legs,,Soulevé de terre roumain,3,6,92.5,8.5
+2024-10-10,Legs B,legs,,Leg extension,1,15,67.5,7
+2024-10-10,Legs B,legs,,Leg extension,2,12,67.5,8
+2024-10-10,Legs B,legs,,Leg extension,3,12,67.5,8
+2024-10-10,Legs B,legs,,Fentes,1,12,27,7
+2024-10-10,Legs B,legs,,Fentes,2,10,27,8
+2024-10-10,Legs B,legs,,Fentes,3,10,27,8.5
+2024-10-13,Push A,push,,Développé couché barre,1,8,105,7
+2024-10-13,Push A,push,,Développé couché barre,2,8,105,8
+2024-10-13,Push A,push,,Développé couché barre,3,6,105,8.5
+2024-10-13,Push A,push,,Développé incliné haltères,1,10,32,7
+2024-10-13,Push A,push,,Développé incliné haltères,2,10,32,8
+2024-10-13,Push A,push,,Développé incliné haltères,3,8,32,8.5
+2024-10-13,Push A,push,,Dips,1,10,35,7
+2024-10-13,Push A,push,,Dips,2,8,35,8
+2024-10-13,Push A,push,,Dips,3,8,35,8.5
+2024-10-13,Push A,push,,Extension triceps poulie,1,12,47,6
+2024-10-13,Push A,push,,Extension triceps poulie,2,12,47,7
+2024-10-13,Push A,push,,Extension triceps poulie,3,10,47,8
+2024-10-15,Pull A,pull,,Tractions pronation,1,8,25,7.5
+2024-10-15,Pull A,pull,,Tractions pronation,2,7,25,8
+2024-10-15,Pull A,pull,,Tractions pronation,3,6,25,8.5
+2024-10-15,Pull A,pull,,Rowing barre,1,8,85,7
+2024-10-15,Pull A,pull,,Rowing barre,2,8,85,8
+2024-10-15,Pull A,pull,,Rowing barre,3,6,85,8.5
+2024-10-15,Pull A,pull,,Tirage vertical,1,10,80,7
+2024-10-15,Pull A,pull,,Tirage vertical,2,10,80,8
+2024-10-15,Pull A,pull,,Tirage vertical,3,8,80,8
+2024-10-15,Pull A,pull,,Curl barre,1,10,40,7
+2024-10-15,Pull A,pull,,Curl barre,2,10,40,8
+2024-10-15,Pull A,pull,,Curl barre,3,8,40,8.5
+2024-10-17,Legs A,legs,,Squat barre,1,6,115,7.5
+2024-10-17,Legs A,legs,,Squat barre,2,6,115,8
+2024-10-17,Legs A,legs,,Squat barre,3,5,115,8.5
+2024-10-17,Legs A,legs,,Presse à cuisses,1,10,170,7
+2024-10-17,Legs A,legs,,Presse à cuisses,2,10,170,8
+2024-10-17,Legs A,legs,,Presse à cuisses,3,8,170,8.5
+2024-10-17,Legs A,legs,,Leg curl,1,12,65,7
+2024-10-17,Legs A,legs,,Leg curl,2,10,65,8
+2024-10-17,Legs A,legs,,Leg curl,3,10,65,8.5
+2024-10-17,Legs A,legs,,Hip thrust,1,10,130,7
+2024-10-17,Legs A,legs,,Hip thrust,2,10,130,8
+2024-10-17,Legs A,legs,,Hip thrust,3,8,130,8
+2024-10-20,Push B,push,,Développé militaire,1,8,80,7
+2024-10-20,Push B,push,,Développé militaire,2,8,80,8
+2024-10-20,Push B,push,,Développé militaire,3,6,80,8.5
+2024-10-20,Push B,push,,Développé couché haltères,1,10,34,7
+2024-10-20,Push B,push,,Développé couché haltères,2,10,34,8
+2024-10-20,Push B,push,,Développé couché haltères,3,8,34,8.5
+2024-10-20,Push B,push,,Arnold press,1,10,28,7
+2024-10-20,Push B,push,,Arnold press,2,10,28,8
+2024-10-20,Push B,push,,Arnold press,3,8,28,8
+2024-10-20,Push B,push,,Écarté haltères,1,12,24,6
+2024-10-20,Push B,push,,Écarté haltères,2,12,24,7
+2024-10-20,Push B,push,,Écarté haltères,3,10,24,8
+2024-10-22,Pull B,pull,,Soulevé de terre,1,5,160,7.5
+2024-10-22,Pull B,pull,,Soulevé de terre,2,5,160,8
+2024-10-22,Pull B,pull,,Soulevé de terre,3,4,160,8.5
+2024-10-22,Pull B,pull,,Rowing haltère,1,10,46,7
+2024-10-22,Pull B,pull,,Rowing haltère,2,10,46,8
+2024-10-22,Pull B,pull,,Rowing haltère,3,8,46,8.5
+2024-10-22,Pull B,pull,,Tirage horizontal poulie,1,10,75,7
+2024-10-22,Pull B,pull,,Tirage horizontal poulie,2,10,75,8
+2024-10-22,Pull B,pull,,Tirage horizontal poulie,3,8,75,8
+2024-10-22,Pull B,pull,,Curl marteau,1,12,26,7
+2024-10-22,Pull B,pull,,Curl marteau,2,10,26,8
+2024-10-22,Pull B,pull,,Curl marteau,3,10,26,8.5
+2024-10-24,Legs B,legs,,Squat bulgare,1,10,38,7.5
+2024-10-24,Legs B,legs,,Squat bulgare,2,8,38,8
+2024-10-24,Legs B,legs,,Squat bulgare,3,8,38,8.5
+2024-10-24,Legs B,legs,,Soulevé de terre roumain,1,8,95,7
+2024-10-24,Legs B,legs,,Soulevé de terre roumain,2,8,95,8
+2024-10-24,Legs B,legs,,Soulevé de terre roumain,3,6,95,8.5
+2024-10-24,Legs B,legs,,Leg extension,1,15,70,7
+2024-10-24,Legs B,legs,,Leg extension,2,12,70,8
+2024-10-24,Legs B,legs,,Leg extension,3,12,70,8
+2024-10-24,Legs B,legs,,Fentes,1,12,28,7
+2024-10-24,Legs B,legs,,Fentes,2,10,28,8
+2024-10-24,Legs B,legs,,Fentes,3,10,28,8.5
+2024-10-28,Push A,push,,Développé couché barre,1,8,105,7
+2024-10-28,Push A,push,,Développé couché barre,2,8,105,8
+2024-10-28,Push A,push,,Développé couché barre,3,6,105,8.5
+2024-10-28,Push A,push,,Développé incliné haltères,1,10,32,7
+2024-10-28,Push A,push,,Développé incliné haltères,2,10,32,8
+2024-10-28,Push A,push,,Développé incliné haltères,3,8,32,8.5
+2024-10-28,Push A,push,,Dips,1,10,35,7
+2024-10-28,Push A,push,,Dips,2,8,35,8
+2024-10-28,Push A,push,,Dips,3,8,35,8.5
+2024-10-28,Push A,push,,Extension triceps poulie,1,12,47,6
+2024-10-28,Push A,push,,Extension triceps poulie,2,12,47,7
+2024-10-28,Push A,push,,Extension triceps poulie,3,10,47,8
+2024-10-30,Pull A,pull,,Tractions pronation,1,8,25,7.5
+2024-10-30,Pull A,pull,,Tractions pronation,2,7,25,8
+2024-10-30,Pull A,pull,,Tractions pronation,3,6,25,8.5
+2024-10-30,Pull A,pull,,Rowing barre,1,8,85,7
+2024-10-30,Pull A,pull,,Rowing barre,2,8,85,8
+2024-10-30,Pull A,pull,,Rowing barre,3,6,85,8.5
+2024-10-30,Pull A,pull,,Tirage vertical,1,10,80,7
+2024-10-30,Pull A,pull,,Tirage vertical,2,10,80,8
+2024-10-30,Pull A,pull,,Tirage vertical,3,8,80,8
+2024-10-30,Pull A,pull,,Curl barre,1,10,40,7
+2024-10-30,Pull A,pull,,Curl barre,2,10,40,8
+2024-10-30,Pull A,pull,,Curl barre,3,8,40,8.5
+2024-11-01,Legs A,legs,,Squat barre,1,6,115,7.5
+2024-11-01,Legs A,legs,,Squat barre,2,6,115,8
+2024-11-01,Legs A,legs,,Squat barre,3,5,115,8.5
+2024-11-01,Legs A,legs,,Presse à cuisses,1,10,170,7
+2024-11-01,Legs A,legs,,Presse à cuisses,2,10,170,8
+2024-11-01,Legs A,legs,,Presse à cuisses,3,8,170,8.5
+2024-11-01,Legs A,legs,,Leg curl,1,12,65,7
+2024-11-01,Legs A,legs,,Leg curl,2,10,65,8
+2024-11-01,Legs A,legs,,Leg curl,3,10,65,8.5
+2024-11-01,Legs A,legs,,Hip thrust,1,10,130,7
+2024-11-01,Legs A,legs,,Hip thrust,2,10,130,8
+2024-11-01,Legs A,legs,,Hip thrust,3,8,130,8
+2024-11-04,Push B,push,,Développé militaire,1,8,80,7
+2024-11-04,Push B,push,,Développé militaire,2,8,80,8
+2024-11-04,Push B,push,,Développé militaire,3,6,80,8.5
+2024-11-04,Push B,push,,Développé couché haltères,1,10,34,7
+2024-11-04,Push B,push,,Développé couché haltères,2,10,34,8
+2024-11-04,Push B,push,,Développé couché haltères,3,8,34,8.5
+2024-11-04,Push B,push,,Arnold press,1,10,28,7
+2024-11-04,Push B,push,,Arnold press,2,10,28,8
+2024-11-04,Push B,push,,Arnold press,3,8,28,8
+2024-11-04,Push B,push,,Écarté haltères,1,12,24,6
+2024-11-04,Push B,push,,Écarté haltères,2,12,24,7
+2024-11-04,Push B,push,,Écarté haltères,3,10,24,8
+2024-11-06,Pull B,pull,,Soulevé de terre,1,5,160,7.5
+2024-11-06,Pull B,pull,,Soulevé de terre,2,5,160,8
+2024-11-06,Pull B,pull,,Soulevé de terre,3,4,160,8.5
+2024-11-06,Pull B,pull,,Rowing haltère,1,10,46,7
+2024-11-06,Pull B,pull,,Rowing haltère,2,10,46,8
+2024-11-06,Pull B,pull,,Rowing haltère,3,8,46,8.5
+2024-11-06,Pull B,pull,,Tirage horizontal poulie,1,10,75,7
+2024-11-06,Pull B,pull,,Tirage horizontal poulie,2,10,75,8
+2024-11-06,Pull B,pull,,Tirage horizontal poulie,3,8,75,8
+2024-11-06,Pull B,pull,,Curl marteau,1,12,26,7
+2024-11-06,Pull B,pull,,Curl marteau,2,10,26,8
+2024-11-06,Pull B,pull,,Curl marteau,3,10,26,8.5
+2024-11-08,Legs B,legs,,Squat bulgare,1,10,38,7.5
+2024-11-08,Legs B,legs,,Squat bulgare,2,8,38,8
+2024-11-08,Legs B,legs,,Squat bulgare,3,8,38,8.5
+2024-11-08,Legs B,legs,,Soulevé de terre roumain,1,8,95,7
+2024-11-08,Legs B,legs,,Soulevé de terre roumain,2,8,95,8
+2024-11-08,Legs B,legs,,Soulevé de terre roumain,3,6,95,8.5
+2024-11-08,Legs B,legs,,Leg extension,1,15,70,7
+2024-11-08,Legs B,legs,,Leg extension,2,12,70,8
+2024-11-08,Legs B,legs,,Leg extension,3,12,70,8
+2024-11-08,Legs B,legs,,Fentes,1,12,28,7
+2024-11-08,Legs B,legs,,Fentes,2,10,28,8
+2024-11-08,Legs B,legs,,Fentes,3,10,28,8.5
+2024-11-11,Push A,push,,Développé couché barre,1,8,107.5,7
+2024-11-11,Push A,push,,Développé couché barre,2,8,107.5,8
+2024-11-11,Push A,push,,Développé couché barre,3,6,107.5,8.5
+2024-11-11,Push A,push,,Développé incliné haltères,1,10,33,7
+2024-11-11,Push A,push,,Développé incliné haltères,2,10,33,8
+2024-11-11,Push A,push,,Développé incliné haltères,3,8,33,8.5
+2024-11-11,Push A,push,,Dips,1,10,37.5,7
+2024-11-11,Push A,push,,Dips,2,8,37.5,8
+2024-11-11,Push A,push,,Dips,3,8,37.5,8.5
+2024-11-11,Push A,push,,Extension triceps poulie,1,12,49.5,6
+2024-11-11,Push A,push,,Extension triceps poulie,2,12,49.5,7
+2024-11-11,Push A,push,,Extension triceps poulie,3,10,49.5,8
+2024-11-13,Pull A,pull,,Tractions pronation,1,8,27.5,7.5
+2024-11-13,Pull A,pull,,Tractions pronation,2,7,27.5,8
+2024-11-13,Pull A,pull,,Tractions pronation,3,6,27.5,8.5
+2024-11-13,Pull A,pull,,Rowing barre,1,8,87.5,7
+2024-11-13,Pull A,pull,,Rowing barre,2,8,87.5,8
+2024-11-13,Pull A,pull,,Rowing barre,3,6,87.5,8.5
+2024-11-13,Pull A,pull,,Tirage vertical,1,10,82.5,7
+2024-11-13,Pull A,pull,,Tirage vertical,2,10,82.5,8
+2024-11-13,Pull A,pull,,Tirage vertical,3,8,82.5,8
+2024-11-13,Pull A,pull,,Curl barre,1,10,41,7
+2024-11-13,Pull A,pull,,Curl barre,2,10,41,8
+2024-11-13,Pull A,pull,,Curl barre,3,8,41,8.5
+2024-11-15,Legs A,legs,,Squat barre,1,6,117.5,7.5
+2024-11-15,Legs A,legs,,Squat barre,2,6,117.5,8
+2024-11-15,Legs A,legs,,Squat barre,3,5,117.5,8.5
+2024-11-15,Legs A,legs,,Presse à cuisses,1,10,175,7
+2024-11-15,Legs A,legs,,Presse à cuisses,2,10,175,8
+2024-11-15,Legs A,legs,,Presse à cuisses,3,8,175,8.5
+2024-11-15,Legs A,legs,,Leg curl,1,12,67.5,7
+2024-11-15,Legs A,legs,,Leg curl,2,10,67.5,8
+2024-11-15,Legs A,legs,,Leg curl,3,10,67.5,8.5
+2024-11-15,Legs A,legs,,Hip thrust,1,10,135,7
+2024-11-15,Legs A,legs,,Hip thrust,2,10,135,8
+2024-11-15,Legs A,legs,,Hip thrust,3,8,135,8
+2024-11-18,Push B,push,,Développé militaire,1,8,82.5,7
+2024-11-18,Push B,push,,Développé militaire,2,8,82.5,8
+2024-11-18,Push B,push,,Développé militaire,3,6,82.5,8.5
+2024-11-18,Push B,push,,Développé couché haltères,1,10,35,7
+2024-11-18,Push B,push,,Développé couché haltères,2,10,35,8
+2024-11-18,Push B,push,,Développé couché haltères,3,8,35,8.5
+2024-11-18,Push B,push,,Arnold press,1,10,29,7
+2024-11-18,Push B,push,,Arnold press,2,10,29,8
+2024-11-18,Push B,push,,Arnold press,3,8,29,8
+2024-11-18,Push B,push,,Écarté haltères,1,12,25,6
+2024-11-18,Push B,push,,Écarté haltères,2,12,25,7
+2024-11-18,Push B,push,,Écarté haltères,3,10,25,8
+2024-11-20,Pull B,pull,,Soulevé de terre,1,5,165,7.5
+2024-11-20,Pull B,pull,,Soulevé de terre,2,5,165,8
+2024-11-20,Pull B,pull,,Soulevé de terre,3,4,165,8.5
+2024-11-20,Pull B,pull,,Rowing haltère,1,10,48,7
+2024-11-20,Pull B,pull,,Rowing haltère,2,10,48,8
+2024-11-20,Pull B,pull,,Rowing haltère,3,8,48,8.5
+2024-11-20,Pull B,pull,,Tirage horizontal poulie,1,10,77.5,7
+2024-11-20,Pull B,pull,,Tirage horizontal poulie,2,10,77.5,8
+2024-11-20,Pull B,pull,,Tirage horizontal poulie,3,8,77.5,8
+2024-11-20,Pull B,pull,,Curl marteau,1,12,27,7
+2024-11-20,Pull B,pull,,Curl marteau,2,10,27,8
+2024-11-20,Pull B,pull,,Curl marteau,3,10,27,8.5
+2024-11-22,Legs B,legs,,Squat bulgare,1,10,40,7.5
+2024-11-22,Legs B,legs,,Squat bulgare,2,8,40,8
+2024-11-22,Legs B,legs,,Squat bulgare,3,8,40,8.5
+2024-11-22,Legs B,legs,,Soulevé de terre roumain,1,8,97.5,7
+2024-11-22,Legs B,legs,,Soulevé de terre roumain,2,8,97.5,8
+2024-11-22,Legs B,legs,,Soulevé de terre roumain,3,6,97.5,8.5
+2024-11-22,Legs B,legs,,Leg extension,1,15,72.5,7
+2024-11-22,Legs B,legs,,Leg extension,2,12,72.5,8
+2024-11-22,Legs B,legs,,Leg extension,3,12,72.5,8
+2024-11-22,Legs B,legs,,Fentes,1,12,29,7
+2024-11-22,Legs B,legs,,Fentes,2,10,29,8
+2024-11-22,Legs B,legs,,Fentes,3,10,29,8.5
+2024-11-25,Push A,push,,Développé couché barre,1,8,107.5,7
+2024-11-25,Push A,push,,Développé couché barre,2,8,107.5,8
+2024-11-25,Push A,push,,Développé couché barre,3,6,107.5,8.5
+2024-11-25,Push A,push,,Développé incliné haltères,1,10,33,7
+2024-11-25,Push A,push,,Développé incliné haltères,2,10,33,8
+2024-11-25,Push A,push,,Développé incliné haltères,3,8,33,8.5
+2024-11-25,Push A,push,,Dips,1,10,37.5,7
+2024-11-25,Push A,push,,Dips,2,8,37.5,8
+2024-11-25,Push A,push,,Dips,3,8,37.5,8.5
+2024-11-25,Push A,push,,Extension triceps poulie,1,12,49.5,6
+2024-11-25,Push A,push,,Extension triceps poulie,2,12,49.5,7
+2024-11-25,Push A,push,,Extension triceps poulie,3,10,49.5,8
+2024-11-27,Pull A,pull,,Tractions pronation,1,8,27.5,7.5
+2024-11-27,Pull A,pull,,Tractions pronation,2,7,27.5,8
+2024-11-27,Pull A,pull,,Tractions pronation,3,6,27.5,8.5
+2024-11-27,Pull A,pull,,Rowing barre,1,8,87.5,7
+2024-11-27,Pull A,pull,,Rowing barre,2,8,87.5,8
+2024-11-27,Pull A,pull,,Rowing barre,3,6,87.5,8.5
+2024-11-27,Pull A,pull,,Tirage vertical,1,10,82.5,7
+2024-11-27,Pull A,pull,,Tirage vertical,2,10,82.5,8
+2024-11-27,Pull A,pull,,Tirage vertical,3,8,82.5,8
+2024-11-27,Pull A,pull,,Curl barre,1,10,41,7
+2024-11-27,Pull A,pull,,Curl barre,2,10,41,8
+2024-11-27,Pull A,pull,,Curl barre,3,8,41,8.5
+2024-11-29,Legs A,legs,,Squat barre,1,6,117.5,7.5
+2024-11-29,Legs A,legs,,Squat barre,2,6,117.5,8
+2024-11-29,Legs A,legs,,Squat barre,3,5,117.5,8.5
+2024-11-29,Legs A,legs,,Presse à cuisses,1,10,175,7
+2024-11-29,Legs A,legs,,Presse à cuisses,2,10,175,8
+2024-11-29,Legs A,legs,,Presse à cuisses,3,8,175,8.5
+2024-11-29,Legs A,legs,,Leg curl,1,12,67.5,7
+2024-11-29,Legs A,legs,,Leg curl,2,10,67.5,8
+2024-11-29,Legs A,legs,,Leg curl,3,10,67.5,8.5
+2024-11-29,Legs A,legs,,Hip thrust,1,10,135,7
+2024-11-29,Legs A,legs,,Hip thrust,2,10,135,8
+2024-11-29,Legs A,legs,,Hip thrust,3,8,135,8
+2024-12-02,Push B,push,,Développé militaire,1,8,82.5,7
+2024-12-02,Push B,push,,Développé militaire,2,8,82.5,8
+2024-12-02,Push B,push,,Développé militaire,3,6,82.5,8.5
+2024-12-02,Push B,push,,Développé couché haltères,1,10,35,7
+2024-12-02,Push B,push,,Développé couché haltères,2,10,35,8
+2024-12-02,Push B,push,,Développé couché haltères,3,8,35,8.5
+2024-12-02,Push B,push,,Arnold press,1,10,29,7
+2024-12-02,Push B,push,,Arnold press,2,10,29,8
+2024-12-02,Push B,push,,Arnold press,3,8,29,8
+2024-12-02,Push B,push,,Écarté haltères,1,12,25,6
+2024-12-02,Push B,push,,Écarté haltères,2,12,25,7
+2024-12-02,Push B,push,,Écarté haltères,3,10,25,8
+2024-12-04,Pull B,pull,,Soulevé de terre,1,5,165,7.5
+2024-12-04,Pull B,pull,,Soulevé de terre,2,5,165,8
+2024-12-04,Pull B,pull,,Soulevé de terre,3,4,165,8.5
+2024-12-04,Pull B,pull,,Rowing haltère,1,10,48,7
+2024-12-04,Pull B,pull,,Rowing haltère,2,10,48,8
+2024-12-04,Pull B,pull,,Rowing haltère,3,8,48,8.5
+2024-12-04,Pull B,pull,,Tirage horizontal poulie,1,10,77.5,7
+2024-12-04,Pull B,pull,,Tirage horizontal poulie,2,10,77.5,8
+2024-12-04,Pull B,pull,,Tirage horizontal poulie,3,8,77.5,8
+2024-12-04,Pull B,pull,,Curl marteau,1,12,27,7
+2024-12-04,Pull B,pull,,Curl marteau,2,10,27,8
+2024-12-04,Pull B,pull,,Curl marteau,3,10,27,8.5
+2024-12-06,Legs B,legs,,Squat bulgare,1,10,40,7.5
+2024-12-06,Legs B,legs,,Squat bulgare,2,8,40,8
+2024-12-06,Legs B,legs,,Squat bulgare,3,8,40,8.5
+2024-12-06,Legs B,legs,,Soulevé de terre roumain,1,8,97.5,7
+2024-12-06,Legs B,legs,,Soulevé de terre roumain,2,8,97.5,8
+2024-12-06,Legs B,legs,,Soulevé de terre roumain,3,6,97.5,8.5
+2024-12-06,Legs B,legs,,Leg extension,1,15,72.5,7
+2024-12-06,Legs B,legs,,Leg extension,2,12,72.5,8
+2024-12-06,Legs B,legs,,Leg extension,3,12,72.5,8
+2024-12-06,Legs B,legs,,Fentes,1,12,29,7
+2024-12-06,Legs B,legs,,Fentes,2,10,29,8
+2024-12-06,Legs B,legs,,Fentes,3,10,29,8.5
+2024-12-09,Push A,push,,Développé couché barre,1,8,110,7
+2024-12-09,Push A,push,,Développé couché barre,2,8,110,8
+2024-12-09,Push A,push,,Développé couché barre,3,6,110,8.5
+2024-12-09,Push A,push,,Développé incliné haltères,1,10,34,7
+2024-12-09,Push A,push,,Développé incliné haltères,2,10,34,8
+2024-12-09,Push A,push,,Développé incliné haltères,3,8,34,8.5
+2024-12-09,Push A,push,,Dips,1,10,40,7
+2024-12-09,Push A,push,,Dips,2,8,40,8
+2024-12-09,Push A,push,,Dips,3,8,40,8.5
+2024-12-09,Push A,push,,Extension triceps poulie,1,12,52,6
+2024-12-09,Push A,push,,Extension triceps poulie,2,12,52,7
+2024-12-09,Push A,push,,Extension triceps poulie,3,10,52,8
+2024-12-11,Pull A,pull,,Tractions pronation,1,8,30,7.5
+2024-12-11,Pull A,pull,,Tractions pronation,2,7,30,8
+2024-12-11,Pull A,pull,,Tractions pronation,3,6,30,8.5
+2024-12-11,Pull A,pull,,Rowing barre,1,8,90,7
+2024-12-11,Pull A,pull,,Rowing barre,2,8,90,8
+2024-12-11,Pull A,pull,,Rowing barre,3,6,90,8.5
+2024-12-11,Pull A,pull,,Tirage vertical,1,10,85,7
+2024-12-11,Pull A,pull,,Tirage vertical,2,10,85,8
+2024-12-11,Pull A,pull,,Tirage vertical,3,8,85,8
+2024-12-11,Pull A,pull,,Curl barre,1,10,42,7
+2024-12-11,Pull A,pull,,Curl barre,2,10,42,8
+2024-12-11,Pull A,pull,,Curl barre,3,8,42,8.5
+2024-12-13,Legs A,legs,,Squat barre,1,6,120,7.5
+2024-12-13,Legs A,legs,,Squat barre,2,6,120,8
+2024-12-13,Legs A,legs,,Squat barre,3,5,120,8.5
+2024-12-13,Legs A,legs,,Presse à cuisses,1,10,180,7
+2024-12-13,Legs A,legs,,Presse à cuisses,2,10,180,8
+2024-12-13,Legs A,legs,,Presse à cuisses,3,8,180,8.5
+2024-12-13,Legs A,legs,,Leg curl,1,12,70,7
+2024-12-13,Legs A,legs,,Leg curl,2,10,70,8
+2024-12-13,Legs A,legs,,Leg curl,3,10,70,8.5
+2024-12-13,Legs A,legs,,Hip thrust,1,10,140,7
+2024-12-13,Legs A,legs,,Hip thrust,2,10,140,8
+2024-12-13,Legs A,legs,,Hip thrust,3,8,140,8
+2024-12-16,Push B,push,,Développé militaire,1,8,85,7
+2024-12-16,Push B,push,,Développé militaire,2,8,85,8
+2024-12-16,Push B,push,,Développé militaire,3,6,85,8.5
+2024-12-16,Push B,push,,Développé couché haltères,1,10,36,7
+2024-12-16,Push B,push,,Développé couché haltères,2,10,36,8
+2024-12-16,Push B,push,,Développé couché haltères,3,8,36,8.5
+2024-12-16,Push B,push,,Arnold press,1,10,30,7
+2024-12-16,Push B,push,,Arnold press,2,10,30,8
+2024-12-16,Push B,push,,Arnold press,3,8,30,8
+2024-12-16,Push B,push,,Écarté haltères,1,12,26,6
+2024-12-16,Push B,push,,Écarté haltères,2,12,26,7
+2024-12-16,Push B,push,,Écarté haltères,3,10,26,8
+2024-12-18,Pull B,pull,,Soulevé de terre,1,5,170,7.5
+2024-12-18,Pull B,pull,,Soulevé de terre,2,5,170,8
+2024-12-18,Pull B,pull,,Soulevé de terre,3,4,170,8.5
+2024-12-18,Pull B,pull,,Rowing haltère,1,10,50,7
+2024-12-18,Pull B,pull,,Rowing haltère,2,10,50,8
+2024-12-18,Pull B,pull,,Rowing haltère,3,8,50,8.5
+2024-12-18,Pull B,pull,,Tirage horizontal poulie,1,10,80,7
+2024-12-18,Pull B,pull,,Tirage horizontal poulie,2,10,80,8
+2024-12-18,Pull B,pull,,Tirage horizontal poulie,3,8,80,8
+2024-12-18,Pull B,pull,,Curl marteau,1,12,28,7
+2024-12-18,Pull B,pull,,Curl marteau,2,10,28,8
+2024-12-18,Pull B,pull,,Curl marteau,3,10,28,8.5
+2024-12-20,Legs B,legs,,Squat bulgare,1,10,42,7.5
+2024-12-20,Legs B,legs,,Squat bulgare,2,8,42,8
+2024-12-20,Legs B,legs,,Squat bulgare,3,8,42,8.5
+2024-12-20,Legs B,legs,,Soulevé de terre roumain,1,8,100,7
+2024-12-20,Legs B,legs,,Soulevé de terre roumain,2,8,100,8
+2024-12-20,Legs B,legs,,Soulevé de terre roumain,3,6,100,8.5
+2024-12-20,Legs B,legs,,Leg extension,1,15,75,7
+2024-12-20,Legs B,legs,,Leg extension,2,12,75,8
+2024-12-20,Legs B,legs,,Leg extension,3,12,75,8
+2024-12-20,Legs B,legs,,Fentes,1,12,30,7
+2024-12-20,Legs B,legs,,Fentes,2,10,30,8
+2024-12-20,Legs B,legs,,Fentes,3,10,30,8.5
+2024-12-23,Push A,push,,Développé couché barre,1,8,110,7
+2024-12-23,Push A,push,,Développé couché barre,2,8,110,8
+2024-12-23,Push A,push,,Développé couché barre,3,6,110,8.5
+2024-12-23,Push A,push,,Développé incliné haltères,1,10,34,7
+2024-12-23,Push A,push,,Développé incliné haltères,2,10,34,8
+2024-12-23,Push A,push,,Développé incliné haltères,3,8,34,8.5
+2024-12-23,Push A,push,,Dips,1,10,40,7
+2024-12-23,Push A,push,,Dips,2,8,40,8
+2024-12-23,Push A,push,,Dips,3,8,40,8.5
+2024-12-23,Push A,push,,Extension triceps poulie,1,12,52,6
+2024-12-23,Push A,push,,Extension triceps poulie,2,12,52,7
+2024-12-23,Push A,push,,Extension triceps poulie,3,10,52,8
+2024-12-25,Pull A,pull,,Tractions pronation,1,8,30,7.5
+2024-12-25,Pull A,pull,,Tractions pronation,2,7,30,8
+2024-12-25,Pull A,pull,,Tractions pronation,3,6,30,8.5
+2024-12-25,Pull A,pull,,Rowing barre,1,8,90,7
+2024-12-25,Pull A,pull,,Rowing barre,2,8,90,8
+2024-12-25,Pull A,pull,,Rowing barre,3,6,90,8.5
+2024-12-25,Pull A,pull,,Tirage vertical,1,10,85,7
+2024-12-25,Pull A,pull,,Tirage vertical,2,10,85,8
+2024-12-25,Pull A,pull,,Tirage vertical,3,8,85,8
+2024-12-25,Pull A,pull,,Curl barre,1,10,42,7
+2024-12-25,Pull A,pull,,Curl barre,2,10,42,8
+2024-12-25,Pull A,pull,,Curl barre,3,8,42,8.5
+2024-12-27,Legs A,legs,,Squat barre,1,6,120,7.5
+2024-12-27,Legs A,legs,,Squat barre,2,6,120,8
+2024-12-27,Legs A,legs,,Squat barre,3,5,120,8.5
+2024-12-27,Legs A,legs,,Presse à cuisses,1,10,180,7
+2024-12-27,Legs A,legs,,Presse à cuisses,2,10,180,8
+2024-12-27,Legs A,legs,,Presse à cuisses,3,8,180,8.5
+2024-12-27,Legs A,legs,,Leg curl,1,12,70,7
+2024-12-27,Legs A,legs,,Leg curl,2,10,70,8
+2024-12-27,Legs A,legs,,Leg curl,3,10,70,8.5
+2024-12-27,Legs A,legs,,Hip thrust,1,10,140,7
+2024-12-27,Legs A,legs,,Hip thrust,2,10,140,8
+2024-12-27,Legs A,legs,,Hip thrust,3,8,140,8
+2024-12-30,Push B,push,,Développé militaire,1,8,85,7
+2024-12-30,Push B,push,,Développé militaire,2,8,85,8
+2024-12-30,Push B,push,,Développé militaire,3,6,85,8.5
+2024-12-30,Push B,push,,Développé couché haltères,1,10,36,7
+2024-12-30,Push B,push,,Développé couché haltères,2,10,36,8
+2024-12-30,Push B,push,,Développé couché haltères,3,8,36,8.5
+2024-12-30,Push B,push,,Arnold press,1,10,30,7
+2024-12-30,Push B,push,,Arnold press,2,10,30,8
+2024-12-30,Push B,push,,Arnold press,3,8,30,8
+2024-12-30,Push B,push,,Écarté haltères,1,12,26,6
+2024-12-30,Push B,push,,Écarté haltères,2,12,26,7
+2024-12-30,Push B,push,,Écarté haltères,3,10,26,8
+2025-01-01,Pull B,pull,,Soulevé de terre,1,5,170,7.5
+2025-01-01,Pull B,pull,,Soulevé de terre,2,5,170,8
+2025-01-01,Pull B,pull,,Soulevé de terre,3,4,170,8.5
+2025-01-01,Pull B,pull,,Rowing haltère,1,10,50,7
+2025-01-01,Pull B,pull,,Rowing haltère,2,10,50,8
+2025-01-01,Pull B,pull,,Rowing haltère,3,8,50,8.5
+2025-01-01,Pull B,pull,,Tirage horizontal poulie,1,10,80,7
+2025-01-01,Pull B,pull,,Tirage horizontal poulie,2,10,80,8
+2025-01-01,Pull B,pull,,Tirage horizontal poulie,3,8,80,8
+2025-01-01,Pull B,pull,,Curl marteau,1,12,28,7
+2025-01-01,Pull B,pull,,Curl marteau,2,10,28,8
+2025-01-01,Pull B,pull,,Curl marteau,3,10,28,8.5
+2025-01-03,Legs B,legs,,Squat bulgare,1,10,42,7.5
+2025-01-03,Legs B,legs,,Squat bulgare,2,8,42,8
+2025-01-03,Legs B,legs,,Squat bulgare,3,8,42,8.5
+2025-01-03,Legs B,legs,,Soulevé de terre roumain,1,8,100,7
+2025-01-03,Legs B,legs,,Soulevé de terre roumain,2,8,100,8
+2025-01-03,Legs B,legs,,Soulevé de terre roumain,3,6,100,8.5
+2025-01-03,Legs B,legs,,Leg extension,1,15,75,7
+2025-01-03,Legs B,legs,,Leg extension,2,12,75,8
+2025-01-03,Legs B,legs,,Leg extension,3,12,75,8
+2025-01-03,Legs B,legs,,Fentes,1,12,30,7
+2025-01-03,Legs B,legs,,Fentes,2,10,30,8
+2025-01-03,Legs B,legs,,Fentes,3,10,30,8.5
+2025-01-06,Push A,push,,Développé couché barre,1,8,112.5,7
+2025-01-06,Push A,push,,Développé couché barre,2,8,112.5,8
+2025-01-06,Push A,push,,Développé couché barre,3,6,112.5,8.5
+2025-01-06,Push A,push,,Développé incliné haltères,1,10,35,7
+2025-01-06,Push A,push,,Développé incliné haltères,2,10,35,8
+2025-01-06,Push A,push,,Développé incliné haltères,3,8,35,8.5
+2025-01-06,Push A,push,,Dips,1,10,42.5,7
+2025-01-06,Push A,push,,Dips,2,8,42.5,8
+2025-01-06,Push A,push,,Dips,3,8,42.5,8.5
+2025-01-06,Push A,push,,Extension triceps poulie,1,12,54.5,6
+2025-01-06,Push A,push,,Extension triceps poulie,2,12,54.5,7
+2025-01-06,Push A,push,,Extension triceps poulie,3,10,54.5,8
+2025-01-08,Pull A,pull,,Tractions pronation,1,8,32.5,7.5
+2025-01-08,Pull A,pull,,Tractions pronation,2,7,32.5,8
+2025-01-08,Pull A,pull,,Tractions pronation,3,6,32.5,8.5
+2025-01-08,Pull A,pull,,Rowing barre,1,8,92.5,7
+2025-01-08,Pull A,pull,,Rowing barre,2,8,92.5,8
+2025-01-08,Pull A,pull,,Rowing barre,3,6,92.5,8.5
+2025-01-08,Pull A,pull,,Tirage vertical,1,10,87.5,7
+2025-01-08,Pull A,pull,,Tirage vertical,2,10,87.5,8
+2025-01-08,Pull A,pull,,Tirage vertical,3,8,87.5,8
+2025-01-08,Pull A,pull,,Curl barre,1,10,43,7
+2025-01-08,Pull A,pull,,Curl barre,2,10,43,8
+2025-01-08,Pull A,pull,,Curl barre,3,8,43,8.5
+2025-01-10,Legs A,legs,,Squat barre,1,6,122.5,7.5
+2025-01-10,Legs A,legs,,Squat barre,2,6,122.5,8
+2025-01-10,Legs A,legs,,Squat barre,3,5,122.5,8.5
+2025-01-10,Legs A,legs,,Presse à cuisses,1,10,185,7
+2025-01-10,Legs A,legs,,Presse à cuisses,2,10,185,8
+2025-01-10,Legs A,legs,,Presse à cuisses,3,8,185,8.5
+2025-01-10,Legs A,legs,,Leg curl,1,12,72.5,7
+2025-01-10,Legs A,legs,,Leg curl,2,10,72.5,8
+2025-01-10,Legs A,legs,,Leg curl,3,10,72.5,8.5
+2025-01-10,Legs A,legs,,Hip thrust,1,10,145,7
+2025-01-10,Legs A,legs,,Hip thrust,2,10,145,8
+2025-01-10,Legs A,legs,,Hip thrust,3,8,145,8
+2025-01-13,Push B,push,,Développé militaire,1,8,87.5,7
+2025-01-13,Push B,push,,Développé militaire,2,8,87.5,8
+2025-01-13,Push B,push,,Développé militaire,3,6,87.5,8.5
+2025-01-13,Push B,push,,Développé couché haltères,1,10,37,7
+2025-01-13,Push B,push,,Développé couché haltères,2,10,37,8
+2025-01-13,Push B,push,,Développé couché haltères,3,8,37,8.5
+2025-01-13,Push B,push,,Arnold press,1,10,31,7
+2025-01-13,Push B,push,,Arnold press,2,10,31,8
+2025-01-13,Push B,push,,Arnold press,3,8,31,8
+2025-01-13,Push B,push,,Écarté haltères,1,12,27,6
+2025-01-13,Push B,push,,Écarté haltères,2,12,27,7
+2025-01-13,Push B,push,,Écarté haltères,3,10,27,8
+2025-01-15,Pull B,pull,,Soulevé de terre,1,5,175,7.5
+2025-01-15,Pull B,pull,,Soulevé de terre,2,5,175,8
+2025-01-15,Pull B,pull,,Soulevé de terre,3,4,175,8.5
+2025-01-15,Pull B,pull,,Rowing haltère,1,10,52,7
+2025-01-15,Pull B,pull,,Rowing haltère,2,10,52,8
+2025-01-15,Pull B,pull,,Rowing haltère,3,8,52,8.5
+2025-01-15,Pull B,pull,,Tirage horizontal poulie,1,10,82.5,7
+2025-01-15,Pull B,pull,,Tirage horizontal poulie,2,10,82.5,8
+2025-01-15,Pull B,pull,,Tirage horizontal poulie,3,8,82.5,8
+2025-01-15,Pull B,pull,,Curl marteau,1,12,29,7
+2025-01-15,Pull B,pull,,Curl marteau,2,10,29,8
+2025-01-15,Pull B,pull,,Curl marteau,3,10,29,8.5
+2025-01-17,Legs B,legs,,Squat bulgare,1,10,44,7.5
+2025-01-17,Legs B,legs,,Squat bulgare,2,8,44,8
+2025-01-17,Legs B,legs,,Squat bulgare,3,8,44,8.5
+2025-01-17,Legs B,legs,,Soulevé de terre roumain,1,8,102.5,7
+2025-01-17,Legs B,legs,,Soulevé de terre roumain,2,8,102.5,8
+2025-01-17,Legs B,legs,,Soulevé de terre roumain,3,6,102.5,8.5
+2025-01-17,Legs B,legs,,Leg extension,1,15,77.5,7
+2025-01-17,Legs B,legs,,Leg extension,2,12,77.5,8
+2025-01-17,Legs B,legs,,Leg extension,3,12,77.5,8
+2025-01-17,Legs B,legs,,Fentes,1,12,31,7
+2025-01-17,Legs B,legs,,Fentes,2,10,31,8
+2025-01-17,Legs B,legs,,Fentes,3,10,31,8.5
+2025-01-20,Push A,push,,Développé couché barre,1,8,112.5,7
+2025-01-20,Push A,push,,Développé couché barre,2,8,112.5,8
+2025-01-20,Push A,push,,Développé couché barre,3,6,112.5,8.5
+2025-01-20,Push A,push,,Développé incliné haltères,1,10,35,7
+2025-01-20,Push A,push,,Développé incliné haltères,2,10,35,8
+2025-01-20,Push A,push,,Développé incliné haltères,3,8,35,8.5
+2025-01-20,Push A,push,,Dips,1,10,42.5,7
+2025-01-20,Push A,push,,Dips,2,8,42.5,8
+2025-01-20,Push A,push,,Dips,3,8,42.5,8.5
+2025-01-20,Push A,push,,Extension triceps poulie,1,12,54.5,6
+2025-01-20,Push A,push,,Extension triceps poulie,2,12,54.5,7
+2025-01-20,Push A,push,,Extension triceps poulie,3,10,54.5,8
+2025-01-22,Pull A,pull,,Tractions pronation,1,8,32.5,7.5
+2025-01-22,Pull A,pull,,Tractions pronation,2,7,32.5,8
+2025-01-22,Pull A,pull,,Tractions pronation,3,6,32.5,8.5
+2025-01-22,Pull A,pull,,Rowing barre,1,8,92.5,7
+2025-01-22,Pull A,pull,,Rowing barre,2,8,92.5,8
+2025-01-22,Pull A,pull,,Rowing barre,3,6,92.5,8.5
+2025-01-22,Pull A,pull,,Tirage vertical,1,10,87.5,7
+2025-01-22,Pull A,pull,,Tirage vertical,2,10,87.5,8
+2025-01-22,Pull A,pull,,Tirage vertical,3,8,87.5,8
+2025-01-22,Pull A,pull,,Curl barre,1,10,43,7
+2025-01-22,Pull A,pull,,Curl barre,2,10,43,8
+2025-01-22,Pull A,pull,,Curl barre,3,8,43,8.5
+2025-01-24,Legs A,legs,,Squat barre,1,6,122.5,7.5
+2025-01-24,Legs A,legs,,Squat barre,2,6,122.5,8
+2025-01-24,Legs A,legs,,Squat barre,3,5,122.5,8.5
+2025-01-24,Legs A,legs,,Presse à cuisses,1,10,185,7
+2025-01-24,Legs A,legs,,Presse à cuisses,2,10,185,8
+2025-01-24,Legs A,legs,,Presse à cuisses,3,8,185,8.5
+2025-01-24,Legs A,legs,,Leg curl,1,12,72.5,7
+2025-01-24,Legs A,legs,,Leg curl,2,10,72.5,8
+2025-01-24,Legs A,legs,,Leg curl,3,10,72.5,8.5
+2025-01-24,Legs A,legs,,Hip thrust,1,10,145,7
+2025-01-24,Legs A,legs,,Hip thrust,2,10,145,8
+2025-01-24,Legs A,legs,,Hip thrust,3,8,145,8
+2025-01-27,Push B,push,,Développé militaire,1,8,87.5,7
+2025-01-27,Push B,push,,Développé militaire,2,8,87.5,8
+2025-01-27,Push B,push,,Développé militaire,3,6,87.5,8.5
+2025-01-27,Push B,push,,Développé couché haltères,1,10,37,7
+2025-01-27,Push B,push,,Développé couché haltères,2,10,37,8
+2025-01-27,Push B,push,,Développé couché haltères,3,8,37,8.5
+2025-01-27,Push B,push,,Arnold press,1,10,31,7
+2025-01-27,Push B,push,,Arnold press,2,10,31,8
+2025-01-27,Push B,push,,Arnold press,3,8,31,8
+2025-01-27,Push B,push,,Écarté haltères,1,12,27,6
+2025-01-27,Push B,push,,Écarté haltères,2,12,27,7
+2025-01-27,Push B,push,,Écarté haltères,3,10,27,8
+2025-01-29,Pull B,pull,,Soulevé de terre,1,5,175,7.5
+2025-01-29,Pull B,pull,,Soulevé de terre,2,5,175,8
+2025-01-29,Pull B,pull,,Soulevé de terre,3,4,175,8.5
+2025-01-29,Pull B,pull,,Rowing haltère,1,10,52,7
+2025-01-29,Pull B,pull,,Rowing haltère,2,10,52,8
+2025-01-29,Pull B,pull,,Rowing haltère,3,8,52,8.5
+2025-01-29,Pull B,pull,,Tirage horizontal poulie,1,10,82.5,7
+2025-01-29,Pull B,pull,,Tirage horizontal poulie,2,10,82.5,8
+2025-01-29,Pull B,pull,,Tirage horizontal poulie,3,8,82.5,8
+2025-01-29,Pull B,pull,,Curl marteau,1,12,29,7
+2025-01-29,Pull B,pull,,Curl marteau,2,10,29,8
+2025-01-29,Pull B,pull,,Curl marteau,3,10,29,8.5
+2025-01-31,Legs B,legs,,Squat bulgare,1,10,44,7.5
+2025-01-31,Legs B,legs,,Squat bulgare,2,8,44,8
+2025-01-31,Legs B,legs,,Squat bulgare,3,8,44,8.5
+2025-01-31,Legs B,legs,,Soulevé de terre roumain,1,8,102.5,7
+2025-01-31,Legs B,legs,,Soulevé de terre roumain,2,8,102.5,8
+2025-01-31,Legs B,legs,,Soulevé de terre roumain,3,6,102.5,8.5
+2025-01-31,Legs B,legs,,Leg extension,1,15,77.5,7
+2025-01-31,Legs B,legs,,Leg extension,2,12,77.5,8
+2025-01-31,Legs B,legs,,Leg extension,3,12,77.5,8
+2025-01-31,Legs B,legs,,Fentes,1,12,31,7
+2025-01-31,Legs B,legs,,Fentes,2,10,31,8
+2025-01-31,Legs B,legs,,Fentes,3,10,31,8.5
+2025-02-03,Push A,push,,Développé couché barre,1,8,115,7
+2025-02-03,Push A,push,,Développé couché barre,2,8,115,8
+2025-02-03,Push A,push,,Développé couché barre,3,6,115,8.5
+2025-02-03,Push A,push,,Développé incliné haltères,1,10,36,7
+2025-02-03,Push A,push,,Développé incliné haltères,2,10,36,8
+2025-02-03,Push A,push,,Développé incliné haltères,3,8,36,8.5
+2025-02-03,Push A,push,,Dips,1,10,45,7
+2025-02-03,Push A,push,,Dips,2,8,45,8
+2025-02-03,Push A,push,,Dips,3,8,45,8.5
+2025-02-03,Push A,push,,Extension triceps poulie,1,12,57,6
+2025-02-03,Push A,push,,Extension triceps poulie,2,12,57,7
+2025-02-03,Push A,push,,Extension triceps poulie,3,10,57,8
+2025-02-05,Pull A,pull,,Tractions pronation,1,8,35,7.5
+2025-02-05,Pull A,pull,,Tractions pronation,2,7,35,8
+2025-02-05,Pull A,pull,,Tractions pronation,3,6,35,8.5
+2025-02-05,Pull A,pull,,Rowing barre,1,8,95,7
+2025-02-05,Pull A,pull,,Rowing barre,2,8,95,8
+2025-02-05,Pull A,pull,,Rowing barre,3,6,95,8.5
+2025-02-05,Pull A,pull,,Tirage vertical,1,10,90,7
+2025-02-05,Pull A,pull,,Tirage vertical,2,10,90,8
+2025-02-05,Pull A,pull,,Tirage vertical,3,8,90,8
+2025-02-05,Pull A,pull,,Curl barre,1,10,44,7
+2025-02-05,Pull A,pull,,Curl barre,2,10,44,8
+2025-02-05,Pull A,pull,,Curl barre,3,8,44,8.5
+2025-02-07,Legs A,legs,,Squat barre,1,6,125,7.5
+2025-02-07,Legs A,legs,,Squat barre,2,6,125,8
+2025-02-07,Legs A,legs,,Squat barre,3,5,125,8.5
+2025-02-07,Legs A,legs,,Presse à cuisses,1,10,190,7
+2025-02-07,Legs A,legs,,Presse à cuisses,2,10,190,8
+2025-02-07,Legs A,legs,,Presse à cuisses,3,8,190,8.5
+2025-02-07,Legs A,legs,,Leg curl,1,12,75,7
+2025-02-07,Legs A,legs,,Leg curl,2,10,75,8
+2025-02-07,Legs A,legs,,Leg curl,3,10,75,8.5
+2025-02-07,Legs A,legs,,Hip thrust,1,10,150,7
+2025-02-07,Legs A,legs,,Hip thrust,2,10,150,8
+2025-02-07,Legs A,legs,,Hip thrust,3,8,150,8
+2025-02-10,Push B,push,,Développé militaire,1,8,90,7
+2025-02-10,Push B,push,,Développé militaire,2,8,90,8
+2025-02-10,Push B,push,,Développé militaire,3,6,90,8.5
+2025-02-10,Push B,push,,Développé couché haltères,1,10,38,7
+2025-02-10,Push B,push,,Développé couché haltères,2,10,38,8
+2025-02-10,Push B,push,,Développé couché haltères,3,8,38,8.5
+2025-02-10,Push B,push,,Arnold press,1,10,32,7
+2025-02-10,Push B,push,,Arnold press,2,10,32,8
+2025-02-10,Push B,push,,Arnold press,3,8,32,8
+2025-02-10,Push B,push,,Écarté haltères,1,12,28,6
+2025-02-10,Push B,push,,Écarté haltères,2,12,28,7
+2025-02-10,Push B,push,,Écarté haltères,3,10,28,8
+2025-02-12,Pull B,pull,,Soulevé de terre,1,5,180,7.5
+2025-02-12,Pull B,pull,,Soulevé de terre,2,5,180,8
+2025-02-12,Pull B,pull,,Soulevé de terre,3,4,180,8.5
+2025-02-12,Pull B,pull,,Rowing haltère,1,10,54,7
+2025-02-12,Pull B,pull,,Rowing haltère,2,10,54,8
+2025-02-12,Pull B,pull,,Rowing haltère,3,8,54,8.5
+2025-02-12,Pull B,pull,,Tirage horizontal poulie,1,10,85,7
+2025-02-12,Pull B,pull,,Tirage horizontal poulie,2,10,85,8
+2025-02-12,Pull B,pull,,Tirage horizontal poulie,3,8,85,8
+2025-02-12,Pull B,pull,,Curl marteau,1,12,30,7
+2025-02-12,Pull B,pull,,Curl marteau,2,10,30,8
+2025-02-12,Pull B,pull,,Curl marteau,3,10,30,8.5
+2025-02-14,Legs B,legs,,Squat bulgare,1,10,46,7.5
+2025-02-14,Legs B,legs,,Squat bulgare,2,8,46,8
+2025-02-14,Legs B,legs,,Squat bulgare,3,8,46,8.5
+2025-02-14,Legs B,legs,,Soulevé de terre roumain,1,8,105,7
+2025-02-14,Legs B,legs,,Soulevé de terre roumain,2,8,105,8
+2025-02-14,Legs B,legs,,Soulevé de terre roumain,3,6,105,8.5
+2025-02-14,Legs B,legs,,Leg extension,1,15,80,7
+2025-02-14,Legs B,legs,,Leg extension,2,12,80,8
+2025-02-14,Legs B,legs,,Leg extension,3,12,80,8
+2025-02-14,Legs B,legs,,Fentes,1,12,32,7
+2025-02-14,Legs B,legs,,Fentes,2,10,32,8
+2025-02-14,Legs B,legs,,Fentes,3,10,32,8.5
+2025-02-17,Push A,push,,Développé couché barre,1,8,115,7
+2025-02-17,Push A,push,,Développé couché barre,2,8,115,8
+2025-02-17,Push A,push,,Développé couché barre,3,6,115,8.5
+2025-02-17,Push A,push,,Développé incliné haltères,1,10,36,7
+2025-02-17,Push A,push,,Développé incliné haltères,2,10,36,8
+2025-02-17,Push A,push,,Développé incliné haltères,3,8,36,8.5
+2025-02-17,Push A,push,,Dips,1,10,45,7
+2025-02-17,Push A,push,,Dips,2,8,45,8
+2025-02-17,Push A,push,,Dips,3,8,45,8.5
+2025-02-17,Push A,push,,Extension triceps poulie,1,12,57,6
+2025-02-17,Push A,push,,Extension triceps poulie,2,12,57,7
+2025-02-17,Push A,push,,Extension triceps poulie,3,10,57,8
+2025-02-19,Pull A,pull,,Tractions pronation,1,8,35,7.5
+2025-02-19,Pull A,pull,,Tractions pronation,2,7,35,8
+2025-02-19,Pull A,pull,,Tractions pronation,3,6,35,8.5
+2025-02-19,Pull A,pull,,Rowing barre,1,8,95,7
+2025-02-19,Pull A,pull,,Rowing barre,2,8,95,8
+2025-02-19,Pull A,pull,,Rowing barre,3,6,95,8.5
+2025-02-19,Pull A,pull,,Tirage vertical,1,10,90,7
+2025-02-19,Pull A,pull,,Tirage vertical,2,10,90,8
+2025-02-19,Pull A,pull,,Tirage vertical,3,8,90,8
+2025-02-19,Pull A,pull,,Curl barre,1,10,44,7
+2025-02-19,Pull A,pull,,Curl barre,2,10,44,8
+2025-02-19,Pull A,pull,,Curl barre,3,8,44,8.5
+2025-02-21,Legs A,legs,,Squat barre,1,6,125,7.5
+2025-02-21,Legs A,legs,,Squat barre,2,6,125,8
+2025-02-21,Legs A,legs,,Squat barre,3,5,125,8.5
+2025-02-21,Legs A,legs,,Presse à cuisses,1,10,190,7
+2025-02-21,Legs A,legs,,Presse à cuisses,2,10,190,8
+2025-02-21,Legs A,legs,,Presse à cuisses,3,8,190,8.5
+2025-02-21,Legs A,legs,,Leg curl,1,12,75,7
+2025-02-21,Legs A,legs,,Leg curl,2,10,75,8
+2025-02-21,Legs A,legs,,Leg curl,3,10,75,8.5
+2025-02-21,Legs A,legs,,Hip thrust,1,10,150,7
+2025-02-21,Legs A,legs,,Hip thrust,2,10,150,8
+2025-02-21,Legs A,legs,,Hip thrust,3,8,150,8
+2025-02-24,Push B,push,,Développé militaire,1,8,90,7
+2025-02-24,Push B,push,,Développé militaire,2,8,90,8
+2025-02-24,Push B,push,,Développé militaire,3,6,90,8.5
+2025-02-24,Push B,push,,Développé couché haltères,1,10,38,7
+2025-02-24,Push B,push,,Développé couché haltères,2,10,38,8
+2025-02-24,Push B,push,,Développé couché haltères,3,8,38,8.5
+2025-02-24,Push B,push,,Arnold press,1,10,32,7
+2025-02-24,Push B,push,,Arnold press,2,10,32,8
+2025-02-24,Push B,push,,Arnold press,3,8,32,8
+2025-02-24,Push B,push,,Écarté haltères,1,12,28,6
+2025-02-24,Push B,push,,Écarté haltères,2,12,28,7
+2025-02-24,Push B,push,,Écarté haltères,3,10,28,8
+2025-02-26,Pull B,pull,,Soulevé de terre,1,5,180,7.5
+2025-02-26,Pull B,pull,,Soulevé de terre,2,5,180,8
+2025-02-26,Pull B,pull,,Soulevé de terre,3,4,180,8.5
+2025-02-26,Pull B,pull,,Rowing haltère,1,10,54,7
+2025-02-26,Pull B,pull,,Rowing haltère,2,10,54,8
+2025-02-26,Pull B,pull,,Rowing haltère,3,8,54,8.5
+2025-02-26,Pull B,pull,,Tirage horizontal poulie,1,10,85,7
+2025-02-26,Pull B,pull,,Tirage horizontal poulie,2,10,85,8
+2025-02-26,Pull B,pull,,Tirage horizontal poulie,3,8,85,8
+2025-02-26,Pull B,pull,,Curl marteau,1,12,30,7
+2025-02-26,Pull B,pull,,Curl marteau,2,10,30,8
+2025-02-26,Pull B,pull,,Curl marteau,3,10,30,8.5
+2025-02-28,Legs B,legs,,Squat bulgare,1,10,46,7.5
+2025-02-28,Legs B,legs,,Squat bulgare,2,8,46,8
+2025-02-28,Legs B,legs,,Squat bulgare,3,8,46,8.5
+2025-02-28,Legs B,legs,,Soulevé de terre roumain,1,8,105,7
+2025-02-28,Legs B,legs,,Soulevé de terre roumain,2,8,105,8
+2025-02-28,Legs B,legs,,Soulevé de terre roumain,3,6,105,8.5
+2025-02-28,Legs B,legs,,Leg extension,1,15,80,7
+2025-02-28,Legs B,legs,,Leg extension,2,12,80,8
+2025-02-28,Legs B,legs,,Leg extension,3,12,80,8
+2025-02-28,Legs B,legs,,Fentes,1,12,32,7
+2025-02-28,Legs B,legs,,Fentes,2,10,32,8
+2025-02-28,Legs B,legs,,Fentes,3,10,32,8.5
+2025-03-03,Push A,push,,Développé couché barre,1,8,117.5,7
+2025-03-03,Push A,push,,Développé couché barre,2,8,117.5,8
+2025-03-03,Push A,push,,Développé couché barre,3,6,117.5,8.5
+2025-03-03,Push A,push,,Développé incliné haltères,1,10,37,7
+2025-03-03,Push A,push,,Développé incliné haltères,2,10,37,8
+2025-03-03,Push A,push,,Développé incliné haltères,3,8,37,8.5
+2025-03-03,Push A,push,,Dips,1,10,47.5,7
+2025-03-03,Push A,push,,Dips,2,8,47.5,8
+2025-03-03,Push A,push,,Dips,3,8,47.5,8.5
+2025-03-03,Push A,push,,Extension triceps poulie,1,12,59.5,6
+2025-03-03,Push A,push,,Extension triceps poulie,2,12,59.5,7
+2025-03-03,Push A,push,,Extension triceps poulie,3,10,59.5,8
+2025-03-05,Pull A,pull,,Tractions pronation,1,8,37.5,7.5
+2025-03-05,Pull A,pull,,Tractions pronation,2,7,37.5,8
+2025-03-05,Pull A,pull,,Tractions pronation,3,6,37.5,8.5
+2025-03-05,Pull A,pull,,Rowing barre,1,8,97.5,7
+2025-03-05,Pull A,pull,,Rowing barre,2,8,97.5,8
+2025-03-05,Pull A,pull,,Rowing barre,3,6,97.5,8.5
+2025-03-05,Pull A,pull,,Tirage vertical,1,10,92.5,7
+2025-03-05,Pull A,pull,,Tirage vertical,2,10,92.5,8
+2025-03-05,Pull A,pull,,Tirage vertical,3,8,92.5,8
+2025-03-05,Pull A,pull,,Curl barre,1,10,45,7
+2025-03-05,Pull A,pull,,Curl barre,2,10,45,8
+2025-03-05,Pull A,pull,,Curl barre,3,8,45,8.5
+2025-03-07,Legs A,legs,,Squat barre,1,6,127.5,7.5
+2025-03-07,Legs A,legs,,Squat barre,2,6,127.5,8
+2025-03-07,Legs A,legs,,Squat barre,3,5,127.5,8.5
+2025-03-07,Legs A,legs,,Presse à cuisses,1,10,195,7
+2025-03-07,Legs A,legs,,Presse à cuisses,2,10,195,8
+2025-03-07,Legs A,legs,,Presse à cuisses,3,8,195,8.5
+2025-03-07,Legs A,legs,,Leg curl,1,12,77.5,7
+2025-03-07,Legs A,legs,,Leg curl,2,10,77.5,8
+2025-03-07,Legs A,legs,,Leg curl,3,10,77.5,8.5
+2025-03-07,Legs A,legs,,Hip thrust,1,10,155,7
+2025-03-07,Legs A,legs,,Hip thrust,2,10,155,8
+2025-03-07,Legs A,legs,,Hip thrust,3,8,155,8
+2025-03-10,Push B,push,,Développé militaire,1,8,92.5,7
+2025-03-10,Push B,push,,Développé militaire,2,8,92.5,8
+2025-03-10,Push B,push,,Développé militaire,3,6,92.5,8.5
+2025-03-10,Push B,push,,Développé couché haltères,1,10,39,7
+2025-03-10,Push B,push,,Développé couché haltères,2,10,39,8
+2025-03-10,Push B,push,,Développé couché haltères,3,8,39,8.5
+2025-03-10,Push B,push,,Arnold press,1,10,33,7
+2025-03-10,Push B,push,,Arnold press,2,10,33,8
+2025-03-10,Push B,push,,Arnold press,3,8,33,8
+2025-03-10,Push B,push,,Écarté haltères,1,12,29,6
+2025-03-10,Push B,push,,Écarté haltères,2,12,29,7
+2025-03-10,Push B,push,,Écarté haltères,3,10,29,8
+2025-03-12,Pull B,pull,,Soulevé de terre,1,5,185,7.5
+2025-03-12,Pull B,pull,,Soulevé de terre,2,5,185,8
+2025-03-12,Pull B,pull,,Soulevé de terre,3,4,185,8.5
+2025-03-12,Pull B,pull,,Rowing haltère,1,10,56,7
+2025-03-12,Pull B,pull,,Rowing haltère,2,10,56,8
+2025-03-12,Pull B,pull,,Rowing haltère,3,8,56,8.5
+2025-03-12,Pull B,pull,,Tirage horizontal poulie,1,10,87.5,7
+2025-03-12,Pull B,pull,,Tirage horizontal poulie,2,10,87.5,8
+2025-03-12,Pull B,pull,,Tirage horizontal poulie,3,8,87.5,8
+2025-03-12,Pull B,pull,,Curl marteau,1,12,31,7
+2025-03-12,Pull B,pull,,Curl marteau,2,10,31,8
+2025-03-12,Pull B,pull,,Curl marteau,3,10,31,8.5
+2025-03-14,Legs B,legs,,Squat bulgare,1,10,48,7.5
+2025-03-14,Legs B,legs,,Squat bulgare,2,8,48,8
+2025-03-14,Legs B,legs,,Squat bulgare,3,8,48,8.5
+2025-03-14,Legs B,legs,,Soulevé de terre roumain,1,8,107.5,7
+2025-03-14,Legs B,legs,,Soulevé de terre roumain,2,8,107.5,8
+2025-03-14,Legs B,legs,,Soulevé de terre roumain,3,6,107.5,8.5
+2025-03-14,Legs B,legs,,Leg extension,1,15,82.5,7
+2025-03-14,Legs B,legs,,Leg extension,2,12,82.5,8
+2025-03-14,Legs B,legs,,Leg extension,3,12,82.5,8
+2025-03-14,Legs B,legs,,Fentes,1,12,33,7
+2025-03-14,Legs B,legs,,Fentes,2,10,33,8
+2025-03-14,Legs B,legs,,Fentes,3,10,33,8.5
+2025-03-17,Push A,push,,Développé couché barre,1,8,117.5,7
+2025-03-17,Push A,push,,Développé couché barre,2,8,117.5,8
+2025-03-17,Push A,push,,Développé couché barre,3,6,117.5,8.5
+2025-03-17,Push A,push,,Développé incliné haltères,1,10,37,7
+2025-03-17,Push A,push,,Développé incliné haltères,2,10,37,8
+2025-03-17,Push A,push,,Développé incliné haltères,3,8,37,8.5
+2025-03-17,Push A,push,,Dips,1,10,47.5,7
+2025-03-17,Push A,push,,Dips,2,8,47.5,8
+2025-03-17,Push A,push,,Dips,3,8,47.5,8.5
+2025-03-17,Push A,push,,Extension triceps poulie,1,12,59.5,6
+2025-03-17,Push A,push,,Extension triceps poulie,2,12,59.5,7
+2025-03-17,Push A,push,,Extension triceps poulie,3,10,59.5,8
+2025-03-19,Pull A,pull,,Tractions pronation,1,8,37.5,7.5
+2025-03-19,Pull A,pull,,Tractions pronation,2,7,37.5,8
+2025-03-19,Pull A,pull,,Tractions pronation,3,6,37.5,8.5
+2025-03-19,Pull A,pull,,Rowing barre,1,8,97.5,7
+2025-03-19,Pull A,pull,,Rowing barre,2,8,97.5,8
+2025-03-19,Pull A,pull,,Rowing barre,3,6,97.5,8.5
+2025-03-19,Pull A,pull,,Tirage vertical,1,10,92.5,7
+2025-03-19,Pull A,pull,,Tirage vertical,2,10,92.5,8
+2025-03-19,Pull A,pull,,Tirage vertical,3,8,92.5,8
+2025-03-19,Pull A,pull,,Curl barre,1,10,45,7
+2025-03-19,Pull A,pull,,Curl barre,2,10,45,8
+2025-03-19,Pull A,pull,,Curl barre,3,8,45,8.5
+2025-03-21,Legs A,legs,,Squat barre,1,6,127.5,7.5
+2025-03-21,Legs A,legs,,Squat barre,2,6,127.5,8
+2025-03-21,Legs A,legs,,Squat barre,3,5,127.5,8.5
+2025-03-21,Legs A,legs,,Presse à cuisses,1,10,195,7
+2025-03-21,Legs A,legs,,Presse à cuisses,2,10,195,8
+2025-03-21,Legs A,legs,,Presse à cuisses,3,8,195,8.5
+2025-03-21,Legs A,legs,,Leg curl,1,12,77.5,7
+2025-03-21,Legs A,legs,,Leg curl,2,10,77.5,8
+2025-03-21,Legs A,legs,,Leg curl,3,10,77.5,8.5
+2025-03-21,Legs A,legs,,Hip thrust,1,10,155,7
+2025-03-21,Legs A,legs,,Hip thrust,2,10,155,8
+2025-03-21,Legs A,legs,,Hip thrust,3,8,155,8
+2025-03-24,Push B,push,,Développé militaire,1,8,92.5,7
+2025-03-24,Push B,push,,Développé militaire,2,8,92.5,8
+2025-03-24,Push B,push,,Développé militaire,3,6,92.5,8.5
+2025-03-24,Push B,push,,Développé couché haltères,1,10,39,7
+2025-03-24,Push B,push,,Développé couché haltères,2,10,39,8
+2025-03-24,Push B,push,,Développé couché haltères,3,8,39,8.5
+2025-03-24,Push B,push,,Arnold press,1,10,33,7
+2025-03-24,Push B,push,,Arnold press,2,10,33,8
+2025-03-24,Push B,push,,Arnold press,3,8,33,8
+2025-03-24,Push B,push,,Écarté haltères,1,12,29,6
+2025-03-24,Push B,push,,Écarté haltères,2,12,29,7
+2025-03-24,Push B,push,,Écarté haltères,3,10,29,8
+2025-03-26,Pull B,pull,,Soulevé de terre,1,5,185,7.5
+2025-03-26,Pull B,pull,,Soulevé de terre,2,5,185,8
+2025-03-26,Pull B,pull,,Soulevé de terre,3,4,185,8.5
+2025-03-26,Pull B,pull,,Rowing haltère,1,10,56,7
+2025-03-26,Pull B,pull,,Rowing haltère,2,10,56,8
+2025-03-26,Pull B,pull,,Rowing haltère,3,8,56,8.5
+2025-03-26,Pull B,pull,,Tirage horizontal poulie,1,10,87.5,7
+2025-03-26,Pull B,pull,,Tirage horizontal poulie,2,10,87.5,8
+2025-03-26,Pull B,pull,,Tirage horizontal poulie,3,8,87.5,8
+2025-03-26,Pull B,pull,,Curl marteau,1,12,31,7
+2025-03-26,Pull B,pull,,Curl marteau,2,10,31,8
+2025-03-26,Pull B,pull,,Curl marteau,3,10,31,8.5
+2025-03-28,Legs B,legs,,Squat bulgare,1,10,48,7.5
+2025-03-28,Legs B,legs,,Squat bulgare,2,8,48,8
+2025-03-28,Legs B,legs,,Squat bulgare,3,8,48,8.5
+2025-03-28,Legs B,legs,,Soulevé de terre roumain,1,8,107.5,7
+2025-03-28,Legs B,legs,,Soulevé de terre roumain,2,8,107.5,8
+2025-03-28,Legs B,legs,,Soulevé de terre roumain,3,6,107.5,8.5
+2025-03-28,Legs B,legs,,Leg extension,1,15,82.5,7
+2025-03-28,Legs B,legs,,Leg extension,2,12,82.5,8
+2025-03-28,Legs B,legs,,Leg extension,3,12,82.5,8
+2025-03-28,Legs B,legs,,Fentes,1,12,33,7
+2025-03-28,Legs B,legs,,Fentes,2,10,33,8
+2025-03-28,Legs B,legs,,Fentes,3,10,33,8.5
+2025-03-30,Push A,push,,Développé couché barre,1,8,120,7
+2025-03-30,Push A,push,,Développé couché barre,2,8,120,8
+2025-03-30,Push A,push,,Développé couché barre,3,6,120,8.5
+2025-03-30,Push A,push,,Développé incliné haltères,1,10,38,7
+2025-03-30,Push A,push,,Développé incliné haltères,2,10,38,8
+2025-03-30,Push A,push,,Développé incliné haltères,3,8,38,8.5
+2025-03-30,Push A,push,,Dips,1,10,50,7
+2025-03-30,Push A,push,,Dips,2,8,50,8
+2025-03-30,Push A,push,,Dips,3,8,50,8.5
+2025-03-30,Push A,push,,Extension triceps poulie,1,12,62,6
+2025-03-30,Push A,push,,Extension triceps poulie,2,12,62,7
+2025-03-30,Push A,push,,Extension triceps poulie,3,10,62,8
+2025-04-01,Pull A,pull,,Tractions pronation,1,8,40,7.5
+2025-04-01,Pull A,pull,,Tractions pronation,2,7,40,8
+2025-04-01,Pull A,pull,,Tractions pronation,3,6,40,8.5
+2025-04-01,Pull A,pull,,Rowing barre,1,8,100,7
+2025-04-01,Pull A,pull,,Rowing barre,2,8,100,8
+2025-04-01,Pull A,pull,,Rowing barre,3,6,100,8.5
+2025-04-01,Pull A,pull,,Tirage vertical,1,10,95,7
+2025-04-01,Pull A,pull,,Tirage vertical,2,10,95,8
+2025-04-01,Pull A,pull,,Tirage vertical,3,8,95,8
+2025-04-01,Pull A,pull,,Curl barre,1,10,46,7
+2025-04-01,Pull A,pull,,Curl barre,2,10,46,8
+2025-04-01,Pull A,pull,,Curl barre,3,8,46,8.5
+2025-04-03,Legs A,legs,,Squat barre,1,6,130,7.5
+2025-04-03,Legs A,legs,,Squat barre,2,6,130,8
+2025-04-03,Legs A,legs,,Squat barre,3,5,130,8.5
+2025-04-03,Legs A,legs,,Presse à cuisses,1,10,200,7
+2025-04-03,Legs A,legs,,Presse à cuisses,2,10,200,8
+2025-04-03,Legs A,legs,,Presse à cuisses,3,8,200,8.5
+2025-04-03,Legs A,legs,,Leg curl,1,12,80,7
+2025-04-03,Legs A,legs,,Leg curl,2,10,80,8
+2025-04-03,Legs A,legs,,Leg curl,3,10,80,8.5
+2025-04-03,Legs A,legs,,Hip thrust,1,10,160,7
+2025-04-03,Legs A,legs,,Hip thrust,2,10,160,8
+2025-04-03,Legs A,legs,,Hip thrust,3,8,160,8
+2025-04-06,Push B,push,,Développé militaire,1,8,95,7
+2025-04-06,Push B,push,,Développé militaire,2,8,95,8
+2025-04-06,Push B,push,,Développé militaire,3,6,95,8.5
+2025-04-06,Push B,push,,Développé couché haltères,1,10,40,7
+2025-04-06,Push B,push,,Développé couché haltères,2,10,40,8
+2025-04-06,Push B,push,,Développé couché haltères,3,8,40,8.5
+2025-04-06,Push B,push,,Arnold press,1,10,34,7
+2025-04-06,Push B,push,,Arnold press,2,10,34,8
+2025-04-06,Push B,push,,Arnold press,3,8,34,8
+2025-04-06,Push B,push,,Écarté haltères,1,12,30,6
+2025-04-06,Push B,push,,Écarté haltères,2,12,30,7
+2025-04-06,Push B,push,,Écarté haltères,3,10,30,8
+2025-04-08,Pull B,pull,,Soulevé de terre,1,5,190,7.5
+2025-04-08,Pull B,pull,,Soulevé de terre,2,5,190,8
+2025-04-08,Pull B,pull,,Soulevé de terre,3,4,190,8.5
+2025-04-08,Pull B,pull,,Rowing haltère,1,10,58,7
+2025-04-08,Pull B,pull,,Rowing haltère,2,10,58,8
+2025-04-08,Pull B,pull,,Rowing haltère,3,8,58,8.5
+2025-04-08,Pull B,pull,,Tirage horizontal poulie,1,10,90,7
+2025-04-08,Pull B,pull,,Tirage horizontal poulie,2,10,90,8
+2025-04-08,Pull B,pull,,Tirage horizontal poulie,3,8,90,8
+2025-04-08,Pull B,pull,,Curl marteau,1,12,32,7
+2025-04-08,Pull B,pull,,Curl marteau,2,10,32,8
+2025-04-08,Pull B,pull,,Curl marteau,3,10,32,8.5
+2025-04-10,Legs B,legs,,Squat bulgare,1,10,50,7.5
+2025-04-10,Legs B,legs,,Squat bulgare,2,8,50,8
+2025-04-10,Legs B,legs,,Squat bulgare,3,8,50,8.5
+2025-04-10,Legs B,legs,,Soulevé de terre roumain,1,8,110,7
+2025-04-10,Legs B,legs,,Soulevé de terre roumain,2,8,110,8
+2025-04-10,Legs B,legs,,Soulevé de terre roumain,3,6,110,8.5
+2025-04-10,Legs B,legs,,Leg extension,1,15,85,7
+2025-04-10,Legs B,legs,,Leg extension,2,12,85,8
+2025-04-10,Legs B,legs,,Leg extension,3,12,85,8
+2025-04-10,Legs B,legs,,Fentes,1,12,34,7
+2025-04-10,Legs B,legs,,Fentes,2,10,34,8
+2025-04-10,Legs B,legs,,Fentes,3,10,34,8.5
+2025-04-13,Push A,push,,Développé couché barre,1,8,120,7
+2025-04-13,Push A,push,,Développé couché barre,2,8,120,8
+2025-04-13,Push A,push,,Développé couché barre,3,6,120,8.5
+2025-04-13,Push A,push,,Développé incliné haltères,1,10,38,7
+2025-04-13,Push A,push,,Développé incliné haltères,2,10,38,8
+2025-04-13,Push A,push,,Développé incliné haltères,3,8,38,8.5
+2025-04-13,Push A,push,,Dips,1,10,50,7
+2025-04-13,Push A,push,,Dips,2,8,50,8
+2025-04-13,Push A,push,,Dips,3,8,50,8.5
+2025-04-13,Push A,push,,Extension triceps poulie,1,12,62,6
+2025-04-13,Push A,push,,Extension triceps poulie,2,12,62,7
+2025-04-13,Push A,push,,Extension triceps poulie,3,10,62,8
+2025-04-15,Pull A,pull,,Tractions pronation,1,8,40,7.5
+2025-04-15,Pull A,pull,,Tractions pronation,2,7,40,8
+2025-04-15,Pull A,pull,,Tractions pronation,3,6,40,8.5
+2025-04-15,Pull A,pull,,Rowing barre,1,8,100,7
+2025-04-15,Pull A,pull,,Rowing barre,2,8,100,8
+2025-04-15,Pull A,pull,,Rowing barre,3,6,100,8.5
+2025-04-15,Pull A,pull,,Tirage vertical,1,10,95,7
+2025-04-15,Pull A,pull,,Tirage vertical,2,10,95,8
+2025-04-15,Pull A,pull,,Tirage vertical,3,8,95,8
+2025-04-15,Pull A,pull,,Curl barre,1,10,46,7
+2025-04-15,Pull A,pull,,Curl barre,2,10,46,8
+2025-04-15,Pull A,pull,,Curl barre,3,8,46,8.5
+2025-04-17,Legs A,legs,,Squat barre,1,6,130,7.5
+2025-04-17,Legs A,legs,,Squat barre,2,6,130,8
+2025-04-17,Legs A,legs,,Squat barre,3,5,130,8.5
+2025-04-17,Legs A,legs,,Presse à cuisses,1,10,200,7
+2025-04-17,Legs A,legs,,Presse à cuisses,2,10,200,8
+2025-04-17,Legs A,legs,,Presse à cuisses,3,8,200,8.5
+2025-04-17,Legs A,legs,,Leg curl,1,12,80,7
+2025-04-17,Legs A,legs,,Leg curl,2,10,80,8
+2025-04-17,Legs A,legs,,Leg curl,3,10,80,8.5
+2025-04-17,Legs A,legs,,Hip thrust,1,10,160,7
+2025-04-17,Legs A,legs,,Hip thrust,2,10,160,8
+2025-04-17,Legs A,legs,,Hip thrust,3,8,160,8
+2025-04-20,Push B,push,,Développé militaire,1,8,95,7
+2025-04-20,Push B,push,,Développé militaire,2,8,95,8
+2025-04-20,Push B,push,,Développé militaire,3,6,95,8.5
+2025-04-20,Push B,push,,Développé couché haltères,1,10,40,7
+2025-04-20,Push B,push,,Développé couché haltères,2,10,40,8
+2025-04-20,Push B,push,,Développé couché haltères,3,8,40,8.5
+2025-04-20,Push B,push,,Arnold press,1,10,34,7
+2025-04-20,Push B,push,,Arnold press,2,10,34,8
+2025-04-20,Push B,push,,Arnold press,3,8,34,8
+2025-04-20,Push B,push,,Écarté haltères,1,12,30,6
+2025-04-20,Push B,push,,Écarté haltères,2,12,30,7
+2025-04-20,Push B,push,,Écarté haltères,3,10,30,8
+2025-04-22,Pull B,pull,,Soulevé de terre,1,5,190,7.5
+2025-04-22,Pull B,pull,,Soulevé de terre,2,5,190,8
+2025-04-22,Pull B,pull,,Soulevé de terre,3,4,190,8.5
+2025-04-22,Pull B,pull,,Rowing haltère,1,10,58,7
+2025-04-22,Pull B,pull,,Rowing haltère,2,10,58,8
+2025-04-22,Pull B,pull,,Rowing haltère,3,8,58,8.5
+2025-04-22,Pull B,pull,,Tirage horizontal poulie,1,10,90,7
+2025-04-22,Pull B,pull,,Tirage horizontal poulie,2,10,90,8
+2025-04-22,Pull B,pull,,Tirage horizontal poulie,3,8,90,8
+2025-04-22,Pull B,pull,,Curl marteau,1,12,32,7
+2025-04-22,Pull B,pull,,Curl marteau,2,10,32,8
+2025-04-22,Pull B,pull,,Curl marteau,3,10,32,8.5
+2025-04-24,Legs B,legs,,Squat bulgare,1,10,50,7.5
+2025-04-24,Legs B,legs,,Squat bulgare,2,8,50,8
+2025-04-24,Legs B,legs,,Squat bulgare,3,8,50,8.5
+2025-04-24,Legs B,legs,,Soulevé de terre roumain,1,8,110,7
+2025-04-24,Legs B,legs,,Soulevé de terre roumain,2,8,110,8
+2025-04-24,Legs B,legs,,Soulevé de terre roumain,3,6,110,8.5
+2025-04-24,Legs B,legs,,Leg extension,1,15,85,7
+2025-04-24,Legs B,legs,,Leg extension,2,12,85,8
+2025-04-24,Legs B,legs,,Leg extension,3,12,85,8
+2025-04-24,Legs B,legs,,Fentes,1,12,34,7
+2025-04-24,Legs B,legs,,Fentes,2,10,34,8
+2025-04-24,Legs B,legs,,Fentes,3,10,34,8.5
+2025-04-27,Push A,push,,Développé couché barre,1,8,122.5,7
+2025-04-27,Push A,push,,Développé couché barre,2,8,122.5,8
+2025-04-27,Push A,push,,Développé couché barre,3,6,122.5,8.5
+2025-04-27,Push A,push,,Développé incliné haltères,1,10,39,7
+2025-04-27,Push A,push,,Développé incliné haltères,2,10,39,8
+2025-04-27,Push A,push,,Développé incliné haltères,3,8,39,8.5
+2025-04-27,Push A,push,,Dips,1,10,52.5,7
+2025-04-27,Push A,push,,Dips,2,8,52.5,8
+2025-04-27,Push A,push,,Dips,3,8,52.5,8.5
+2025-04-27,Push A,push,,Extension triceps poulie,1,12,64.5,6
+2025-04-27,Push A,push,,Extension triceps poulie,2,12,64.5,7
+2025-04-27,Push A,push,,Extension triceps poulie,3,10,64.5,8
+2025-04-29,Pull A,pull,,Tractions pronation,1,8,42.5,7.5
+2025-04-29,Pull A,pull,,Tractions pronation,2,7,42.5,8
+2025-04-29,Pull A,pull,,Tractions pronation,3,6,42.5,8.5
+2025-04-29,Pull A,pull,,Rowing barre,1,8,102.5,7
+2025-04-29,Pull A,pull,,Rowing barre,2,8,102.5,8
+2025-04-29,Pull A,pull,,Rowing barre,3,6,102.5,8.5
+2025-04-29,Pull A,pull,,Tirage vertical,1,10,97.5,7
+2025-04-29,Pull A,pull,,Tirage vertical,2,10,97.5,8
+2025-04-29,Pull A,pull,,Tirage vertical,3,8,97.5,8
+2025-04-29,Pull A,pull,,Curl barre,1,10,47,7
+2025-04-29,Pull A,pull,,Curl barre,2,10,47,8
+2025-04-29,Pull A,pull,,Curl barre,3,8,47,8.5
+2025-05-01,Legs A,legs,,Squat barre,1,6,132.5,7.5
+2025-05-01,Legs A,legs,,Squat barre,2,6,132.5,8
+2025-05-01,Legs A,legs,,Squat barre,3,5,132.5,8.5
+2025-05-01,Legs A,legs,,Presse à cuisses,1,10,205,7
+2025-05-01,Legs A,legs,,Presse à cuisses,2,10,205,8
+2025-05-01,Legs A,legs,,Presse à cuisses,3,8,205,8.5
+2025-05-01,Legs A,legs,,Leg curl,1,12,82.5,7
+2025-05-01,Legs A,legs,,Leg curl,2,10,82.5,8
+2025-05-01,Legs A,legs,,Leg curl,3,10,82.5,8.5
+2025-05-01,Legs A,legs,,Hip thrust,1,10,165,7
+2025-05-01,Legs A,legs,,Hip thrust,2,10,165,8
+2025-05-01,Legs A,legs,,Hip thrust,3,8,165,8
+2025-05-04,Push B,push,,Développé militaire,1,8,97.5,7
+2025-05-04,Push B,push,,Développé militaire,2,8,97.5,8
+2025-05-04,Push B,push,,Développé militaire,3,6,97.5,8.5
+2025-05-04,Push B,push,,Développé couché haltères,1,10,41,7
+2025-05-04,Push B,push,,Développé couché haltères,2,10,41,8
+2025-05-04,Push B,push,,Développé couché haltères,3,8,41,8.5
+2025-05-04,Push B,push,,Arnold press,1,10,35,7
+2025-05-04,Push B,push,,Arnold press,2,10,35,8
+2025-05-04,Push B,push,,Arnold press,3,8,35,8
+2025-05-04,Push B,push,,Écarté haltères,1,12,31,6
+2025-05-04,Push B,push,,Écarté haltères,2,12,31,7
+2025-05-04,Push B,push,,Écarté haltères,3,10,31,8
+2025-05-06,Pull B,pull,,Soulevé de terre,1,5,195,7.5
+2025-05-06,Pull B,pull,,Soulevé de terre,2,5,195,8
+2025-05-06,Pull B,pull,,Soulevé de terre,3,4,195,8.5
+2025-05-06,Pull B,pull,,Rowing haltère,1,10,60,7
+2025-05-06,Pull B,pull,,Rowing haltère,2,10,60,8
+2025-05-06,Pull B,pull,,Rowing haltère,3,8,60,8.5
+2025-05-06,Pull B,pull,,Tirage horizontal poulie,1,10,92.5,7
+2025-05-06,Pull B,pull,,Tirage horizontal poulie,2,10,92.5,8
+2025-05-06,Pull B,pull,,Tirage horizontal poulie,3,8,92.5,8
+2025-05-06,Pull B,pull,,Curl marteau,1,12,33,7
+2025-05-06,Pull B,pull,,Curl marteau,2,10,33,8
+2025-05-06,Pull B,pull,,Curl marteau,3,10,33,8.5
+2025-05-08,Legs B,legs,,Squat bulgare,1,10,52,7.5
+2025-05-08,Legs B,legs,,Squat bulgare,2,8,52,8
+2025-05-08,Legs B,legs,,Squat bulgare,3,8,52,8.5
+2025-05-08,Legs B,legs,,Soulevé de terre roumain,1,8,112.5,7
+2025-05-08,Legs B,legs,,Soulevé de terre roumain,2,8,112.5,8
+2025-05-08,Legs B,legs,,Soulevé de terre roumain,3,6,112.5,8.5
+2025-05-08,Legs B,legs,,Leg extension,1,15,87.5,7
+2025-05-08,Legs B,legs,,Leg extension,2,12,87.5,8
+2025-05-08,Legs B,legs,,Leg extension,3,12,87.5,8
+2025-05-08,Legs B,legs,,Fentes,1,12,35,7
+2025-05-08,Legs B,legs,,Fentes,2,10,35,8
+2025-05-08,Legs B,legs,,Fentes,3,10,35,8.5

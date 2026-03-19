@@ -7,7 +7,7 @@ export default function NotFound() {
       {/* Logo */}
       {/* TODO: Update APP_NAME */}
       <Link href="/" className="font-extrabold text-xl tracking-tight text-white mb-16">
-        MyApp
+        RepAI
       </Link>
 
       {/* 404 */}
