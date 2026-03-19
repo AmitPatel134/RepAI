@@ -22,6 +22,18 @@ type Activity = {
 
 type UnifiedItem = { kind: "workout"; data: Workout } | { kind: "activity"; data: Activity }
 
+type VoiceSet = { reps: number | null; weight: number | null }
+type VoiceExercise = { name: string; sets: VoiceSet[] }
+type VoiceResult = {
+  kind: "workout" | "cardio" | "ambiguous"
+  possibleCardioTypes?: string[]
+  workout?: { name: string; type: string; exercises: VoiceExercise[]; notes?: string | null }
+  activity?: {
+    type: string; durationSec?: number | null; distanceM?: number | null
+    elevationM?: number | null; avgHeartRate?: number | null; calories?: number | null; notes?: string | null
+  }
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const WORKOUT_TYPES = [
@@ -142,6 +154,13 @@ export default function ActivitiesPage() {
   const [showCardioForm, setShowCardioForm] = useState(false)
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
 
+  // Voice
+  const [voiceRecording, setVoiceRecording] = useState(false)
+  const [voiceParsing, setVoiceParsing] = useState(false)
+  const [voiceTranscript, setVoiceTranscript] = useState("")
+  const [voiceResult, setVoiceResult] = useState<VoiceResult | null>(null)
+  const recognitionRef = useRef<{ stop: () => void } | null>(null)
+
   // Workout form
   const [wName, setWName] = useState("")
   const [wType, setWType] = useState("fullbody")
@@ -149,6 +168,7 @@ export default function ActivitiesPage() {
   const [wDate, setWDate] = useState(new Date().toISOString().slice(0, 10))
   const [wNotes, setWNotes] = useState("")
   const [wSaving, setWSaving] = useState(false)
+  const [wExercises, setWExercises] = useState<VoiceExercise[]>([])
 
   // Cardio form
   const [cType, setCType] = useState("running")
@@ -340,11 +360,12 @@ export default function ActivitiesPage() {
     const r = await authFetch("/api/workouts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: wName.trim(), type: finalType, notes: wNotes, date: wDate }),
+      body: JSON.stringify({ name: wName.trim(), type: finalType, notes: wNotes, date: wDate, exercises: wExercises }),
     })
     if (r.ok) {
       const workout = await r.json()
       setShowWorkoutForm(false)
+      setWExercises([])
       router.push(`/app/workouts/${workout.id}`)
     }
     setWSaving(false)
@@ -418,6 +439,116 @@ export default function ActivitiesPage() {
     setCDurH(""); setCDurM(""); setCDist(""); setCElev(""); setCHR(""); setCCal(""); setCNotes("")
   }
 
+  // ─── Voice ────────────────────────────────────────────────────────────────
+
+  function startVoice() {
+    if (isDemo) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SR) { alert("Reconnaissance vocale non supportée sur ce navigateur."); return }
+
+    const recognition = new SR()
+    recognition.lang = "fr-FR"
+    recognition.continuous = false
+    recognition.interimResults = false
+
+    recognition.onresult = (e: { results: { [x: number]: { [x: number]: { transcript: string } } } }) => {
+      const text = e.results[0][0].transcript
+      setVoiceTranscript(text)
+      setVoiceRecording(false)
+      parseVoice(text)
+    }
+    recognition.onerror = () => setVoiceRecording(false)
+    recognition.onend = () => setVoiceRecording(false)
+
+    recognitionRef.current = recognition
+    recognition.start()
+    setVoiceTranscript("")
+    setVoiceRecording(true)
+  }
+
+  function stopVoice() {
+    recognitionRef.current?.stop()
+    setVoiceRecording(false)
+  }
+
+  async function parseVoice(text: string) {
+    setVoiceParsing(true)
+    try {
+      const r = await authFetch("/api/voice/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: text }),
+      })
+      const result: VoiceResult = await r.json()
+      applyVoiceResult(result)
+    } catch {
+      alert("Erreur lors de l'analyse vocale")
+    }
+    setVoiceParsing(false)
+  }
+
+  function applyVoiceResult(result: VoiceResult) {
+    if (result.kind === "workout") {
+      const w = result.workout
+      if (!w) return
+      setWName(w.name || "Séance")
+      setWType(w.type || "fullbody")
+      setWDate(new Date().toISOString().slice(0, 10))
+      setWNotes(w.notes || "")
+      setWExercises(w.exercises || [])
+      setShowWorkoutForm(true)
+    } else if (result.kind === "cardio") {
+      const a = result.activity
+      if (!a) return
+      setCType(a.type || "running")
+      setCDate(new Date().toISOString().slice(0, 10))
+      const h = a.durationSec ? Math.floor(a.durationSec / 3600) : 0
+      const m = a.durationSec ? Math.floor((a.durationSec % 3600) / 60) : 0
+      setCDurH(h > 0 ? String(h) : "")
+      setCDurM(m > 0 ? String(m) : "")
+      setCDist(a.distanceM ? String((a.distanceM / 1000).toFixed(2)).replace(/\.?0+$/, "") : "")
+      setCElev(a.elevationM ? String(a.elevationM) : "")
+      setCHR(a.avgHeartRate ? String(a.avgHeartRate) : "")
+      setCCal(a.calories ? String(a.calories) : "")
+      setCNotes(a.notes || "")
+      setShowCardioForm(true)
+    } else {
+      // ambiguous — store result and show selector
+      setVoiceResult(result)
+    }
+  }
+
+  function applyVoiceCardioChoice(cardioType: string) {
+    const a = voiceResult?.activity
+    setCType(cardioType)
+    setCDate(new Date().toISOString().slice(0, 10))
+    if (a) {
+      const h = a.durationSec ? Math.floor(a.durationSec / 3600) : 0
+      const m = a.durationSec ? Math.floor((a.durationSec % 3600) / 60) : 0
+      setCDurH(h > 0 ? String(h) : "")
+      setCDurM(m > 0 ? String(m) : "")
+      setCDist(a.distanceM ? String((a.distanceM / 1000).toFixed(2)).replace(/\.?0+$/, "") : "")
+      setCElev(a.elevationM ? String(a.elevationM) : "")
+      setCHR(a.avgHeartRate ? String(a.avgHeartRate) : "")
+      setCCal(a.calories ? String(a.calories) : "")
+      setCNotes(a.notes || "")
+    }
+    setVoiceResult(null)
+    setShowCardioForm(true)
+  }
+
+  function applyVoiceWorkoutChoice() {
+    const w = voiceResult?.workout
+    setWName(w?.name || "Séance")
+    setWType(w?.type || "fullbody")
+    setWDate(new Date().toISOString().slice(0, 10))
+    setWNotes(w?.notes || "")
+    setWExercises(w?.exercises || [])
+    setVoiceResult(null)
+    setShowWorkoutForm(true)
+  }
+
   if (loading) return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center">
       <div className="w-6 h-6 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
@@ -455,15 +586,32 @@ export default function ActivitiesPage() {
                 Annuler
               </button>
             ) : (
-              <button
-                onClick={handleAdd}
-                className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors"
-              >
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span className="hidden sm:inline">Nouvelle activité</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Voice button */}
+                <button
+                  onClick={voiceRecording ? stopVoice : startVoice}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                    voiceRecording
+                      ? "bg-red-500 shadow-lg shadow-red-500/40 animate-pulse"
+                      : "bg-white/[0.07] border border-white/10 hover:bg-white/15"
+                  }`}
+                  title="Commande vocale"
+                >
+                  <svg className={`w-4 h-4 ${voiceRecording ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                </button>
+                {/* Add button */}
+                <button
+                  onClick={handleAdd}
+                  className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors"
+                >
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="hidden sm:inline">Nouvelle activité</span>
+                </button>
+              </div>
             )}
           </div>
 
@@ -812,8 +960,41 @@ export default function ActivitiesPage() {
                     className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none resize-none"/>
                 </div>
               </div>
+
+              {/* Exercises from voice */}
+              {wExercises.length > 0 && (
+                <div className="mt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">
+                      Exercices détectés ({wExercises.length})
+                    </p>
+                    <button onClick={() => setWExercises([])} className="text-[11px] text-gray-600 hover:text-red-400 transition-colors">
+                      Effacer
+                    </button>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {wExercises.map((ex, i) => (
+                      <div key={i} className="bg-white/[0.04] border border-white/[0.07] rounded-xl px-3 py-2.5">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-bold text-white">{ex.name}</p>
+                          <span className="text-[11px] font-bold text-violet-400">{ex.sets.length} série{ex.sets.length > 1 ? "s" : ""}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                          {ex.sets.map((s, j) => (
+                            <span key={j} className="text-[11px] text-gray-400 bg-white/5 px-2 py-0.5 rounded-full">
+                              {s.reps != null ? `${s.reps} rép` : "—"}
+                              {s.weight != null ? ` × ${s.weight} kg` : ""}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <button onClick={handleCreateWorkout} disabled={wSaving || !wName.trim()} className="w-full mt-5 py-3 bg-violet-600 rounded-xl text-sm font-bold text-white hover:bg-violet-500 transition-colors disabled:opacity-50">
-                {wSaving ? "..." : "Créer →"}
+                {wSaving ? "..." : wExercises.length > 0 ? `Créer avec ${wExercises.length} exercice${wExercises.length > 1 ? "s" : ""} →` : "Créer →"}
               </button>
             </div>
           </div>
@@ -899,6 +1080,104 @@ export default function ActivitiesPage() {
               <button onClick={handleSaveActivity} disabled={cSaving} className="w-full mt-5 py-3 bg-orange-500 rounded-xl text-sm font-bold text-white hover:bg-orange-400 transition-colors disabled:opacity-50">
                 {cSaving ? "..." : editingActivity ? "Enregistrer" : "Ajouter"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Voice recording overlay ── */}
+      {voiceRecording && (
+        <div className="fixed inset-0 bg-black/85 z-50 flex flex-col items-center justify-center gap-6 px-6">
+          <div className="w-20 h-20 rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center animate-pulse">
+            <svg className="w-9 h-9 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+          </div>
+          <div className="text-center">
+            <p className="text-white font-bold text-lg mb-1">Enregistrement…</p>
+            <p className="text-gray-400 text-sm">Décrivez votre activité à voix haute</p>
+          </div>
+          <div className="flex gap-1.5">
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} className="w-1.5 rounded-full bg-red-400 animate-bounce"
+                style={{ height: `${12 + (i % 2) * 8}px`, animationDelay: `${i * 0.1}s` }} />
+            ))}
+          </div>
+          <button onClick={stopVoice} className="mt-2 px-6 py-2.5 border border-white/20 rounded-xl text-sm font-bold text-gray-300 hover:text-white transition-colors">
+            Arrêter
+          </button>
+        </div>
+      )}
+
+      {/* ── Voice parsing overlay ── */}
+      {voiceParsing && (
+        <div className="fixed inset-0 bg-black/85 z-50 flex flex-col items-center justify-center gap-5 px-6">
+          <div className="w-16 h-16 rounded-full bg-violet-600/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-violet-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <div className="text-center">
+            <p className="text-white font-bold text-lg mb-1">Analyse en cours…</p>
+            {voiceTranscript && (
+              <p className="text-gray-400 text-sm italic max-w-xs">&ldquo;{voiceTranscript}&rdquo;</p>
+            )}
+          </div>
+          <div className="flex gap-1.5">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Voice ambiguous type selector ── */}
+      {voiceResult && !voiceRecording && !voiceParsing && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={() => setVoiceResult(null)}>
+          <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-white/20" /></div>
+            <div className="px-5 pb-8 pt-3">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Plusieurs types détectés</p>
+              <h3 className="text-base font-black text-white mb-2">Quel type d&apos;activité ?</h3>
+              {voiceTranscript && (
+                <p className="text-xs text-gray-500 italic mb-5 bg-white/5 px-3 py-2 rounded-xl">&ldquo;{voiceTranscript}&rdquo;</p>
+              )}
+              <div className="flex flex-col gap-2">
+                {/* Workout option */}
+                <button
+                  onClick={applyVoiceWorkoutChoice}
+                  className="flex items-center gap-3 p-3.5 bg-violet-600/10 border border-violet-500/30 rounded-2xl text-left hover:border-violet-500/60 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-violet-600/20 flex items-center justify-center text-violet-400 shrink-0">
+                    <DumbbellIcon size={18} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-extrabold text-white">Séance de sport</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Exercices, séries, répétitions</p>
+                  </div>
+                </button>
+                {/* Cardio options */}
+                {(voiceResult.possibleCardioTypes && voiceResult.possibleCardioTypes.length > 0
+                  ? voiceResult.possibleCardioTypes
+                  : CARDIO_TYPES.map(t => t.key)
+                ).map(key => {
+                  const info = CARDIO_TYPES.find(t => t.key === key)
+                  if (!info) return null
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => applyVoiceCardioChoice(key)}
+                      className="flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-colors"
+                      style={{ backgroundColor: info.color + "15", borderColor: info.color + "40" }}
+                    >
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: info.color + "25" }}>
+                        <span style={{ color: info.color }}><CardioIcon type={key} size={18} /></span>
+                      </div>
+                      <p className="text-sm font-extrabold text-white">{info.label}</p>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </div>
