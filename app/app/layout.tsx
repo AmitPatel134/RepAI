@@ -5,7 +5,6 @@ import AppSidebar from "@/components/AppSidebar"
 
 const PAGE_ORDER = [
   "/app/activities",
-  "/app/workouts",
   "/app",
   "/app/coach",
   "/app/profil",

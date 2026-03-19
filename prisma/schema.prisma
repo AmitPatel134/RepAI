@@ -20,7 +20,6 @@ model User {
   workouts      Workout[]
   coachSessions CoachSession[]
   activities    Activity[]
-  stravaToken   StravaToken?
 }
 
 model Activity {
@@ -41,24 +40,10 @@ model Activity {
   laps          Int?
   poolLengthM   Int?
   notes         String?
-  source        String    @default("manual")
-  stravaId      String?   @unique
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@index([userId, date])
-}
-
-model StravaToken {
-  id              String    @id @default(cuid())
-  userId          String    @unique
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  stravaAthleteId Int       @unique
-  accessToken     String
-  refreshToken    String
-  expiresAt       DateTime
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
 }
 
 model Workout {

@@ -64,7 +64,6 @@ export async function POST(request: NextRequest) {
         laps: laps ?? null,
         poolLengthM: poolLengthM ?? null,
         notes: notes ?? null,
-        source: "manual",
       },
     })
 
