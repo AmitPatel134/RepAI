@@ -1,14 +1,20 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
 import LoadingScreen from "@/components/LoadingScreen"
-import { DEMO_COACH_SESSIONS, DEMO_WORKOUTS } from "@/lib/demoData"
+import { DEMO_WORKOUTS } from "@/lib/demoData"
 
-type Session = { id: string; question: string; response: string; createdAt: string }
+type Session = { question: string; response: string; createdAt: string }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
+const LS_KEY = "repai_last_coach"
+
+function loadStored(): Session | null {
+  if (typeof window === "undefined") return null
+  try { return JSON.parse(localStorage.getItem(LS_KEY) ?? "null") } catch { return null }
+}
+function saveStored(s: Session) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(s)) } catch { /* noop */ }
 }
 
 function renderMarkdown(text: string) {
@@ -22,19 +28,23 @@ function renderMarkdown(text: string) {
     .replace(/\n/g, "<br/>")
 }
 
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+}
+
 const QUICK_QUESTIONS = [
   "Comment améliorer ma force sur le squat ?",
   "Est-ce que mon volume d'entraînement est adapté ?",
-  "Comment éviter les blessures sur le soulevé de terre ?",
+  "Analyse mon alimentation et mes entraînements",
   "Quelle fréquence d'entraînement me recommandes-tu ?",
   "Comment optimiser ma récupération entre les séances ?",
-  "Dois-je changer ma programmation actuelle ?",
+  "Mon apport en protéines est-il suffisant ?",
 ]
 
 export default function CoachPage() {
   const [ready, setReady] = useState(false)
   const [isDemo, setIsDemo] = useState(false)
-  const [sessions, setSessions] = useState<Session[]>([])
+  const [lastSession, setLastSession] = useState<Session | null>(null)
   const [question, setQuestion] = useState("")
   const [loading, setLoading] = useState(false)
   const [workoutContext, setWorkoutContext] = useState("")
@@ -42,10 +52,14 @@ export default function CoachPage() {
   const [nutritionContext, setNutritionContext] = useState("")
 
   useEffect(() => {
+    // Show stored response immediately (before auth check)
+    const stored = loadStored()
+    if (stored) setLastSession(stored)
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         setIsDemo(true)
-        setSessions(DEMO_COACH_SESSIONS)
+        // Build demo workout context
         const ctx = DEMO_WORKOUTS.slice(0, 3).map(w =>
           `Séance: ${w.name} (${w.date.slice(0, 10)}) — ${w.exercises.map(e =>
             `${e.name}: ${e.sets.map(s => `${s.reps}×${s.weight}kg`).join(", ")}`
@@ -60,8 +74,9 @@ export default function CoachPage() {
         authFetch("/api/workouts").then(r => r.json()).catch(() => []),
         authFetch("/api/activities").then(r => r.json()).catch(() => []),
         authFetch("/api/nutrition").then(r => r.json()).catch(() => []),
-        authFetch("/api/coach").then(r => r.json()).catch(() => DEMO_COACH_SESSIONS),
+        authFetch("/api/coach").then(r => r.json()).catch(() => []),
       ]).then(([workouts, activities, meals, coachSessions]) => {
+        // Build workout context
         if (Array.isArray(workouts) && workouts.length > 0) {
           const ctx = workouts.slice(0, 5).map((w: typeof DEMO_WORKOUTS[0]) =>
             `Séance: ${w.name} (${w.date.slice(0, 10)}) — ${w.exercises?.map(e =>
@@ -70,6 +85,7 @@ export default function CoachPage() {
           ).join("\n")
           setWorkoutContext(ctx)
         }
+        // Build activity context
         if (Array.isArray(activities) && activities.length > 0) {
           const ctx = activities.slice(0, 5).map((a: { type: string; name: string; date: string; distanceM: number | null; durationSec: number | null; avgHeartRate: number | null; avgPaceSecKm: number | null }) => {
             const parts = [
@@ -82,12 +98,12 @@ export default function CoachPage() {
           }).join("\n")
           setActivityContext(ctx)
         }
+        // Build nutrition context
         if (Array.isArray(meals) && meals.length > 0) {
           const today = new Date().toISOString().slice(0, 10)
-          const recentMeals = meals.slice(0, 10)
           const todayMeals = meals.filter((m: { date: string }) => m.date.slice(0, 10) === today)
           const todayCal = todayMeals.reduce((s: number, m: { calories: number | null }) => s + (m.calories ?? 0), 0)
-          const ctx = recentMeals.map((m: { name: string; date: string; calories: number | null; proteins: number | null; carbs: number | null; fats: number | null }) => {
+          const ctx = meals.slice(0, 10).map((m: { name: string; date: string; calories: number | null; proteins: number | null; carbs: number | null; fats: number | null }) => {
             const parts = [
               m.calories ? `${m.calories} kcal` : null,
               m.proteins ? `P: ${Math.round(m.proteins)}g` : null,
@@ -96,27 +112,33 @@ export default function CoachPage() {
             ].filter(Boolean).join(", ")
             return `${m.name} (${m.date.slice(0, 10)})${parts ? ` — ${parts}` : ""}`
           }).join("\n")
-          const prefix = todayCal > 0 ? `Calories aujourd'hui : ${todayCal} kcal\n` : ""
-          setNutritionContext(prefix + ctx)
+          setNutritionContext((todayCal > 0 ? `Calories aujourd'hui : ${todayCal} kcal\n` : "") + ctx)
         }
-        setSessions(Array.isArray(coachSessions) ? coachSessions : DEMO_COACH_SESSIONS)
+        // Use most recent session from API if newer than stored
+        if (Array.isArray(coachSessions) && coachSessions.length > 0) {
+          const apiLatest = coachSessions[0] as { question: string; response: string; createdAt: string }
+          const storedTs = stored ? new Date(stored.createdAt).getTime() : 0
+          const apiTs = new Date(apiLatest.createdAt).getTime()
+          if (apiTs > storedTs) {
+            const s: Session = { question: apiLatest.question, response: apiLatest.response, createdAt: apiLatest.createdAt }
+            setLastSession(s)
+            saveStored(s)
+          }
+        }
       }).catch(() => {
         setIsDemo(true)
-        setSessions(DEMO_COACH_SESSIONS)
       }).finally(() => setReady(true))
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
 
   async function handleAsk() {
     if (!question.trim() || loading) return
-
     const q = question.trim()
     setQuestion("")
     setLoading(true)
 
     if (isDemo) {
-      // Simulate AI response in demo mode
       const demoResponse = `Excellente question ! 🎯
 
 **Analyse basée sur tes données :**
@@ -132,17 +154,11 @@ En regardant tes séances récentes, voici mes observations :
 2. Assure-toi de dormir 7-9h pour maximiser la récupération
 3. Maintiens un surplus calorique modéré (+200-300 kcal/jour)
 
-**En résumé :** Tu es sur la bonne voie. Continue comme ça !
+*Note : Ceci est une réponse de démonstration. Connecte-toi pour des conseils personnalisés.*`
 
-*Note : Ceci est une réponse de démonstration. Connecte-toi pour obtenir des conseils IA personnalisés basés sur tes vraies données.*`
-
-      const newSession: Session = {
-        id: `demo-${Date.now()}`,
-        question: q,
-        response: demoResponse,
-        createdAt: new Date().toISOString(),
-      }
-      setSessions(prev => [newSession, ...prev])
+      const s: Session = { question: q, response: demoResponse, createdAt: new Date().toISOString() }
+      setLastSession(s)
+      saveStored(s)
       setLoading(false)
       return
     }
@@ -154,21 +170,20 @@ En regardant tes séances récentes, voici mes observations :
         body: JSON.stringify({ question: q, workoutContext, activityContext, nutritionContext }),
       })
       const data = await r.json()
-      const newSession: Session = {
-        id: data.id ?? `local-${Date.now()}`,
+      const s: Session = {
         question: q,
         response: data.response,
-        createdAt: new Date().toISOString(),
+        createdAt: data.createdAt ?? new Date().toISOString(),
       }
-      setSessions(prev => [newSession, ...prev])
+      setLastSession(s)
+      saveStored(s)
     } catch {
-      const errorSession: Session = {
-        id: `error-${Date.now()}`,
+      const s: Session = {
         question: q,
         response: "Désolé, une erreur s'est produite. Vérifiez votre connexion et réessayez.",
         createdAt: new Date().toISOString(),
       }
-      setSessions(prev => [errorSession, ...prev])
+      setLastSession(s)
     } finally {
       setLoading(false)
     }
@@ -177,7 +192,7 @@ En regardant tes séances récentes, voici mes observations :
   if (!ready) return <LoadingScreen />
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+    <div className="min-h-screen bg-gray-950 text-white pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
       {isDemo && (
         <div className="bg-violet-600/20 border-b border-violet-500/30 px-6 py-2 flex items-center justify-between shrink-0">
           <p className="text-xs font-semibold text-violet-300">
@@ -189,18 +204,18 @@ En regardant tes séances récentes, voici mes observations :
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto w-full px-4 py-6 md:px-6 md:py-8 flex flex-col flex-1">
+      <div className="max-w-3xl mx-auto w-full px-4 py-6 md:px-6 md:py-8 flex flex-col gap-6">
         {/* Header */}
-        <div className="mb-6 md:mb-8 shrink-0">
+        <div>
           <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Intelligence artificielle</p>
           <h1 className="text-2xl font-extrabold text-white">Coach IA</h1>
           <p className="text-sm text-gray-500 font-medium mt-1">
-            Posez vos questions — le coach analyse vos données d&apos;entraînement pour vous répondre.
+            Posez vos questions — le coach analyse vos données sportives et nutritionnelles.
           </p>
         </div>
 
         {/* Quick questions */}
-        <div className="mb-6 shrink-0">
+        <div>
           <p className="text-xs font-bold text-gray-500 mb-3">Questions rapides</p>
           <div className="flex flex-wrap gap-2">
             {QUICK_QUESTIONS.map(q => (
@@ -216,98 +231,91 @@ En regardant tes séances récentes, voici mes observations :
         </div>
 
         {/* Ask input */}
-        <div className="mb-6 md:mb-8 shrink-0">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <textarea
-              value={question}
-              onChange={e => setQuestion(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAsk() }
-              }}
-              placeholder="Posez votre question au coach..."
-              rows={3}
-              className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder-gray-600 font-medium outline-none focus:border-violet-500 transition-colors resize-none"
-            />
-            <button
-              onClick={handleAsk}
-              disabled={!question.trim() || loading}
-              className="sm:self-end px-5 py-3 bg-violet-600 hover:bg-violet-500 rounded-2xl font-bold text-sm text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              )}
-              {loading ? "Analyse..." : "Demander"}
-            </button>
-          </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <textarea
+            value={question}
+            onChange={e => setQuestion(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAsk() } }}
+            placeholder="Posez votre question au coach…"
+            rows={3}
+            className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder-gray-600 font-medium outline-none focus:border-violet-500 transition-colors resize-none"
+          />
+          <button
+            onClick={handleAsk}
+            disabled={!question.trim() || loading}
+            className="sm:self-end px-5 py-3 bg-violet-600 hover:bg-violet-500 rounded-2xl font-bold text-sm text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            )}
+            {loading ? "Analyse…" : "Demander"}
+          </button>
         </div>
 
-        {/* Sessions */}
+        {/* Loading animation */}
         {loading && (
-          <div className="mb-4">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-7 h-7 rounded-xl bg-violet-600 flex items-center justify-center shrink-0">
-                  <svg className="w-4 h-4 text-white animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                </div>
-                <p className="text-xs font-bold text-violet-400">Coach IA analyse vos données...</p>
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-7 h-7 rounded-xl bg-violet-600 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-white animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
               </div>
-              <div className="flex gap-1">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                ))}
-              </div>
+              <p className="text-xs font-bold text-violet-400">Coach IA analyse vos données…</p>
+            </div>
+            <div className="flex gap-1">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+              ))}
             </div>
           </div>
         )}
 
-        <div className="flex flex-col gap-4">
-          {sessions.map(s => (
-            <div key={s.id} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-              {/* Question */}
-              <div className="px-5 py-4 border-b border-white/5 flex items-start gap-3">
-                <div className="w-7 h-7 rounded-xl bg-gray-700 flex items-center justify-center shrink-0 mt-0.5">
-                  <svg className="w-3.5 h-3.5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-white leading-relaxed">{s.question}</p>
-                  <p className="text-xs text-gray-600 mt-1">{formatDate(s.createdAt)}</p>
-                </div>
+        {/* Last session */}
+        {!loading && lastSession && (
+          <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+            {/* Question */}
+            <div className="px-5 py-4 border-b border-white/5 flex items-start gap-3">
+              <div className="w-7 h-7 rounded-xl bg-gray-700 flex items-center justify-center shrink-0 mt-0.5">
+                <svg className="w-3.5 h-3.5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
               </div>
-              {/* Response */}
-              <div className="px-5 py-4 flex items-start gap-3">
-                <div className="w-7 h-7 rounded-xl bg-violet-600 flex items-center justify-center shrink-0 mt-0.5">
-                  <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                </div>
-                <div
-                  className="flex-1 text-sm text-gray-300 font-medium leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: renderMarkdown(s.response) }}
-                />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-white leading-relaxed">{lastSession.question}</p>
+                <p className="text-xs text-gray-600 mt-1">{formatDate(lastSession.createdAt)}</p>
               </div>
             </div>
-          ))}
-
-          {sessions.length === 0 && !loading && (
-            <div className="text-center py-12">
-              <p className="text-4xl mb-4">🤖</p>
-              <p className="text-gray-400 font-semibold mb-2">Posez votre première question</p>
-              <p className="text-gray-600 text-sm">Le coach IA analysera vos données d&apos;entraînement pour vous répondre</p>
+            {/* Response */}
+            <div className="px-5 py-4 flex items-start gap-3">
+              <div className="w-7 h-7 rounded-xl bg-violet-600 flex items-center justify-center shrink-0 mt-0.5">
+                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              <div
+                className="flex-1 text-sm text-gray-300 font-medium leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(lastSession.response) }}
+              />
             </div>
-          )}
+          </div>
+        )}
 
-        </div>
+        {/* Empty state */}
+        {!loading && !lastSession && (
+          <div className="text-center py-12">
+            <p className="text-4xl mb-4">🤖</p>
+            <p className="text-gray-400 font-semibold mb-2">Posez votre première question</p>
+            <p className="text-gray-600 text-sm">Le coach IA analysera vos données sportives et alimentaires pour vous répondre</p>
+          </div>
+        )}
       </div>
     </div>
   )

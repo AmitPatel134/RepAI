@@ -71,7 +71,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-950 text-white pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
       <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col gap-5">
 
         {/* Greeting */}
