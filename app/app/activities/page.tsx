@@ -24,15 +24,15 @@ type UnifiedItem = { kind: "workout"; data: Workout } | { kind: "activity"; data
 
 type VoiceSet = { reps: number | null; weight: number | null }
 type VoiceExercise = { name: string; sets: VoiceSet[] }
-type VoiceResult = {
-  kind: "workout" | "cardio" | "ambiguous"
-  possibleCardioTypes?: string[]
-  workout?: { name: string; type: string; exercises: VoiceExercise[]; notes?: string | null }
-  activity?: {
-    type: string; durationSec?: number | null; distanceM?: number | null
-    elevationM?: number | null; avgHeartRate?: number | null; calories?: number | null; notes?: string | null
-  }
+type VoiceActivityData = {
+  type: string; durationSec?: number | null; distanceM?: number | null
+  elevationM?: number | null; avgHeartRate?: number | null; calories?: number | null; notes?: string | null
 }
+type VoiceWorkoutData = { name: string; type: string; exercises: VoiceExercise[]; notes?: string | null }
+type VoiceItem =
+  | { kind: "workout"; workout: VoiceWorkoutData }
+  | { kind: "cardio"; activity: VoiceActivityData }
+type VoiceResult = { items: VoiceItem[] }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -157,8 +157,9 @@ export default function ActivitiesPage() {
   // Voice
   const [voiceRecording, setVoiceRecording] = useState(false)
   const [voiceParsing, setVoiceParsing] = useState(false)
+  const [voiceSaving, setVoiceSaving] = useState(false)
   const [voiceTranscript, setVoiceTranscript] = useState("")
-  const [voiceResult, setVoiceResult] = useState<VoiceResult | null>(null)
+  const [voiceSuccess, setVoiceSuccess] = useState(0)
   const [voiceError, setVoiceError] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -514,82 +515,112 @@ export default function ActivitiesPage() {
   }
 
   function applyVoiceResult(result: VoiceResult) {
-    // Detect useless results
-    if (result.kind === "workout") {
-      const w = result.workout
-      if (!w || (!w.name?.trim() && (!w.exercises || w.exercises.length === 0))) {
-        setVoiceError("empty"); return
-      }
-    } else if (result.kind === "cardio") {
-      const a = result.activity
-      if (!a || (!a.durationSec && !a.distanceM && !a.calories && !a.avgHeartRate)) {
-        setVoiceError("empty"); return
-      }
-    } else {
-      // ambiguous with nothing useful
-      const hasCardio = result.possibleCardioTypes && result.possibleCardioTypes.length > 0
-      const hasWorkout = result.workout?.exercises && result.workout.exercises.length > 0
-      if (!hasCardio && !hasWorkout) { setVoiceError("empty"); return }
-    }
+    const items = result?.items
+    if (!items || items.length === 0) { setVoiceError("empty"); return }
 
-    if (result.kind === "workout") {
-      const w = result.workout
-      if (!w) return
-      setWName(w.name || "Séance")
-      setWType(w.type || "fullbody")
-      setWDate(new Date().toISOString().slice(0, 10))
-      setWNotes(w.notes || "")
-      setWExercises(w.exercises || [])
-      setShowWorkoutForm(true)
-    } else if (result.kind === "cardio") {
-      const a = result.activity
-      if (!a) return
-      setCType(a.type || "running")
-      setCDate(new Date().toISOString().slice(0, 10))
-      const h = a.durationSec ? Math.floor(a.durationSec / 3600) : 0
-      const m = a.durationSec ? Math.floor((a.durationSec % 3600) / 60) : 0
-      setCDurH(h > 0 ? String(h) : "")
-      setCDurM(m > 0 ? String(m) : "")
-      setCDist(a.distanceM ? String((a.distanceM / 1000).toFixed(2)).replace(/\.?0+$/, "") : "")
-      setCElev(a.elevationM ? String(a.elevationM) : "")
-      setCHR(a.avgHeartRate ? String(a.avgHeartRate) : "")
-      setCCal(a.calories ? String(a.calories) : "")
-      setCNotes(a.notes || "")
-      setShowCardioForm(true)
+    // Check all items have meaningful data
+    const usefulItems = items.filter(item => {
+      if (item.kind === "workout") {
+        const w = item.workout
+        return w && (w.name?.trim() || w.exercises?.length > 0)
+      } else {
+        const a = item.activity
+        return a && (a.durationSec || a.distanceM || a.calories || a.avgHeartRate)
+      }
+    })
+    if (usefulItems.length === 0) { setVoiceError("empty"); return }
+
+    if (usefulItems.length === 1) {
+      // Single item → open pre-filled form
+      const item = usefulItems[0]
+      if (item.kind === "workout") {
+        const w = item.workout
+        setWName(w.name || "Séance")
+        setWType(w.type || "fullbody")
+        setWDate(new Date().toISOString().slice(0, 10))
+        setWNotes(w.notes || "")
+        setWExercises(w.exercises || [])
+        setShowWorkoutForm(true)
+      } else {
+        const a = item.activity
+        setCType(a.type || "running")
+        setCDate(new Date().toISOString().slice(0, 10))
+        const h = a.durationSec ? Math.floor(a.durationSec / 3600) : 0
+        const m = a.durationSec ? Math.floor((a.durationSec % 3600) / 60) : 0
+        setCDurH(h > 0 ? String(h) : "")
+        setCDurM(m > 0 ? String(m) : "")
+        setCDist(a.distanceM ? String((a.distanceM / 1000).toFixed(2)).replace(/\.?0+$/, "") : "")
+        setCElev(a.elevationM ? String(a.elevationM) : "")
+        setCHR(a.avgHeartRate ? String(a.avgHeartRate) : "")
+        setCCal(a.calories ? String(a.calories) : "")
+        setCNotes(a.notes || "")
+        setShowCardioForm(true)
+      }
     } else {
-      // ambiguous — store result and show selector
-      setVoiceResult(result)
+      // Multiple items → auto-save all
+      saveVoiceItems(usefulItems)
     }
   }
 
-  function applyVoiceCardioChoice(cardioType: string) {
-    const a = voiceResult?.activity
-    setCType(cardioType)
-    setCDate(new Date().toISOString().slice(0, 10))
-    if (a) {
-      const h = a.durationSec ? Math.floor(a.durationSec / 3600) : 0
-      const m = a.durationSec ? Math.floor((a.durationSec % 3600) / 60) : 0
-      setCDurH(h > 0 ? String(h) : "")
-      setCDurM(m > 0 ? String(m) : "")
-      setCDist(a.distanceM ? String((a.distanceM / 1000).toFixed(2)).replace(/\.?0+$/, "") : "")
-      setCElev(a.elevationM ? String(a.elevationM) : "")
-      setCHR(a.avgHeartRate ? String(a.avgHeartRate) : "")
-      setCCal(a.calories ? String(a.calories) : "")
-      setCNotes(a.notes || "")
-    }
-    setVoiceResult(null)
-    setShowCardioForm(true)
-  }
+  async function saveVoiceItems(items: VoiceItem[]) {
+    setVoiceSaving(true)
+    let savedCount = 0
+    const today = new Date().toISOString().slice(0, 10)
 
-  function applyVoiceWorkoutChoice() {
-    const w = voiceResult?.workout
-    setWName(w?.name || "Séance")
-    setWType(w?.type || "fullbody")
-    setWDate(new Date().toISOString().slice(0, 10))
-    setWNotes(w?.notes || "")
-    setWExercises(w?.exercises || [])
-    setVoiceResult(null)
-    setShowWorkoutForm(true)
+    for (const item of items) {
+      if (item.kind === "workout") {
+        const w = item.workout
+        const r = await authFetch("/api/workouts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: w.name || "Séance",
+            type: w.type || "fullbody",
+            notes: w.notes || null,
+            date: today,
+            exercises: w.exercises || [],
+          }),
+        })
+        if (r.ok) {
+          const workout = await r.json()
+          setWorkouts(prev => [workout, ...prev])
+          const label = new Date(workout.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+          setOpenMonths(prev => new Set([...prev, label]))
+          savedCount++
+        }
+      } else {
+        const a = item.activity
+        const autoName = CARDIO_TYPES.find(t => t.key === a.type)?.label ?? a.type
+        const r = await authFetch("/api/activities", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: a.type,
+            name: autoName,
+            date: today,
+            durationSec: a.durationSec ?? null,
+            distanceM: a.distanceM ?? null,
+            elevationM: a.elevationM ?? null,
+            avgHeartRate: a.avgHeartRate ?? null,
+            calories: a.calories ?? null,
+            notes: a.notes ?? null,
+          }),
+        })
+        if (r.ok) {
+          const act = await r.json()
+          setActivities(prev => [act, ...prev])
+          const label = new Date(act.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+          setOpenMonths(prev => new Set([...prev, label]))
+          savedCount++
+        }
+      }
+    }
+
+    setVoiceSaving(false)
+    if (savedCount > 0) {
+      setVoiceSuccess(savedCount)
+      setTimeout(() => setVoiceSuccess(0), 4000)
+    }
   }
 
   if (loading) return (
@@ -1174,54 +1205,34 @@ export default function ActivitiesPage() {
         </div>
       )}
 
-      {/* ── Voice ambiguous type selector ── */}
-      {voiceResult && !voiceRecording && !voiceParsing && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={() => setVoiceResult(null)}>
-          <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-white/20" /></div>
-            <div className="px-5 pb-8 pt-3">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Plusieurs types détectés</p>
-              <h3 className="text-base font-black text-white mb-2">Quel type d&apos;activité ?</h3>
-              {voiceTranscript && (
-                <p className="text-xs text-gray-500 italic mb-5 bg-white/5 px-3 py-2 rounded-xl">&ldquo;{voiceTranscript}&rdquo;</p>
-              )}
-              <div className="flex flex-col gap-2">
-                {/* Workout option */}
-                <button
-                  onClick={applyVoiceWorkoutChoice}
-                  className="flex items-center gap-3 p-3.5 bg-violet-600/10 border border-violet-500/30 rounded-2xl text-left hover:border-violet-500/60 transition-colors"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-violet-600/20 flex items-center justify-center text-violet-400 shrink-0">
-                    <DumbbellIcon size={18} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-extrabold text-white">Séance de sport</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Exercices, séries, répétitions</p>
-                  </div>
-                </button>
-                {/* Cardio options */}
-                {(voiceResult.possibleCardioTypes && voiceResult.possibleCardioTypes.length > 0
-                  ? voiceResult.possibleCardioTypes
-                  : CARDIO_TYPES.map(t => t.key)
-                ).map(key => {
-                  const info = CARDIO_TYPES.find(t => t.key === key)
-                  if (!info) return null
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => applyVoiceCardioChoice(key)}
-                      className="flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-colors"
-                      style={{ backgroundColor: info.color + "15", borderColor: info.color + "40" }}
-                    >
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: info.color + "25" }}>
-                        <span style={{ color: info.color }}><CardioIcon type={key} size={18} /></span>
-                      </div>
-                      <p className="text-sm font-extrabold text-white">{info.label}</p>
-                    </button>
-                  )
-                })}
-              </div>
+      {/* ── Voice saving overlay ── */}
+      {voiceSaving && (
+        <div className="fixed inset-0 bg-black/85 z-50 flex flex-col items-center justify-center gap-5 px-6">
+          <div className="w-16 h-16 rounded-full bg-violet-600/20 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+          </div>
+          <div className="text-center">
+            <p className="text-white font-bold text-lg mb-1">Enregistrement…</p>
+            <p className="text-gray-400 text-sm">Sauvegarde de toutes les activités</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Voice success toast ── */}
+      {voiceSuccess > 0 && (
+        <div
+          className="fixed left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
+          style={{ bottom: "calc(env(safe-area-inset-bottom) + 80px)" }}
+        >
+          <div className="bg-green-500/20 border border-green-500/40 backdrop-blur-md rounded-2xl px-5 py-3 flex items-center gap-3 shadow-2xl pointer-events-auto">
+            <div className="w-8 h-8 rounded-xl bg-green-500/20 flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
             </div>
+            <p className="text-sm font-bold text-green-300">
+              {voiceSuccess} activité{voiceSuccess > 1 ? "s" : ""} ajoutée{voiceSuccess > 1 ? "s" : ""}
+            </p>
           </div>
         </div>
       )}
