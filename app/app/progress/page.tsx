@@ -569,7 +569,7 @@ export default function ProgressPage() {
                   />
                   <Tooltip
                     contentStyle={{ background: "#1f2937", border: "none", borderRadius: "12px", fontSize: "12px", color: "#fff" }}
-                    formatter={(v: number) => [`${(v / 1000).toFixed(1)}t`, "Volume"]}
+                    formatter={(v: unknown) => [`${(Number(v) / 1000).toFixed(1)}t`, "Volume"]}
                     cursor={{ fill: "rgba(255,255,255,0.05)" }}
                   />
                   <Bar dataKey="volume" fill="#7c3aed" radius={[0, 6, 6, 0]} />
