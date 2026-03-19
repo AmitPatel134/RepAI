@@ -39,6 +39,7 @@ export default function CoachPage() {
   const [loading, setLoading] = useState(false)
   const [workoutContext, setWorkoutContext] = useState("")
   const [activityContext, setActivityContext] = useState("")
+  const [nutritionContext, setNutritionContext] = useState("")
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -58,8 +59,9 @@ export default function CoachPage() {
       Promise.all([
         authFetch("/api/workouts").then(r => r.json()).catch(() => []),
         authFetch("/api/activities").then(r => r.json()).catch(() => []),
+        authFetch("/api/nutrition").then(r => r.json()).catch(() => []),
         authFetch("/api/coach").then(r => r.json()).catch(() => DEMO_COACH_SESSIONS),
-      ]).then(([workouts, activities, coachSessions]) => {
+      ]).then(([workouts, activities, meals, coachSessions]) => {
         if (Array.isArray(workouts) && workouts.length > 0) {
           const ctx = workouts.slice(0, 5).map((w: typeof DEMO_WORKOUTS[0]) =>
             `Séance: ${w.name} (${w.date.slice(0, 10)}) — ${w.exercises?.map(e =>
@@ -79,6 +81,23 @@ export default function CoachPage() {
             return `${a.type} "${a.name}" (${a.date.slice(0, 10)})${parts ? ` : ${parts}` : ""}`
           }).join("\n")
           setActivityContext(ctx)
+        }
+        if (Array.isArray(meals) && meals.length > 0) {
+          const today = new Date().toISOString().slice(0, 10)
+          const recentMeals = meals.slice(0, 10)
+          const todayMeals = meals.filter((m: { date: string }) => m.date.slice(0, 10) === today)
+          const todayCal = todayMeals.reduce((s: number, m: { calories: number | null }) => s + (m.calories ?? 0), 0)
+          const ctx = recentMeals.map((m: { name: string; date: string; calories: number | null; proteins: number | null; carbs: number | null; fats: number | null }) => {
+            const parts = [
+              m.calories ? `${m.calories} kcal` : null,
+              m.proteins ? `P: ${Math.round(m.proteins)}g` : null,
+              m.carbs ? `G: ${Math.round(m.carbs)}g` : null,
+              m.fats ? `L: ${Math.round(m.fats)}g` : null,
+            ].filter(Boolean).join(", ")
+            return `${m.name} (${m.date.slice(0, 10)})${parts ? ` — ${parts}` : ""}`
+          }).join("\n")
+          const prefix = todayCal > 0 ? `Calories aujourd'hui : ${todayCal} kcal\n` : ""
+          setNutritionContext(prefix + ctx)
         }
         setSessions(Array.isArray(coachSessions) ? coachSessions : DEMO_COACH_SESSIONS)
       }).catch(() => {
@@ -132,7 +151,7 @@ En regardant tes séances récentes, voici mes observations :
       const r = await authFetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q, workoutContext, activityContext }),
+        body: JSON.stringify({ question: q, workoutContext, activityContext, nutritionContext }),
       })
       const data = await r.json()
       const newSession: Session = {

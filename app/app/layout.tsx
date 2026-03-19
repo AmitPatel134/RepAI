@@ -8,7 +8,7 @@ const PAGE_ORDER = [
   "/app/activities",
   "/app",
   "/app/coach",
-  "/app/profil",
+  "/app/nutrition",
 ]
 
 function getPageIndex(pathname: string) {

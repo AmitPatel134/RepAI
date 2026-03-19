@@ -20,6 +20,24 @@ model User {
   workouts      Workout[]
   coachSessions CoachSession[]
   activities    Activity[]
+  meals         Meal[]
+}
+
+model Meal {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  date      DateTime @default(now())
+  calories  Int?
+  proteins  Float?
+  carbs     Float?
+  fats      Float?
+  fiber     Float?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
 }
 
 model Activity {

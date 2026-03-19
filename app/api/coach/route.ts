@@ -37,11 +37,11 @@ export async function POST(request: NextRequest) {
     const authUser = await getAuthUser(request)
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
-    const { question, workoutContext, activityContext } = await request.json()
+    const { question, workoutContext, activityContext, nutritionContext } = await request.json()
     if (!question?.trim()) return Response.json({ error: "Question required" }, { status: 400 })
 
-    const systemPrompt = `Tu es un coach sportif expert en musculation, fitness et sports d'endurance.
-Tu analyses les données d'entraînement des utilisateurs (exercices, séries, répétitions, charges, RPE) ainsi que leurs activités cardio (course, vélo, natation, etc. avec distance, durée, allure, fréquence cardiaque) pour leur donner des conseils personnalisés et scientifiquement fondés.
+    const systemPrompt = `Tu es un coach sportif et nutritionniste expert en musculation, fitness, sports d'endurance et alimentation sportive.
+Tu analyses les données d'entraînement (exercices, séries, répétitions, charges, RPE), les activités cardio (course, vélo, natation, etc.) et les données nutritionnelles (repas, calories, macronutriments) pour donner des conseils personnalisés et scientifiquement fondés.
 Réponds en français, de manière concise mais complète.
 Utilise le markdown pour structurer tes réponses (titres, listes, gras).
 Base-toi toujours sur les données fournies pour personnaliser tes conseils.
@@ -50,6 +50,7 @@ Sois encourageant mais honnête.`
     const contextParts: string[] = []
     if (workoutContext) contextParts.push(`--- Séances de musculation ---\n${workoutContext}`)
     if (activityContext) contextParts.push(`--- Activités cardio ---\n${activityContext}`)
+    if (nutritionContext) contextParts.push(`--- Alimentation ---\n${nutritionContext}`)
     const fullContext = contextParts.join("\n\n")
 
     const userPrompt = fullContext

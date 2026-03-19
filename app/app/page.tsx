@@ -75,11 +75,18 @@ export default function HomePage() {
       <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col gap-5">
 
         {/* Greeting */}
-        <div className="pt-2">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Accueil</p>
-          <h1 className="text-2xl font-extrabold text-white">
-            {getGreeting()}{firstName ? `, ${firstName}` : ""} 👋
-          </h1>
+        <div className="pt-2 flex items-start justify-between">
+          <div>
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Accueil</p>
+            <h1 className="text-2xl font-extrabold text-white">
+              {getGreeting()}{firstName ? `, ${firstName}` : ""} 👋
+            </h1>
+          </div>
+          <a href="/app/profil" className="mt-1 w-9 h-9 rounded-full bg-white/[0.07] border border-white/10 flex items-center justify-center hover:bg-white/15 transition-colors shrink-0">
+            <svg className="w-4.5 h-4.5 w-[18px] h-[18px] text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </a>
         </div>
 
         {/* Stats row */}
@@ -140,26 +147,27 @@ export default function HomePage() {
 
         {/* Quick nav */}
         <div className="grid grid-cols-2 gap-3">
-          <a href="/app/workouts" className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3 hover:bg-white/10 transition-colors">
+          <a href="/app/activities" className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3 hover:bg-white/10 transition-colors">
             <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
               <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
             <div>
-              <p className="text-sm font-bold text-white">Séances</p>
-              <p className="text-xs text-gray-500">Nouvelle séance</p>
+              <p className="text-sm font-bold text-white">Activités</p>
+              <p className="text-xs text-gray-500">Nouvelle activité</p>
             </div>
           </a>
-          <a href="/app/progress" className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3 hover:bg-white/10 transition-colors">
+          <a href="/app/nutrition" className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3 hover:bg-white/10 transition-colors">
             <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
               <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
             <div>
-              <p className="text-sm font-bold text-white">Progrès</p>
-              <p className="text-xs text-gray-500">Voir les stats</p>
+              <p className="text-sm font-bold text-white">Nutrition</p>
+              <p className="text-xs text-gray-500">Analyser un repas</p>
             </div>
           </a>
         </div>
