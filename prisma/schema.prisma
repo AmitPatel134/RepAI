@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  telephone     String?
+  company       String?
+  plan          String         @default("free")
+  planExpiresAt DateTime?
+  createdAt     DateTime       @default(now())
+  workouts      Workout[]
+  coachSessions CoachSession[]
+}
+
+model Workout {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  notes     String?
+  date      DateTime   @default(now())
+  exercises Exercise[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Exercise {
+  id        String  @id @default(cuid())
+  workoutId String
+  workout   Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  name      String
+  category  String  @default("strength")
+  sets      Set[]
+  order     Int     @default(0)
+}
+
+model Set {
+  id         String   @id @default(cuid())
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  reps       Int?
+  weight     Float?
+  duration   Int?
+  rpe        Float?
+  notes      String?
+  order      Int      @default(0)
+}
+
+model CoachSession {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question  String
+  response  String
+  createdAt DateTime @default(now())
+}

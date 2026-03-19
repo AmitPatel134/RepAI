@@ -1,0 +1,289 @@
+"use client"
+import { useEffect, useRef, useState } from "react"
+import { supabase } from "@/lib/supabase"
+import { authFetch } from "@/lib/authFetch"
+import LoadingScreen from "@/components/LoadingScreen"
+import { DEMO_COACH_SESSIONS, DEMO_WORKOUTS } from "@/lib/demoData"
+
+type Session = { id: string; question: string; response: string; createdAt: string }
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
+}
+
+function renderMarkdown(text: string) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/^### (.*$)/gm, "<h4 class='font-bold text-white mt-3 mb-1 text-sm'>$1</h4>")
+    .replace(/^## (.*$)/gm, "<h3 class='font-extrabold text-white mt-4 mb-2'>$1</h3>")
+    .replace(/^- (.*$)/gm, "<li class='ml-4 list-disc text-gray-300'>$1</li>")
+    .replace(/^\d+\. (.*$)/gm, "<li class='ml-4 list-decimal text-gray-300'>$1</li>")
+    .replace(/\n\n/g, "<br/><br/>")
+    .replace(/\n/g, "<br/>")
+}
+
+const QUICK_QUESTIONS = [
+  "Comment améliorer ma force sur le squat ?",
+  "Est-ce que mon volume d'entraînement est adapté ?",
+  "Comment éviter les blessures sur le soulevé de terre ?",
+  "Quelle fréquence d'entraînement me recommandes-tu ?",
+  "Comment optimiser ma récupération entre les séances ?",
+  "Dois-je changer ma programmation actuelle ?",
+]
+
+export default function CoachPage() {
+  const [ready, setReady] = useState(false)
+  const [isDemo, setIsDemo] = useState(false)
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [question, setQuestion] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [workoutContext, setWorkoutContext] = useState("")
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        setIsDemo(true)
+        setSessions(DEMO_COACH_SESSIONS)
+        // Build demo context
+        const ctx = DEMO_WORKOUTS.slice(0, 3).map(w =>
+          `Séance: ${w.name} (${w.date.slice(0, 10)}) — ${w.exercises.map(e =>
+            `${e.name}: ${e.sets.map(s => `${s.reps}×${s.weight}kg`).join(", ")}`
+          ).join(" | ")}`
+        ).join("\n")
+        setWorkoutContext(ctx)
+        setReady(true)
+        return
+      }
+      authFetch("/api/workouts")
+        .then(r => r.json())
+        .then(d => {
+          const workouts = Array.isArray(d) ? d : DEMO_WORKOUTS
+          const ctx = workouts.slice(0, 5).map((w: typeof DEMO_WORKOUTS[0]) =>
+            `Séance: ${w.name} (${w.date.slice(0, 10)}) — ${w.exercises?.map(e =>
+              `${e.name}: ${e.sets.map(s => `${s.reps}×${s.weight}kg`).join(", ")}`
+            ).join(" | ") ?? ""}`
+          ).join("\n")
+          setWorkoutContext(ctx)
+        })
+        .catch(() => {
+          setIsDemo(true)
+        })
+
+      authFetch("/api/coach")
+        .then(r => r.json())
+        .then(d => setSessions(Array.isArray(d) ? d : DEMO_COACH_SESSIONS))
+        .catch(() => setSessions(DEMO_COACH_SESSIONS))
+        .finally(() => setReady(true))
+    })
+  }, [])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [sessions])
+
+  async function handleAsk() {
+    if (!question.trim() || loading) return
+
+    const q = question.trim()
+    setQuestion("")
+    setLoading(true)
+
+    if (isDemo) {
+      // Simulate AI response in demo mode
+      const demoResponse = `Excellente question ! 🎯
+
+**Analyse basée sur tes données :**
+
+En regardant tes séances récentes, voici mes observations :
+- Tu t'entraînes 3x/semaine avec un split Push/Pull/Legs
+- Tes charges progressent régulièrement (+2.5kg toutes les 1-2 semaines)
+- Ton RPE moyen est autour de 8/10, ce qui est dans la zone idéale
+
+**Mes recommandations :**
+
+1. Continue ta progression linéaire — elle fonctionne bien
+2. Assure-toi de dormir 7-9h pour maximiser la récupération
+3. Maintiens un surplus calorique modéré (+200-300 kcal/jour)
+
+**En résumé :** Tu es sur la bonne voie. Continue comme ça !
+
+*Note : Ceci est une réponse de démonstration. Connecte-toi pour obtenir des conseils IA personnalisés basés sur tes vraies données.*`
+
+      const newSession: Session = {
+        id: `demo-${Date.now()}`,
+        question: q,
+        response: demoResponse,
+        createdAt: new Date().toISOString(),
+      }
+      setSessions(prev => [newSession, ...prev])
+      setLoading(false)
+      return
+    }
+
+    try {
+      const r = await authFetch("/api/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: q, workoutContext }),
+      })
+      const data = await r.json()
+      const newSession: Session = {
+        id: data.id ?? `local-${Date.now()}`,
+        question: q,
+        response: data.response,
+        createdAt: new Date().toISOString(),
+      }
+      setSessions(prev => [newSession, ...prev])
+    } catch {
+      const errorSession: Session = {
+        id: `error-${Date.now()}`,
+        question: q,
+        response: "Désolé, une erreur s'est produite. Vérifiez votre connexion et réessayez.",
+        createdAt: new Date().toISOString(),
+      }
+      setSessions(prev => [errorSession, ...prev])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!ready) return <LoadingScreen />
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+      {isDemo && (
+        <div className="bg-violet-600/20 border-b border-violet-500/30 px-6 py-2 flex items-center justify-between shrink-0">
+          <p className="text-xs font-semibold text-violet-300">
+            Mode démo — <a href="/login" className="underline hover:text-white">Connectez-vous</a> pour des conseils IA personnalisés.
+          </p>
+          <a href="/login" className="text-xs font-bold text-white bg-violet-600 px-3 py-1 rounded-full hover:bg-violet-500 transition-colors">
+            Se connecter
+          </a>
+        </div>
+      )}
+
+      <div className="max-w-3xl mx-auto w-full px-4 py-6 md:px-6 md:py-8 flex flex-col flex-1">
+        {/* Header */}
+        <div className="mb-6 md:mb-8 shrink-0">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Intelligence artificielle</p>
+          <h1 className="text-2xl font-extrabold text-white">Coach IA</h1>
+          <p className="text-sm text-gray-500 font-medium mt-1">
+            Posez vos questions — le coach analyse vos données d&apos;entraînement pour vous répondre.
+          </p>
+        </div>
+
+        {/* Quick questions */}
+        <div className="mb-6 shrink-0">
+          <p className="text-xs font-bold text-gray-500 mb-3">Questions rapides</p>
+          <div className="flex flex-wrap gap-2">
+            {QUICK_QUESTIONS.map(q => (
+              <button
+                key={q}
+                onClick={() => setQuestion(q)}
+                className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs font-semibold text-gray-400 hover:border-violet-500/50 hover:text-violet-400 transition-colors"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Ask input */}
+        <div className="mb-6 md:mb-8 shrink-0">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <textarea
+              value={question}
+              onChange={e => setQuestion(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAsk() }
+              }}
+              placeholder="Posez votre question au coach..."
+              rows={3}
+              className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm text-white placeholder-gray-600 font-medium outline-none focus:border-violet-500 transition-colors resize-none"
+            />
+            <button
+              onClick={handleAsk}
+              disabled={!question.trim() || loading}
+              className="sm:self-end px-5 py-3 bg-violet-600 hover:bg-violet-500 rounded-2xl font-bold text-sm text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              )}
+              {loading ? "Analyse..." : "Demander"}
+            </button>
+          </div>
+        </div>
+
+        {/* Sessions */}
+        {loading && (
+          <div className="mb-4">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-7 h-7 rounded-xl bg-violet-600 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-white animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <p className="text-xs font-bold text-violet-400">Coach IA analyse vos données...</p>
+              </div>
+              <div className="flex gap-1">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-4">
+          {sessions.map(s => (
+            <div key={s.id} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+              {/* Question */}
+              <div className="px-5 py-4 border-b border-white/5 flex items-start gap-3">
+                <div className="w-7 h-7 rounded-xl bg-gray-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg className="w-3.5 h-3.5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-white leading-relaxed">{s.question}</p>
+                  <p className="text-xs text-gray-600 mt-1">{formatDate(s.createdAt)}</p>
+                </div>
+              </div>
+              {/* Response */}
+              <div className="px-5 py-4 flex items-start gap-3">
+                <div className="w-7 h-7 rounded-xl bg-violet-600 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <div
+                  className="flex-1 text-sm text-gray-300 font-medium leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: renderMarkdown(s.response) }}
+                />
+              </div>
+            </div>
+          ))}
+
+          {sessions.length === 0 && !loading && (
+            <div className="text-center py-12">
+              <p className="text-4xl mb-4">🤖</p>
+              <p className="text-gray-400 font-semibold mb-2">Posez votre première question</p>
+              <p className="text-gray-600 text-sm">Le coach IA analysera vos données d&apos;entraînement pour vous répondre</p>
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </div>
+      </div>
+    </div>
+  )
+}
