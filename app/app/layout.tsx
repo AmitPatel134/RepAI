@@ -4,8 +4,8 @@ import { useRef, useEffect, useState } from "react"
 import AppSidebar from "@/components/AppSidebar"
 
 const PAGE_ORDER = [
-  "/app/activities",
   "/app/progress",
+  "/app/activities",
   "/app",
   "/app/coach",
   "/app/profil",

@@ -1,39 +1,26 @@
 "use client"
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
 import { DEMO_WORKOUTS } from "@/lib/demoData"
 import UpgradeModal from "@/components/UpgradeModal"
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Workout = {
-  id: string
-  name: string
-  type: string
-  date: string
+  id: string; name: string; type: string; date: string
   exercises: { id: string; name: string; sets: { reps: number | null; weight: number | null }[] }[]
 }
 
 type Activity = {
-  id: string
-  type: string
-  name: string
-  date: string
-  durationSec: number | null
-  distanceM: number | null
-  elevationM: number | null
-  avgHeartRate: number | null
-  calories: number | null
-  avgSpeedKmh: number | null
-  avgPaceSecKm: number | null
-  notes: string | null
+  id: string; type: string; name: string; date: string
+  durationSec: number | null; distanceM: number | null; elevationM: number | null
+  avgHeartRate: number | null; calories: number | null
+  avgSpeedKmh: number | null; avgPaceSecKm: number | null; notes: string | null
 }
 
-type UnifiedItem =
-  | { kind: "workout"; data: Workout }
-  | { kind: "activity"; data: Activity }
+type UnifiedItem = { kind: "workout"; data: Workout } | { kind: "activity"; data: Activity }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -62,7 +49,7 @@ const CARDIO_TYPES = [
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
+  return new Date(iso).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })
 }
 function fmtDuration(sec: number | null) {
   if (!sec) return null
@@ -81,42 +68,43 @@ function getCardioInfo(type: string) {
   return CARDIO_TYPES.find(t => t.key === type) ?? CARDIO_TYPES[CARDIO_TYPES.length - 1]
 }
 
-// ─── Icons ───────────────────────────────────────────────────────────────────
+// ─── Icons ────────────────────────────────────────────────────────────────────
 
-function DumbbellIcon() {
+function DumbbellIcon({ size = 18 }: { size?: number }) {
   return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3M6 12h12" />
     </svg>
   )
 }
 
-function CardioIcon({ type }: { type: string }) {
+function CardioIcon({ type, size = 18 }: { type: string; size?: number }) {
+  const s = size
   if (type === "running") return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg width={s} height={s} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M13 4a1 1 0 100-2 1 1 0 000 2zM7 8l3 2-2 5h5l2-5 2.5 1M6 20l2.5-5M15 20l-1.5-5" />
     </svg>
   )
   if (type === "cycling") return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg width={s} height={s} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 17l-2-5 3-2 2 4h4M14 5a1 1 0 100-2 1 1 0 000 2z"/>
     </svg>
   )
   if (type === "swimming") return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg width={s} height={s} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>
       <circle cx="12" cy="6" r="2"/><path strokeLinecap="round" d="M12 8v4"/>
     </svg>
   )
   return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg width={s} height={s} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
     </svg>
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function ActivitiesPage() {
   const router = useRouter()
@@ -127,8 +115,10 @@ export default function ActivitiesPage() {
   const [plan, setPlan] = useState("free")
   const [upgradeMsg, setUpgradeMsg] = useState<string | null>(null)
 
-  // UI state
-  const [filter, setFilter] = useState<"all" | "workout" | "activity">("all")
+  const [openMonths, setOpenMonths] = useState<Set<string>>(new Set())
+  const [openYears, setOpenYears] = useState<Set<string>>(new Set())
+
+  // Modals
   const [showTypeSelector, setShowTypeSelector] = useState(false)
   const [showWorkoutForm, setShowWorkoutForm] = useState(false)
   const [showCardioForm, setShowCardioForm] = useState(false)
@@ -159,6 +149,9 @@ export default function ActivitiesPage() {
       if (!session) {
         setIsDemo(true)
         setWorkouts(DEMO_WORKOUTS as unknown as Workout[])
+        // open current month for demo
+        const label = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+        setOpenMonths(new Set([label]))
         setLoading(false)
         return
       }
@@ -171,23 +164,40 @@ export default function ActivitiesPage() {
         setWorkouts(Array.isArray(w) ? w : [])
         setActivities(Array.isArray(a) ? a : [])
         setPlan(p?.plan ?? "free")
+        // open current month by default
+        const label = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+        setOpenMonths(new Set([label]))
       }).finally(() => setLoading(false))
     })
   }, [])
 
-  // Merged + sorted list
+  // Build merged + sorted list
   const unified: UnifiedItem[] = [
     ...workouts.map(w => ({ kind: "workout" as const, data: w })),
     ...activities.map(a => ({ kind: "activity" as const, data: a })),
   ].sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
 
-  const filtered = unified.filter(item => filter === "all" || item.kind === filter)
+  // Group by year → month
+  const currentYear = String(new Date().getFullYear())
+  type MonthGroup = { label: string; items: UnifiedItem[] }
+  type YearGroup = { year: string; months: MonthGroup[] }
+  const yearGroups: YearGroup[] = []
+  for (const item of unified) {
+    const year = String(new Date(item.data.date).getFullYear())
+    const label = new Date(item.data.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+    let yg = yearGroups.find(g => g.year === year)
+    if (!yg) { yg = { year, months: [] }; yearGroups.push(yg) }
+    const last = yg.months[yg.months.length - 1]
+    if (last?.label === label) last.items.push(item)
+    else yg.months.push({ label, items: [item] })
+  }
 
-  // Stats this week
-  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
-  const thisWeekWorkouts = workouts.filter(w => new Date(w.date) >= weekAgo).length
-  const thisWeekActivities = activities.filter(a => new Date(a.date) >= weekAgo)
-  const totalKm = thisWeekActivities.reduce((s, a) => s + (a.distanceM ?? 0) / 1000, 0)
+  function toggleMonth(label: string) {
+    setOpenMonths(prev => { const n = new Set(prev); n.has(label) ? n.delete(label) : n.add(label); return n })
+  }
+  function toggleYear(year: string) {
+    setOpenYears(prev => { const n = new Set(prev); n.has(year) ? n.delete(year) : n.add(year); return n })
+  }
 
   function handleAdd() {
     if (isDemo) { setUpgradeMsg("Crée un compte pour ajouter des activités."); return }
@@ -196,14 +206,15 @@ export default function ActivitiesPage() {
 
   async function handleCreateWorkout() {
     if (!wName.trim()) return
-    // Free plan: 5 workouts/month
     if (plan === "free") {
       const now = new Date()
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      const monthCount = workouts.filter(w => new Date(w.date) >= firstOfMonth).length
+      const monthCount = workouts.filter(w => {
+        const d = new Date(w.date)
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+      }).length
       if (monthCount >= 5) {
         setShowWorkoutForm(false)
-        setUpgradeMsg("Limite atteinte : 5 séances par mois sur le plan Gratuit. Passez Pro pour un accès illimité.")
+        setUpgradeMsg("Limite atteinte : 5 séances par mois sur le plan Gratuit.")
         return
       }
     }
@@ -243,6 +254,8 @@ export default function ActivitiesPage() {
       setActivities(prev => [act, ...prev])
       setShowCardioForm(false)
       resetCardioForm()
+      const label = new Date(act.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+      setOpenMonths(prev => new Set([...prev, label]))
     }
     setCSaving(false)
   }
@@ -252,14 +265,14 @@ export default function ActivitiesPage() {
     setCDurH(""); setCDurM(""); setCDist(""); setCElev(""); setCHR(""); setCCal(""); setCNotes("")
   }
 
-  async function handleDeleteWorkout(id: string) {
-    await authFetch(`/api/workouts/${id}`, { method: "DELETE" })
-    setWorkouts(prev => prev.filter(w => w.id !== id))
-  }
-
-  async function handleDeleteActivity(id: string) {
-    await authFetch(`/api/activities/${id}`, { method: "DELETE" })
-    setActivities(prev => prev.filter(a => a.id !== id))
+  async function handleDelete(item: UnifiedItem) {
+    if (item.kind === "workout") {
+      await authFetch(`/api/workouts/${item.data.id}`, { method: "DELETE" })
+      setWorkouts(prev => prev.filter(w => w.id !== item.data.id))
+    } else {
+      await authFetch(`/api/activities/${item.data.id}`, { method: "DELETE" })
+      setActivities(prev => prev.filter(a => a.id !== item.data.id))
+    }
   }
 
   if (loading) return (
@@ -269,155 +282,207 @@ export default function ActivitiesPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-950 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
+    <div className="min-h-screen bg-gray-950 text-white">
+
+      {/* Demo banner */}
+      {isDemo && (
+        <div className="bg-violet-600/20 border-b border-violet-500/30 px-4 py-2 flex items-center justify-between">
+          <p className="text-xs font-semibold text-violet-300">
+            Mode démo — <a href="/login" className="underline">Connectez-vous</a> pour sauvegarder.
+          </p>
+          <a href="/login" className="text-xs font-bold text-white bg-violet-600 px-3 py-1 rounded-full">Se connecter</a>
+        </div>
+      )}
 
       {/* Header */}
-      <div className="px-4 pt-8 pb-4 md:pt-10 flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-black text-white">Activités</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{unified.length} au total</p>
-        </div>
-        <button
-          onClick={handleAdd}
-          className="w-10 h-10 rounded-2xl bg-violet-600 flex items-center justify-center text-white hover:bg-violet-500 transition-colors shadow-lg shadow-violet-900/40"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
-          </svg>
-        </button>
-      </div>
-
-      {/* Stats */}
-      {unified.length > 0 && (
-        <div className="px-4 mb-4 grid grid-cols-3 gap-2">
-          {[
-            { label: "Séances / semaine", value: `${thisWeekWorkouts}` },
-            { label: "Km / semaine", value: totalKm > 0 ? `${totalKm.toFixed(1)}` : "—" },
-            { label: "Total", value: `${unified.length}` },
-          ].map(s => (
-            <div key={s.label} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-3 py-3 text-center">
-              <p className="text-xl font-black text-white">{s.value}</p>
-              <p className="text-[10px] text-gray-500 font-medium mt-0.5 leading-tight">{s.label}</p>
+      <div className="sticky top-0 z-30 bg-gray-950/95 backdrop-blur-md border-b border-white/[0.07]">
+        <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Journal</p>
+              <h1 className="text-2xl font-extrabold text-white">Activités</h1>
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Filter tabs */}
-      {unified.length > 0 && (
-        <div className="px-4 mb-4 flex gap-2">
-          {[
-            { key: "all", label: `Tout (${unified.length})` },
-            { key: "workout", label: `Séances (${workouts.length})` },
-            { key: "activity", label: `Cardio (${activities.length})` },
-          ].map(f => (
             <button
-              key={f.key}
-              onClick={() => setFilter(f.key as typeof filter)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                filter === f.key ? "bg-white text-gray-900" : "bg-white/[0.06] text-gray-400 hover:text-white"
-              }`}
+              onClick={handleAdd}
+              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors"
             >
-              {f.label}
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="hidden sm:inline">Nouvelle activité</span>
             </button>
-          ))}
+          </div>
+
+          {/* Free plan usage */}
+          {!isDemo && plan === "free" && (() => {
+            const now = new Date()
+            const used = workouts.filter(w => {
+              const d = new Date(w.date)
+              return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+            }).length
+            return (
+              <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className={`w-4 h-1.5 rounded-full ${i < used ? "bg-violet-500" : "bg-white/10"}`} />
+                    ))}
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-500">{used}/5 séances ce mois</span>
+                </div>
+                <a href="/pricing" className="text-[10px] font-bold text-violet-400 hover:text-violet-300">Passer Pro →</a>
+              </div>
+            )
+          })()}
         </div>
-      )}
+      </div>
 
       {/* List */}
-      <div className="px-4 flex flex-col gap-2">
-        {filtered.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-4xl mb-3">🏋️</p>
-            <p className="text-gray-400 font-bold text-sm">Aucune activité</p>
-            <p className="text-gray-600 text-xs mt-1">Ajoute ta première séance ou activité</p>
-            <button onClick={handleAdd} className="mt-4 text-violet-400 text-sm font-bold">+ Ajouter</button>
+      <div className="pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
+        {unified.length === 0 ? (
+          <div className="text-center py-20 px-4">
+            <p className="text-4xl mb-4">🏋️</p>
+            <p className="text-gray-400 font-semibold mb-2">Aucune activité enregistrée</p>
+            <p className="text-gray-600 text-sm mb-6">Ajoutez votre première séance ou activité cardio</p>
+            <button onClick={handleAdd} className="bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm px-6 py-3 rounded-xl transition-colors">
+              Ajouter une activité
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-0">
+            {yearGroups.map(yg => {
+              const isCurrentYear = yg.year === currentYear
+              const isYearOpen = openYears.has(yg.year)
+              const totalInYear = yg.months.reduce((s, m) => s + m.items.length, 0)
+
+              const monthBlocks = yg.months.map(group => {
+                const isOpen = openMonths.has(group.label)
+                return (
+                  <div key={group.label} className="border-b border-white/10">
+                    <button
+                      onClick={() => toggleMonth(group.label)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-white/[0.04] border-t border-white/10 hover:bg-white/[0.07] transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <p className="text-sm font-extrabold text-white capitalize">{group.label}</p>
+                        <span className="text-[10px] font-bold text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">
+                          {group.items.length} activité{group.items.length > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      <svg className="w-4 h-4 text-gray-500 transition-transform duration-300"
+                        style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    <div style={{ display: "grid", gridTemplateRows: isOpen ? "1fr" : "0fr", transition: "grid-template-rows 0.3s cubic-bezier(0.4,0,0.2,1)" }}>
+                      <div style={{ overflow: "hidden" }}>
+                        <div className="divide-y divide-white/[0.07]">
+                          {group.items.map(item => {
+                            if (item.kind === "workout") {
+                              const w = item.data
+                              const totalSets = w.exercises.reduce((s, e) => s + e.sets.length, 0)
+                              const typeLabel = WORKOUT_TYPES.find(t => t.value === w.type)?.label ?? w.type
+                              return (
+                                <div
+                                  key={`w-${w.id}`}
+                                  className="flex items-center gap-3 py-3 px-4 md:px-6 cursor-pointer hover:bg-white/[0.03] transition-colors"
+                                  onClick={() => !isDemo && router.push(`/app/workouts/${w.id}`)}
+                                >
+                                  <div className="w-9 h-9 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0 text-violet-400">
+                                    <DumbbellIcon />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-white truncate">{w.name}</p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      <span className="text-[11px] font-bold text-violet-400">{typeLabel}</span>
+                                      {w.exercises.length > 0 && (
+                                        <span className="text-[11px] text-gray-500">{w.exercises.length} exo{w.exercises.length > 1 ? "s" : ""} · {totalSets} série{totalSets > 1 ? "s" : ""}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3 shrink-0">
+                                    <p className="text-xs text-gray-500">{fmtDate(w.date)}</p>
+                                    <button
+                                      onClick={e => { e.stopPropagation(); handleDelete(item) }}
+                                      className="text-gray-700 hover:text-red-400 transition-colors"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                      </svg>
+                                    </button>
+                                  </div>
+                                </div>
+                              )
+                            } else {
+                              const a = item.data
+                              const info = getCardioInfo(a.type)
+                              return (
+                                <div key={`a-${a.id}`} className="flex items-center gap-3 py-3 px-4 md:px-6">
+                                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: info.color + "22" }}>
+                                    <span style={{ color: info.color }}><CardioIcon type={a.type} /></span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-white truncate">{a.name}</p>
+                                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                      <span className="text-[11px] font-bold" style={{ color: info.color }}>{info.label}</span>
+                                      {a.distanceM && <span className="text-[11px] text-gray-500">{fmtDist(a.distanceM)}</span>}
+                                      {a.durationSec && <span className="text-[11px] text-gray-500">{fmtDuration(a.durationSec)}</span>}
+                                      {a.avgPaceSecKm && <span className="text-[11px] text-gray-500">{fmtPace(a.avgPaceSecKm)}</span>}
+                                      {!a.avgPaceSecKm && a.avgSpeedKmh && <span className="text-[11px] text-gray-500">{a.avgSpeedKmh.toFixed(1)} km/h</span>}
+                                      {a.avgHeartRate && <span className="text-[11px] text-red-400">{a.avgHeartRate} bpm</span>}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3 shrink-0">
+                                    <p className="text-xs text-gray-500">{fmtDate(a.date)}</p>
+                                    <button onClick={() => handleDelete(item)} className="text-gray-700 hover:text-red-400 transition-colors">
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                      </svg>
+                                    </button>
+                                  </div>
+                                </div>
+                              )
+                            }
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+
+              if (isCurrentYear) {
+                return <React.Fragment key={yg.year}>{monthBlocks}</React.Fragment>
+              }
+
+              return (
+                <div key={yg.year}>
+                  <button
+                    onClick={() => toggleYear(yg.year)}
+                    className="w-full flex items-center justify-between px-4 py-3.5 bg-white/[0.06] border-t border-white/10 hover:bg-white/[0.09] transition-colors"
+                  >
+                    <p className="text-base font-black text-white">{yg.year}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-gray-500">{totalInYear} activité{totalInYear > 1 ? "s" : ""}</span>
+                      <svg className="w-4 h-4 text-gray-500 transition-transform duration-300"
+                        style={{ transform: isYearOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </button>
+                  <div style={{ display: "grid", gridTemplateRows: isYearOpen ? "1fr" : "0fr", transition: "grid-template-rows 0.3s cubic-bezier(0.4,0,0.2,1)" }}>
+                    <div style={{ overflow: "hidden" }}>{monthBlocks}</div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
-
-        {filtered.map(item => {
-          if (item.kind === "workout") {
-            const w = item.data
-            const totalSets = w.exercises.reduce((s, e) => s + e.sets.length, 0)
-            return (
-              <div
-                key={`w-${w.id}`}
-                className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4 flex items-start gap-3 cursor-pointer hover:border-white/20 transition-colors"
-                onClick={() => router.push(`/app/workouts/${w.id}`)}
-              >
-                <div className="w-10 h-10 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0 text-violet-400">
-                  <DumbbellIcon />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-bold text-white leading-tight">{w.name}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{fmtDate(w.date)}</p>
-                    </div>
-                    <button
-                      onClick={e => { e.stopPropagation(); handleDeleteWorkout(w.id) }}
-                      className="text-gray-700 hover:text-red-400 transition-colors shrink-0"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-violet-500/10 text-violet-400">
-                      {WORKOUT_TYPES.find(t => t.value === w.type)?.label ?? w.type}
-                    </span>
-                    {w.exercises.length > 0 && (
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white/[0.06] text-gray-400">
-                        {w.exercises.length} exo{w.exercises.length > 1 ? "s" : ""}
-                      </span>
-                    )}
-                    {totalSets > 0 && (
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white/[0.06] text-gray-400">
-                        {totalSets} série{totalSets > 1 ? "s" : ""}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          } else {
-            const a = item.data
-            const info = getCardioInfo(a.type)
-            return (
-              <div key={`a-${a.id}`} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4 flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: info.color + "22" }}>
-                  <span style={{ color: info.color }}><CardioIcon type={a.type} /></span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-bold text-white leading-tight">{a.name}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{fmtDate(a.date)}</p>
-                    </div>
-                    <button onClick={() => handleDeleteActivity(a.id)} className="text-gray-700 hover:text-red-400 transition-colors shrink-0">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg" style={{ backgroundColor: info.color + "20", color: info.color }}>{info.label}</span>
-                    {a.distanceM && <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white/[0.06] text-gray-300">{fmtDist(a.distanceM)}</span>}
-                    {a.durationSec && <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white/[0.06] text-gray-300">{fmtDuration(a.durationSec)}</span>}
-                    {a.avgPaceSecKm && <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white/[0.06] text-gray-300">{fmtPace(a.avgPaceSecKm)}</span>}
-                    {!a.avgPaceSecKm && a.avgSpeedKmh && <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white/[0.06] text-gray-300">{a.avgSpeedKmh.toFixed(1)} km/h</span>}
-                    {a.elevationM && a.elevationM > 0 && <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white/[0.06] text-gray-300">↑{Math.round(a.elevationM)}m</span>}
-                    {a.avgHeartRate && <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-red-500/10 text-red-400">{a.avgHeartRate} bpm</span>}
-                  </div>
-                </div>
-              </div>
-            )
-          }
-        })}
       </div>
 
-      {/* ── Type Selector Modal ── */}
+      {/* ── Type Selector ── */}
       {showTypeSelector && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center">
           <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg">
@@ -430,7 +495,7 @@ export default function ActivitiesPage() {
                   className="flex items-center gap-4 p-4 bg-violet-600/10 border border-violet-500/30 rounded-2xl text-left hover:border-violet-500/60 transition-colors"
                 >
                   <div className="w-12 h-12 rounded-xl bg-violet-600/20 flex items-center justify-center text-violet-400 shrink-0">
-                    <DumbbellIcon />
+                    <DumbbellIcon size={22} />
                   </div>
                   <div>
                     <p className="text-sm font-extrabold text-white">Séance de sport</p>
@@ -442,7 +507,7 @@ export default function ActivitiesPage() {
                   className="flex items-center gap-4 p-4 bg-orange-500/10 border border-orange-500/30 rounded-2xl text-left hover:border-orange-500/60 transition-colors"
                 >
                   <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center text-orange-400 shrink-0">
-                    <CardioIcon type="running" />
+                    <CardioIcon type="running" size={22} />
                   </div>
                   <div>
                     <p className="text-sm font-extrabold text-white">Activité cardio</p>
@@ -450,15 +515,13 @@ export default function ActivitiesPage() {
                   </div>
                 </button>
               </div>
-              <button onClick={() => setShowTypeSelector(false)} className="w-full mt-4 py-3 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors">
-                Annuler
-              </button>
+              <button onClick={() => setShowTypeSelector(false)} className="w-full mt-4 py-3 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors">Annuler</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Workout Form Modal ── */}
+      {/* ── Workout Form ── */}
       {showWorkoutForm && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center">
           <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -512,14 +575,13 @@ export default function ActivitiesPage() {
         </div>
       )}
 
-      {/* ── Cardio Form Modal ── */}
+      {/* ── Cardio Form ── */}
       {showCardioForm && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center">
           <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-white/20" /></div>
             <div className="px-5 pb-6 pt-2">
               <h3 className="text-base font-black text-white mb-4">Nouvelle activité cardio</h3>
-              {/* Type selector */}
               <div className="overflow-x-auto mb-4">
                 <div className="flex gap-2 w-max pb-1">
                   {CARDIO_TYPES.map(t => (
