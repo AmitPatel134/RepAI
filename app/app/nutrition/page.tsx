@@ -47,7 +47,10 @@ function resizeImage(file: File, maxPx = 900, quality = 0.75): Promise<string> {
       URL.revokeObjectURL(url)
       resolve(canvas.toDataURL("image/jpeg", quality))
     }
-    img.onerror = reject
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error("format"))
+    }
     img.src = url
   })
 }
@@ -169,8 +172,12 @@ export default function NutritionPage() {
       setAnalysisResult(data)
       setEditName(data.name ?? "")
       setMealDate(new Date().toISOString().slice(0, 10))
-    } catch {
-      setAnalyzeError("Erreur réseau")
+    } catch (err) {
+      if ((err as Error)?.message === "format") {
+        setAnalyzeError("Format non supporté. Utilise une photo JPG ou PNG.")
+      } else {
+        setAnalyzeError("Erreur réseau")
+      }
     }
     setAnalyzing(false)
   }
@@ -340,7 +347,7 @@ export default function NutritionPage() {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/heic"
         capture="environment"
         className="hidden"
         onChange={handleFileChange}
