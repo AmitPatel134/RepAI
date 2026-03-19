@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
@@ -67,6 +67,9 @@ function fmtPace(s: number | null) {
 function getCardioInfo(type: string) {
   return CARDIO_TYPES.find(t => t.key === type) ?? CARDIO_TYPES[CARDIO_TYPES.length - 1]
 }
+function getItemKey(item: UnifiedItem) {
+  return item.kind === "workout" ? `w:${item.data.id}` : `a:${item.data.id}`
+}
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -118,10 +121,26 @@ export default function ActivitiesPage() {
   const [openMonths, setOpenMonths] = useState<Set<string>>(new Set())
   const [openYears, setOpenYears] = useState<Set<string>>(new Set())
 
+  // Edit mode
+  const [editMode, setEditMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [deletingSelected, setDeletingSelected] = useState(false)
+
+  // Long press detection
+  const lpTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lpFired = useRef(false)
+  const lpMoved = useRef(false)
+  const lpStartX = useRef(0)
+  const lpStartY = useRef(0)
+
+  // Bottom sheet drag-to-dismiss
+  const sheetDragY = useRef<number | null>(null)
+
   // Modals
   const [showTypeSelector, setShowTypeSelector] = useState(false)
   const [showWorkoutForm, setShowWorkoutForm] = useState(false)
   const [showCardioForm, setShowCardioForm] = useState(false)
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
 
   // Workout form
   const [wName, setWName] = useState("")
@@ -149,7 +168,6 @@ export default function ActivitiesPage() {
       if (!session) {
         setIsDemo(true)
         setWorkouts(DEMO_WORKOUTS as unknown as Workout[])
-        // open current month for demo
         const label = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
         setOpenMonths(new Set([label]))
         setLoading(false)
@@ -164,20 +182,19 @@ export default function ActivitiesPage() {
         setWorkouts(Array.isArray(w) ? w : [])
         setActivities(Array.isArray(a) ? a : [])
         setPlan(p?.plan ?? "free")
-        // open current month by default
         const label = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
         setOpenMonths(new Set([label]))
       }).finally(() => setLoading(false))
     })
   }, [])
 
-  // Build merged + sorted list
+  // ─── Unified list ─────────────────────────────────────────────────────────
+
   const unified: UnifiedItem[] = [
     ...workouts.map(w => ({ kind: "workout" as const, data: w })),
     ...activities.map(a => ({ kind: "activity" as const, data: a })),
   ].sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
 
-  // Group by year → month
   const currentYear = String(new Date().getFullYear())
   type MonthGroup = { label: string; items: UnifiedItem[] }
   type YearGroup = { year: string; months: MonthGroup[] }
@@ -198,6 +215,107 @@ export default function ActivitiesPage() {
   function toggleYear(year: string) {
     setOpenYears(prev => { const n = new Set(prev); n.has(year) ? n.delete(year) : n.add(year); return n })
   }
+
+  // ─── Edit mode ────────────────────────────────────────────────────────────
+
+  function enterEditMode(key: string) {
+    setEditMode(true)
+    setSelectedIds(new Set([key]))
+  }
+
+  function exitEditMode() {
+    setEditMode(false)
+    setSelectedIds(new Set())
+  }
+
+  function toggleSelect(key: string) {
+    setSelectedIds(prev => {
+      const n = new Set(prev)
+      if (n.has(key)) n.delete(key)
+      else n.add(key)
+      if (n.size === 0) setEditMode(false)
+      return n
+    })
+  }
+
+  // Long press handlers
+  function onItemTouchStart(e: React.TouchEvent, key: string) {
+    if (editMode) return
+    lpFired.current = false
+    lpMoved.current = false
+    lpStartX.current = e.touches[0].clientX
+    lpStartY.current = e.touches[0].clientY
+    lpTimer.current = setTimeout(() => {
+      lpFired.current = true
+      enterEditMode(key)
+    }, 500)
+  }
+
+  function onItemTouchMove(e: React.TouchEvent) {
+    if (editMode) return
+    const dx = Math.abs(e.touches[0].clientX - lpStartX.current)
+    const dy = Math.abs(e.touches[0].clientY - lpStartY.current)
+    if (dx > 8 || dy > 8) {
+      lpMoved.current = true
+      if (lpTimer.current) { clearTimeout(lpTimer.current); lpTimer.current = null }
+    }
+  }
+
+  function onItemTouchEnd() {
+    if (lpTimer.current) { clearTimeout(lpTimer.current); lpTimer.current = null }
+  }
+
+  function onItemClick(key: string, defaultAction: () => void) {
+    if (lpFired.current) { lpFired.current = false; return }
+    if (editMode) { toggleSelect(key); return }
+    defaultAction()
+  }
+
+  // ─── Edit actions ─────────────────────────────────────────────────────────
+
+  function handleEditSelected() {
+    const key = [...selectedIds][0]
+    if (!key) return
+    exitEditMode()
+    if (key.startsWith("w:")) {
+      router.push(`/app/workouts/${key.slice(2)}`)
+    } else {
+      const act = activities.find(a => a.id === key.slice(2))
+      if (act) openEditActivity(act)
+    }
+  }
+
+  async function handleDeleteSelected() {
+    setDeletingSelected(true)
+    for (const key of selectedIds) {
+      if (key.startsWith("w:")) {
+        const id = key.slice(2)
+        await authFetch(`/api/workouts/${id}`, { method: "DELETE" })
+        setWorkouts(prev => prev.filter(w => w.id !== id))
+      } else {
+        const id = key.slice(2)
+        await authFetch(`/api/activities/${id}`, { method: "DELETE" })
+        setActivities(prev => prev.filter(a => a.id !== id))
+      }
+    }
+    setDeletingSelected(false)
+    exitEditMode()
+  }
+
+  // ─── Sheet drag-to-dismiss ────────────────────────────────────────────────
+
+  function onSheetHandleTouchStart(e: React.TouchEvent) {
+    sheetDragY.current = e.touches[0].clientY
+  }
+
+  function onSheetHandleTouchEnd(e: React.TouchEvent, close: () => void) {
+    if (sheetDragY.current !== null) {
+      if (e.changedTouches[0].clientY - sheetDragY.current > 60) close()
+      sheetDragY.current = null
+    }
+  }
+
+  // ─── Add / forms ──────────────────────────────────────────────────────────
 
   function handleAdd() {
     if (isDemo) { setUpgradeMsg("Crée un compte pour ajouter des activités."); return }
@@ -233,29 +351,66 @@ export default function ActivitiesPage() {
     setWSaving(false)
   }
 
-  async function handleCreateActivity() {
+  function openEditActivity(act: Activity) {
+    setEditingActivity(act)
+    setCType(act.type)
+    setCName(act.name)
+    setCDate(act.date.slice(0, 10))
+    const h = act.durationSec ? Math.floor(act.durationSec / 3600) : 0
+    const m = act.durationSec ? Math.floor((act.durationSec % 3600) / 60) : 0
+    setCDurH(h > 0 ? String(h) : "")
+    setCDurM(m > 0 ? String(m) : "")
+    setCDist(act.distanceM ? String((act.distanceM / 1000).toFixed(2)).replace(/\.?0+$/, "") : "")
+    setCElev(act.elevationM ? String(act.elevationM) : "")
+    setCHR(act.avgHeartRate ? String(act.avgHeartRate) : "")
+    setCCal(act.calories ? String(act.calories) : "")
+    setCNotes(act.notes ?? "")
+    setShowCardioForm(true)
+  }
+
+  function closeCardioForm() {
+    setShowCardioForm(false)
+    setEditingActivity(null)
+    resetCardioForm()
+  }
+
+  async function handleSaveActivity() {
     if (!cName.trim()) return
     setCSaving(true)
     const durationSec = cDurH || cDurM ? parseInt(cDurH || "0") * 3600 + parseInt(cDurM || "0") * 60 : null
     const distanceM = cDist ? parseFloat(cDist) * 1000 : null
-    const r = await authFetch("/api/activities", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: cType, name: cName.trim(), date: cDate, durationSec, distanceM,
-        elevationM: cElev ? parseFloat(cElev) : null,
-        avgHeartRate: cHR ? parseInt(cHR) : null,
-        calories: cCal ? parseInt(cCal) : null,
-        notes: cNotes || null,
-      }),
-    })
-    if (r.ok) {
-      const act = await r.json()
-      setActivities(prev => [act, ...prev])
-      setShowCardioForm(false)
-      resetCardioForm()
-      const label = new Date(act.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-      setOpenMonths(prev => new Set([...prev, label]))
+    const body = {
+      type: cType, name: cName.trim(), date: cDate, durationSec, distanceM,
+      elevationM: cElev ? parseFloat(cElev) : null,
+      avgHeartRate: cHR ? parseInt(cHR) : null,
+      calories: cCal ? parseInt(cCal) : null,
+      notes: cNotes || null,
+    }
+
+    if (editingActivity) {
+      const r = await authFetch(`/api/activities/${editingActivity.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+      if (r.ok) {
+        const updated = await r.json()
+        setActivities(prev => prev.map(a => a.id === updated.id ? updated : a))
+        closeCardioForm()
+      }
+    } else {
+      const r = await authFetch("/api/activities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+      if (r.ok) {
+        const act = await r.json()
+        setActivities(prev => [act, ...prev])
+        closeCardioForm()
+        const label = new Date(act.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+        setOpenMonths(prev => new Set([...prev, label]))
+      }
     }
     setCSaving(false)
   }
@@ -263,16 +418,6 @@ export default function ActivitiesPage() {
   function resetCardioForm() {
     setCType("running"); setCName(""); setCDate(new Date().toISOString().slice(0, 10))
     setCDurH(""); setCDurM(""); setCDist(""); setCElev(""); setCHR(""); setCCal(""); setCNotes("")
-  }
-
-  async function handleDelete(item: UnifiedItem) {
-    if (item.kind === "workout") {
-      await authFetch(`/api/workouts/${item.data.id}`, { method: "DELETE" })
-      setWorkouts(prev => prev.filter(w => w.id !== item.data.id))
-    } else {
-      await authFetch(`/api/activities/${item.data.id}`, { method: "DELETE" })
-      setActivities(prev => prev.filter(a => a.id !== item.data.id))
-    }
   }
 
   if (loading) return (
@@ -299,22 +444,33 @@ export default function ActivitiesPage() {
         <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Journal</p>
-              <h1 className="text-2xl font-extrabold text-white">Activités</h1>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">
+                {editMode ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? "s" : ""}` : "Journal"}
+              </p>
+              <h1 className="text-2xl font-extrabold text-white">{editMode ? "Modifier" : "Activités"}</h1>
             </div>
-            <button
-              onClick={handleAdd}
-              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors"
-            >
-              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              <span className="hidden sm:inline">Nouvelle activité</span>
-            </button>
+            {editMode ? (
+              <button
+                onClick={exitEditMode}
+                className="text-sm font-bold text-gray-400 hover:text-white transition-colors px-3 py-2"
+              >
+                Annuler
+              </button>
+            ) : (
+              <button
+                onClick={handleAdd}
+                className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors"
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="hidden sm:inline">Nouvelle activité</span>
+              </button>
+            )}
           </div>
 
           {/* Free plan usage */}
-          {!isDemo && plan === "free" && (() => {
+          {!isDemo && !editMode && plan === "free" && (() => {
             const now = new Date()
             const used = workouts.filter(w => {
               const d = new Date(w.date)
@@ -360,7 +516,7 @@ export default function ActivitiesPage() {
                 return (
                   <div key={group.label} className="border-b border-white/10">
                     <button
-                      onClick={() => toggleMonth(group.label)}
+                      onClick={() => !editMode && toggleMonth(group.label)}
                       className="w-full flex items-center justify-between px-4 py-3 bg-white/[0.04] border-t border-white/10 hover:bg-white/[0.07] transition-colors"
                     >
                       <div className="flex items-center gap-2.5">
@@ -369,16 +525,21 @@ export default function ActivitiesPage() {
                           {group.items.length} activité{group.items.length > 1 ? "s" : ""}
                         </span>
                       </div>
-                      <svg className="w-4 h-4 text-gray-500 transition-transform duration-300"
-                        style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                      </svg>
+                      {!editMode && (
+                        <svg className="w-4 h-4 text-gray-500 transition-transform duration-300"
+                          style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
                     </button>
-                    <div style={{ display: "grid", gridTemplateRows: isOpen ? "1fr" : "0fr", transition: "grid-template-rows 0.3s cubic-bezier(0.4,0,0.2,1)" }}>
+                    <div style={{ display: "grid", gridTemplateRows: (isOpen || editMode) ? "1fr" : "0fr", transition: "grid-template-rows 0.3s cubic-bezier(0.4,0,0.2,1)" }}>
                       <div style={{ overflow: "hidden" }}>
                         <div className="divide-y divide-white/[0.07]">
                           {group.items.map(item => {
+                            const key = getItemKey(item)
+                            const isSelected = selectedIds.has(key)
+
                             if (item.kind === "workout") {
                               const w = item.data
                               const totalSets = w.exercises.reduce((s, e) => s + e.sets.length, 0)
@@ -386,9 +547,25 @@ export default function ActivitiesPage() {
                               return (
                                 <div
                                   key={`w-${w.id}`}
-                                  className="flex items-center gap-3 py-3 px-4 md:px-6 cursor-pointer hover:bg-white/[0.03] transition-colors"
-                                  onClick={() => !isDemo && router.push(`/app/workouts/${w.id}`)}
+                                  className={`flex items-center gap-3 py-3 px-4 md:px-6 cursor-pointer transition-colors select-none ${
+                                    isSelected ? "bg-violet-500/10" : "hover:bg-white/[0.03]"
+                                  } ${editMode && !isSelected ? "opacity-50" : ""}`}
+                                  onTouchStart={e => onItemTouchStart(e, key)}
+                                  onTouchMove={onItemTouchMove}
+                                  onTouchEnd={onItemTouchEnd}
+                                  onClick={() => onItemClick(key, () => !isDemo && router.push(`/app/workouts/${w.id}`))}
                                 >
+                                  {editMode && (
+                                    <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
+                                      isSelected ? "bg-violet-600 border-violet-600" : "border-gray-600"
+                                    }`}>
+                                      {isSelected && (
+                                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                  )}
                                   <div className="w-9 h-9 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0 text-violet-400">
                                     <DumbbellIcon />
                                   </div>
@@ -401,24 +578,34 @@ export default function ActivitiesPage() {
                                       )}
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-3 shrink-0">
-                                    <p className="text-xs text-gray-500">{fmtDate(w.date)}</p>
-                                    <button
-                                      onClick={e => { e.stopPropagation(); handleDelete(item) }}
-                                      className="text-gray-700 hover:text-red-400 transition-colors"
-                                    >
-                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                      </svg>
-                                    </button>
-                                  </div>
+                                  <p className="text-xs text-gray-500 shrink-0">{fmtDate(w.date)}</p>
                                 </div>
                               )
                             } else {
                               const a = item.data
                               const info = getCardioInfo(a.type)
                               return (
-                                <div key={`a-${a.id}`} className="flex items-center gap-3 py-3 px-4 md:px-6">
+                                <div
+                                  key={`a-${a.id}`}
+                                  className={`flex items-center gap-3 py-3 px-4 md:px-6 cursor-pointer transition-colors select-none ${
+                                    isSelected ? "bg-violet-500/10" : "hover:bg-white/[0.03]"
+                                  } ${editMode && !isSelected ? "opacity-50" : ""}`}
+                                  onTouchStart={e => onItemTouchStart(e, key)}
+                                  onTouchMove={onItemTouchMove}
+                                  onTouchEnd={onItemTouchEnd}
+                                  onClick={() => onItemClick(key, () => {})}
+                                >
+                                  {editMode && (
+                                    <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
+                                      isSelected ? "bg-violet-600 border-violet-600" : "border-gray-600"
+                                    }`}>
+                                      {isSelected && (
+                                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                  )}
                                   <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: info.color + "22" }}>
                                     <span style={{ color: info.color }}><CardioIcon type={a.type} /></span>
                                   </div>
@@ -433,14 +620,7 @@ export default function ActivitiesPage() {
                                       {a.avgHeartRate && <span className="text-[11px] text-red-400">{a.avgHeartRate} bpm</span>}
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-3 shrink-0">
-                                    <p className="text-xs text-gray-500">{fmtDate(a.date)}</p>
-                                    <button onClick={() => handleDelete(item)} className="text-gray-700 hover:text-red-400 transition-colors">
-                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                      </svg>
-                                    </button>
-                                  </div>
+                                  <p className="text-xs text-gray-500 shrink-0">{fmtDate(a.date)}</p>
                                 </div>
                               )
                             }
@@ -482,11 +662,71 @@ export default function ActivitiesPage() {
         )}
       </div>
 
-      {/* ── Type Selector ── */}
+      {/* ── Floating edit action bar ── */}
+      {editMode && selectedIds.size > 0 && (
+        <div
+          className="fixed left-0 right-0 z-40 flex justify-center px-4"
+          style={{ bottom: "calc(env(safe-area-inset-bottom) + 72px)" }}
+        >
+          <div className="w-full max-w-sm bg-gray-900/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-3 flex items-center gap-2">
+            {selectedIds.size === 1 ? (
+              <>
+                <button
+                  onClick={exitEditMode}
+                  className="flex-1 py-2.5 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleEditSelected}
+                  className="flex-1 py-2.5 bg-white/10 border border-white/20 rounded-xl text-sm font-bold text-white hover:bg-white/20 transition-colors"
+                >
+                  Éditer
+                </button>
+                <button
+                  onClick={handleDeleteSelected}
+                  disabled={deletingSelected}
+                  className="flex-1 py-2.5 bg-red-500/20 border border-red-500/40 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                >
+                  {deletingSelected ? "..." : "Supprimer"}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={exitEditMode}
+                  className="flex-1 py-2.5 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleDeleteSelected}
+                  disabled={deletingSelected}
+                  className="flex-[2] py-2.5 bg-red-500/20 border border-red-500/40 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                >
+                  {deletingSelected ? "..." : `Supprimer (${selectedIds.size})`}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Type Selector (bottom sheet, swipe-to-dismiss) ── */}
       {showTypeSelector && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center">
-          <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg">
-            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-white/20" /></div>
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"
+          onClick={() => setShowTypeSelector(false)}
+        >
+          <div
+            className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg"
+            onClick={e => e.stopPropagation()}
+            onTouchStart={onSheetHandleTouchStart}
+            onTouchEnd={e => onSheetHandleTouchEnd(e, () => setShowTypeSelector(false))}
+          >
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-white/20" />
+            </div>
             <div className="px-5 pb-8 pt-2">
               <h3 className="text-base font-black text-white mb-5">Quel type d&apos;activité ?</h3>
               <div className="flex flex-col gap-3">
@@ -515,17 +755,28 @@ export default function ActivitiesPage() {
                   </div>
                 </button>
               </div>
-              <button onClick={() => setShowTypeSelector(false)} className="w-full mt-4 py-3 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors">Annuler</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Workout Form ── */}
+      {/* ── Workout Form (bottom sheet, swipe-to-dismiss) ── */}
       {showWorkoutForm && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center">
-          <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-white/20" /></div>
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"
+          onClick={() => setShowWorkoutForm(false)}
+        >
+          <div
+            className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div
+              className="flex justify-center pt-3 pb-1 cursor-grab"
+              onTouchStart={onSheetHandleTouchStart}
+              onTouchEnd={e => onSheetHandleTouchEnd(e, () => setShowWorkoutForm(false))}
+            >
+              <div className="w-10 h-1 rounded-full bg-white/20" />
+            </div>
             <div className="px-5 pb-6 pt-2">
               <h3 className="text-base font-black text-white mb-4">Nouvelle séance</h3>
               <div className="flex flex-col gap-4">
@@ -564,28 +815,39 @@ export default function ActivitiesPage() {
                     className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none resize-none"/>
                 </div>
               </div>
-              <div className="flex gap-3 mt-5">
-                <button onClick={() => setShowWorkoutForm(false)} className="flex-1 py-3 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors">Annuler</button>
-                <button onClick={handleCreateWorkout} disabled={wSaving || !wName.trim()} className="flex-1 py-3 bg-violet-600 rounded-xl text-sm font-bold text-white hover:bg-violet-500 transition-colors disabled:opacity-50">
-                  {wSaving ? "..." : "Créer →"}
-                </button>
-              </div>
+              <button onClick={handleCreateWorkout} disabled={wSaving || !wName.trim()} className="w-full mt-5 py-3 bg-violet-600 rounded-xl text-sm font-bold text-white hover:bg-violet-500 transition-colors disabled:opacity-50">
+                {wSaving ? "..." : "Créer →"}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Cardio Form ── */}
+      {/* ── Cardio Form (bottom sheet, swipe-to-dismiss) ── */}
       {showCardioForm && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center">
-          <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-white/20" /></div>
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"
+          onClick={closeCardioForm}
+        >
+          <div
+            className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div
+              className="flex justify-center pt-3 pb-1 cursor-grab"
+              onTouchStart={onSheetHandleTouchStart}
+              onTouchEnd={e => onSheetHandleTouchEnd(e, closeCardioForm)}
+            >
+              <div className="w-10 h-1 rounded-full bg-white/20" />
+            </div>
             <div className="px-5 pb-6 pt-2">
-              <h3 className="text-base font-black text-white mb-4">Nouvelle activité cardio</h3>
+              <h3 className="text-base font-black text-white mb-4">
+                {editingActivity ? "Modifier l'activité" : "Nouvelle activité cardio"}
+              </h3>
               <div className="overflow-x-auto mb-4">
                 <div className="flex gap-2 w-max pb-1">
                   {CARDIO_TYPES.map(t => (
-                    <button key={t.key} onClick={() => { setCType(t.key); setCName(t.label) }}
+                    <button key={t.key} onClick={() => { setCType(t.key); if (!editingActivity) setCName(t.label) }}
                       className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl border transition-all"
                       style={cType === t.key
                         ? { backgroundColor: t.color + "22", borderColor: t.color + "66", color: t.color }
@@ -639,12 +901,9 @@ export default function ActivitiesPage() {
                 <textarea value={cNotes} onChange={e => setCNotes(e.target.value)} placeholder="Notes (optionnel)" rows={2}
                   className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 outline-none resize-none"/>
               </div>
-              <div className="flex gap-3 mt-5">
-                <button onClick={() => setShowCardioForm(false)} className="flex-1 py-3 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors">Annuler</button>
-                <button onClick={handleCreateActivity} disabled={cSaving || !cName.trim()} className="flex-1 py-3 bg-orange-500 rounded-xl text-sm font-bold text-white hover:bg-orange-400 transition-colors disabled:opacity-50">
-                  {cSaving ? "..." : "Ajouter"}
-                </button>
-              </div>
+              <button onClick={handleSaveActivity} disabled={cSaving || !cName.trim()} className="w-full mt-5 py-3 bg-orange-500 rounded-xl text-sm font-bold text-white hover:bg-orange-400 transition-colors disabled:opacity-50">
+                {cSaving ? "..." : editingActivity ? "Enregistrer" : "Ajouter"}
+              </button>
             </div>
           </div>
         </div>
