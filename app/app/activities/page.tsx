@@ -299,12 +299,11 @@ export default function ActivitiesPage() {
     const key = [...selectedIds][0]
     if (!key) return
     exitEditMode()
-    if (key.startsWith("w:")) {
-      router.push(`/app/workouts/${key.slice(2)}`)
-    } else {
+    if (key.startsWith("a:")) {
       const act = activities.find(a => a.id === key.slice(2))
       if (act) openEditActivity(act)
     }
+    // workouts are not editable from here
   }
 
   async function handleDeleteSelected() {
@@ -367,9 +366,11 @@ export default function ActivitiesPage() {
     })
     if (r.ok) {
       const workout = await r.json()
+      setWorkouts(prev => [workout, ...prev])
+      const label = new Date(workout.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+      setOpenMonths(prev => new Set([...prev, label]))
       setShowWorkoutForm(false)
       setWExercises([])
-      router.push(`/app/workouts/${workout.id}`)
     }
     setWSaving(false)
   }
@@ -773,7 +774,7 @@ export default function ActivitiesPage() {
                                   onTouchStart={e => onItemTouchStart(e, key)}
                                   onTouchMove={onItemTouchMove}
                                   onTouchEnd={onItemTouchEnd}
-                                  onClick={() => onItemClick(key, () => !isDemo && router.push(`/app/workouts/${w.id}`))}
+                                  onClick={() => onItemClick(key, () => {})}
                                 >
                                   {editMode && (
                                     <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
