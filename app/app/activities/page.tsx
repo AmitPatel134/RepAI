@@ -159,7 +159,8 @@ export default function ActivitiesPage() {
   const [voiceParsing, setVoiceParsing] = useState(false)
   const [voiceTranscript, setVoiceTranscript] = useState("")
   const [voiceResult, setVoiceResult] = useState<VoiceResult | null>(null)
-  const recognitionRef = useRef<{ stop: () => void } | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
 
   // Workout form
   const [wName, setWName] = useState("")
@@ -441,39 +442,55 @@ export default function ActivitiesPage() {
 
   // ─── Voice ────────────────────────────────────────────────────────────────
 
-  function startVoice() {
+  async function startVoice() {
     if (isDemo) return
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (!SR) { alert("Reconnaissance vocale non supportée sur ce navigateur."); return }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType = ["audio/webm", "audio/mp4", "audio/ogg"].find(t => MediaRecorder.isTypeSupported(t)) ?? ""
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+      audioChunksRef.current = []
 
-    const recognition = new SR()
-    recognition.lang = "fr-FR"
-    recognition.continuous = false
-    recognition.interimResults = false
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
+      recorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop())
+        const blob = new Blob(audioChunksRef.current, { type: mimeType || "audio/webm" })
+        processAudio(blob, mimeType)
+      }
 
-    recognition.onresult = (e: { results: { [x: number]: { [x: number]: { transcript: string } } } }) => {
-      const text = e.results[0][0].transcript
-      setVoiceTranscript(text)
-      setVoiceRecording(false)
-      parseVoice(text)
+      recorder.start()
+      mediaRecorderRef.current = recorder
+      setVoiceTranscript("")
+      setVoiceRecording(true)
+    } catch {
+      alert("Impossible d'accéder au microphone. Vérifiez les permissions.")
     }
-    recognition.onerror = () => setVoiceRecording(false)
-    recognition.onend = () => setVoiceRecording(false)
-
-    recognitionRef.current = recognition
-    recognition.start()
-    setVoiceTranscript("")
-    setVoiceRecording(true)
   }
 
   function stopVoice() {
-    recognitionRef.current?.stop()
+    mediaRecorderRef.current?.stop()
     setVoiceRecording(false)
   }
 
-  async function parseVoice(text: string) {
+  async function processAudio(blob: Blob, mimeType: string) {
     setVoiceParsing(true)
+    try {
+      const ext = mimeType.includes("mp4") ? "mp4" : mimeType.includes("ogg") ? "ogg" : "webm"
+      const formData = new FormData()
+      formData.append("audio", blob, `recording.${ext}`)
+
+      const tr = await authFetch("/api/voice/transcribe", { method: "POST", body: formData })
+      const { transcript, error } = await tr.json()
+      if (!transcript) { alert(error ?? "Transcription échouée"); setVoiceParsing(false); return }
+
+      setVoiceTranscript(transcript)
+      await parseVoice(transcript)
+    } catch {
+      alert("Erreur lors de la transcription")
+    }
+    setVoiceParsing(false)
+  }
+
+  async function parseVoice(text: string) {
     try {
       const r = await authFetch("/api/voice/parse", {
         method: "POST",
@@ -485,7 +502,6 @@ export default function ActivitiesPage() {
     } catch {
       alert("Erreur lors de l'analyse vocale")
     }
-    setVoiceParsing(false)
   }
 
   function applyVoiceResult(result: VoiceResult) {
