@@ -1,19 +1,31 @@
 import Groq from "groq-sdk"
 import { getAuthUser } from "@/lib/authServer"
+import { createRateLimiter } from "@/lib/rate-limit"
 import { NextRequest } from "next/server"
 
 export const dynamic = "force-dynamic"
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+const rateLimit = createRateLimiter({ maxRequests: 10, windowMs: 60_000 })
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = rateLimit(request)
+    if (limited) return limited
+
     const authUser = await getAuthUser(request)
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
     const { image } = await request.json()
     if (!image || typeof image !== "string") {
       return Response.json({ error: "Image required" }, { status: 400 })
+    }
+    if (!image.startsWith("data:image/")) {
+      return Response.json({ error: "Invalid image format" }, { status: 400 })
+    }
+    // ~4MB base64 limit (≈3MB raw)
+    if (image.length > 4 * 1024 * 1024) {
+      return Response.json({ error: "Image too large" }, { status: 413 })
     }
 
     const prompt = `Tu es un nutritionniste expert. Analyse cette photo de nourriture et estime les informations nutritionnelles pour la portion visible.

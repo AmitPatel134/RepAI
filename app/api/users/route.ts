@@ -21,12 +21,19 @@ export async function PATCH(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const authUser = await getAuthUser(request)
+  if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
+
   const body = await request.json()
+  if (body.email && body.email !== authUser.email) {
+    return Response.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   const user = await prisma.user.upsert({
-    where: { email: body.email },
+    where: { email: authUser.email },
     update: {},
     create: {
-      email: body.email,
+      email: authUser.email,
       name: body.name,
       telephone: body.telephone ?? null,
       company: body.company ?? null,

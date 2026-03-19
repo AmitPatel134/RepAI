@@ -1,13 +1,18 @@
 import Groq from "groq-sdk"
 import { getAuthUser } from "@/lib/authServer"
+import { createRateLimiter } from "@/lib/rate-limit"
 import { NextRequest } from "next/server"
 
 export const dynamic = "force-dynamic"
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+const rateLimit = createRateLimiter({ maxRequests: 10, windowMs: 60_000 })
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = rateLimit(request)
+    if (limited) return limited
+
     const authUser = await getAuthUser(request)
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
 

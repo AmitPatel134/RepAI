@@ -1,8 +1,14 @@
 import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
+import { createRateLimiter } from "@/lib/rate-limit"
+import { NextRequest } from "next/server"
 
-export async function POST(request: Request) {
+const rateLimit = createRateLimiter({ maxRequests: 5, windowMs: 60_000 })
+
+export async function POST(request: NextRequest) {
+  const limited = rateLimit(request)
+  if (limited) return limited
   const authUser = await getAuthUser(request)
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
