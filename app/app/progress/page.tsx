@@ -492,7 +492,7 @@ export default function ProgressPage() {
                 />
                 <Tooltip
                   contentStyle={{ background: "#1f2937", border: "none", borderRadius: "12px", fontSize: "12px", color: "#fff" }}
-                  formatter={(v: number) => [`${v} kg`, "Moy."]}
+                  formatter={(v: unknown) => [`${v} kg`, "Moy."]}
                 />
                 <Line
                   type="monotone" dataKey="weight"
