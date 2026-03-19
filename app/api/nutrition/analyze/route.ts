@@ -22,7 +22,7 @@ Réponds UNIQUEMENT avec un objet JSON valide (sans bloc markdown, sans texte av
 Estime les portions visuellement. Si tu ne peux pas identifier de nourriture, mets null pour les valeurs numériques et "Aliment non identifié" pour le nom.`
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.2-11b-vision-preview",
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       messages: [
         {
