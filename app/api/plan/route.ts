@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { PLANS, isPro } from "@/lib/plans"
+import { isPro } from "@/lib/plans"
 import { getAuthUser } from "@/lib/authServer"
 
 export const dynamic = "force-dynamic"
@@ -12,8 +12,8 @@ export async function GET(request: Request) {
   if (!user) {
     return Response.json({
       plan: "free",
-      limits: PLANS.free,
-      usage: { items: 0, generationsThisMonth: 0 },
+      usage: { workoutsThisMonth: 0 },
+      limits: { workoutsPerMonth: 5 },
     })
   }
 
@@ -21,23 +21,19 @@ export async function GET(request: Request) {
   firstOfMonth.setDate(1)
   firstOfMonth.setHours(0, 0, 0, 0)
 
-  const [itemsCount, generationsCount] = await Promise.all([
-    prisma.item.count({ where: { userId: user.id } }),
-    prisma.generation.count({ where: { userId: user.id, createdAt: { gte: firstOfMonth } } }),
-  ])
+  const workoutsThisMonth = await prisma.workout.count({
+    where: { userId: user.id, createdAt: { gte: firstOfMonth } },
+  })
 
   const plan = user.plan ?? "free"
-  const limits = isPro(plan) ? PLANS.pro : PLANS.free
+  const pro = isPro(plan)
 
   return Response.json({
     plan,
+    usage: { workoutsThisMonth },
     limits: {
-      items: limits.items === Infinity ? null : limits.items,
-      generationsPerMonth: limits.generationsPerMonth === Infinity ? null : limits.generationsPerMonth,
-    },
-    usage: {
-      items: itemsCount,
-      generationsThisMonth: generationsCount,
+      workoutsPerMonth: pro ? null : 5,
+      exercisesPerWorkout: pro ? null : 3,
     },
   })
 }
