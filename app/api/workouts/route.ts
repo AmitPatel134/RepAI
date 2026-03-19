@@ -43,30 +43,15 @@ export async function POST(request: NextRequest) {
     })
 
     const body = await request.json()
-    const { name, notes, date, exercises } = body
+    const { name, type, notes, date } = body
 
     const workout = await prisma.workout.create({
       data: {
         userId: user.id,
         name,
+        type: type || "fullbody",
         notes: notes || null,
         date: date ? new Date(date) : new Date(),
-        exercises: {
-          create: exercises.map((ex: { name: string; category?: string; sets: { reps?: number; weight?: number; rpe?: number; notes?: string }[] }, ei: number) => ({
-            name: ex.name,
-            category: ex.category ?? "strength",
-            order: ei,
-            sets: {
-              create: ex.sets.map((s: { reps?: number; weight?: number; rpe?: number; notes?: string }, si: number) => ({
-                reps: s.reps || null,
-                weight: s.weight || null,
-                rpe: s.rpe || null,
-                notes: s.notes || null,
-                order: si,
-              })),
-            },
-          })),
-        },
       },
       include: {
         exercises: {

@@ -120,12 +120,22 @@
   transition: opacity 0.7s ease, transform 0.7s ease;
 }
 
+@keyframes pageFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.page-enter, .page-enter-back {
+  animation: pageFadeIn 0.18s ease forwards;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
+  html, body {
     @apply bg-background text-foreground;
+    background-color: #030712;
     -webkit-tap-highlight-color: transparent;
   }
   html {

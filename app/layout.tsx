@@ -18,24 +18,23 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "MyApp — AI-powered SaaS",
-    template: "%s | MyApp",
+    default: "RepAI — Suivi & Performance",
+    template: "%s | RepAI",
   },
-  description: "The AI-powered platform to manage your workflow efficiently.",
-  keywords: ["SaaS", "AI", "productivity", "management"],
-  authors: [{ name: "MyApp" }],
+  description: "Trackez vos séances, visualisez vos progrès et progressez avec votre coach IA.",
+  keywords: ["musculation", "fitness", "suivi", "performance", "coach IA"],
+  authors: [{ name: "RepAI" }],
   openGraph: {
-    title: "MyApp — AI-powered SaaS",
-    description: "The AI-powered platform to manage your workflow efficiently.",
-    url: "https://example.com",
-    siteName: "MyApp",
-    locale: "en_US",
+    title: "RepAI — Suivi & Performance",
+    description: "Trackez vos séances, visualisez vos progrès et progressez avec votre coach IA.",
+    siteName: "RepAI",
+    locale: "fr_FR",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "MyApp — AI-powered SaaS",
-    description: "The AI-powered platform to manage your workflow efficiently.",
+    title: "RepAI — Suivi & Performance",
+    description: "Trackez vos séances, visualisez vos progrès et progressez avec votre coach IA.",
   },
   robots: {
     index: true,
@@ -50,7 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${jakarta.variable} font-[family-name:var(--font-jakarta)] antialiased bg-white text-gray-900`}>
+      <body className={`${jakarta.variable} font-[family-name:var(--font-jakarta)] antialiased`}>
         {children}
         <Analytics />
       </body>

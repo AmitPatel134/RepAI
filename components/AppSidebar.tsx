@@ -138,26 +138,53 @@ export default function AppSidebar() {
 
       </aside>
 
-      {/* MOBILE BOTTOM NAV */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 flex items-center" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-        {mobileNavItems.map(item => {
-          const active = isActive(item)
-          return (
-            <a
-              key={item.href}
-              href={item.href}
-              className={`flex-1 flex flex-col items-center justify-center py-3 gap-1 transition-colors min-h-[56px] ${
-                active ? "text-violet-600" : "text-gray-400"
-              }`}
-            >
-              <span className={active ? "text-violet-600" : "text-gray-400"}>
-                {item.icon}
-              </span>
-              <span className="text-[10px] font-semibold leading-none">{item.label}</span>
-            </a>
-          )
-        })}
-      </nav>
+      {/* MOBILE BOTTOM NAV — floating pill */}
+      <div
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4 bg-gray-950"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)", paddingTop: "8px" }}
+      >
+        <nav className="relative w-full max-w-sm rounded-2xl bg-gray-900/85 backdrop-blur-md border border-white/10 shadow-2xl overflow-hidden">
+
+          {/* Sliding active bubble */}
+          {(() => {
+            const activeIndex = mobileNavItems.findIndex(item => isActive(item))
+            return activeIndex >= 0 ? (
+              <div
+                className="absolute top-1.5 bottom-1.5 pointer-events-none"
+                style={{
+                  width: `${100 / mobileNavItems.length}%`,
+                  transform: `translateX(${activeIndex * 100}%)`,
+                  transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                }}
+              >
+                <div className="h-full mx-1.5 rounded-xl bg-violet-600 shadow-lg shadow-violet-900/50" />
+              </div>
+            ) : null
+          })()}
+
+          {/* Items */}
+          <div className="relative flex">
+            {mobileNavItems.map(item => {
+              const active = isActive(item)
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="flex-1 flex flex-col items-center justify-center py-3 gap-0.5 z-10 transition-colors duration-200"
+                >
+                  <span className={active ? "text-white" : "text-gray-500"}>
+                    {item.icon}
+                  </span>
+                  <span className={`text-[9px] font-bold leading-none ${active ? "text-white" : "text-gray-500"}`}>
+                    {item.label}
+                  </span>
+                </a>
+              )
+            })}
+          </div>
+
+        </nav>
+      </div>
     </>
   )
 }

@@ -26,6 +26,7 @@ model Workout {
   userId    String
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
+  type      String     @default("fullbody")
   notes     String?
   date      DateTime   @default(now())
   exercises Exercise[]

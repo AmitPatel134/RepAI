@@ -41,32 +41,37 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (!existing) return Response.json({ error: "Not found" }, { status: 404 })
 
     const body = await request.json()
-    const { name, notes, date, exercises } = body
+    const { name, type, notes, date, exercises } = body
 
-    // Delete old exercises (cascade deletes sets)
-    await prisma.exercise.deleteMany({ where: { workoutId: params.id } })
+    // If exercises provided, replace them all
+    if (exercises !== undefined) {
+      await prisma.exercise.deleteMany({ where: { workoutId: params.id } })
+    }
 
     const workout = await prisma.workout.update({
       where: { id: params.id },
       data: {
-        name,
-        notes: notes || null,
-        date: date ? new Date(date) : existing.date,
-        exercises: {
-          create: exercises.map((ex: { name: string; category?: string; sets: { reps?: number; weight?: number; rpe?: number }[] }, ei: number) => ({
-            name: ex.name,
-            category: ex.category ?? "strength",
-            order: ei,
-            sets: {
-              create: ex.sets.map((s: { reps?: number; weight?: number; rpe?: number }, si: number) => ({
-                reps: s.reps || null,
-                weight: s.weight || null,
-                rpe: s.rpe || null,
-                order: si,
-              })),
-            },
-          })),
-        },
+        ...(name !== undefined && { name }),
+        ...(type !== undefined && { type }),
+        ...(notes !== undefined && { notes: notes || null }),
+        ...(date !== undefined && { date: new Date(date) }),
+        ...(exercises !== undefined && {
+          exercises: {
+            create: exercises.map((ex: { name: string; category?: string; sets: { reps?: number; weight?: number; rpe?: number }[] }, ei: number) => ({
+              name: ex.name,
+              category: ex.category ?? "strength",
+              order: ei,
+              sets: {
+                create: ex.sets.map((s: { reps?: number; weight?: number; rpe?: number }, si: number) => ({
+                  reps: s.reps || null,
+                  weight: s.weight || null,
+                  rpe: s.rpe || null,
+                  order: si,
+                })),
+              },
+            })),
+          },
+        }),
       },
       include: {
         exercises: {
