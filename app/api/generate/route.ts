@@ -1,6 +1,4 @@
 import Groq from "groq-sdk"
-import { prisma } from "@/lib/prisma"
-import { getLimit, isPro } from "@/lib/plans"
 import { createRateLimiter } from "@/lib/rate-limit"
 import { getAuthUser } from "@/lib/authServer"
 import { NextRequest } from "next/server"
@@ -17,19 +15,6 @@ export async function POST(request: NextRequest) {
   const { item, mode, tone = "professional", length = "standard", instructions = "" } = await request.json()
 
   const email = authUser?.email
-  if (email) {
-    const user = await prisma.user.findUnique({ where: { email } })
-    if (user && !isPro(user.plan)) {
-      const firstOfMonth = new Date()
-      firstOfMonth.setDate(1)
-      firstOfMonth.setHours(0, 0, 0, 0)
-      const count = await prisma.generation.count({ where: { userId: user.id, createdAt: { gte: firstOfMonth } } })
-      const limit = getLimit(user.plan, "generationsPerMonth")
-      if (count >= limit) {
-        return Response.json({ error: "LIMIT_REACHED", limit }, { status: 403 })
-      }
-    }
-  }
 
   const itemDetails = [
     `Name: ${item.name}`,
@@ -130,18 +115,6 @@ Write the final post directly, ready to publish.`
   })
 
   const content = completion.choices[0].message.content ?? ""
-
-  if (email) {
-    const user = await prisma.user.upsert({ where: { email }, update: {}, create: { email } })
-    await prisma.generation.create({
-      data: {
-        userId: user.id,
-        content,
-        type: mode,
-        prompt: instructions || null,
-      },
-    })
-  }
 
   return Response.json({ content })
 }

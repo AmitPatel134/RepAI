@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Pricing — RepAI",
     description: "Start free. Pro plan with no commitment for unlimited items and generations.",
-    url: "https://example.com/pricing",
+    url: "https://repai.fr/pricing",
   },
   twitter: {
     title: "Pricing — RepAI",

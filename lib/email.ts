@@ -3,9 +3,9 @@ import { Resend } from "resend"
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "RepAI"
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://example.com"
-const FROM_EMAIL = process.env.FROM_EMAIL ?? `noreply@example.com`
-const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL ?? `support@example.com`
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://repai.fr"
+const FROM_EMAIL = process.env.FROM_EMAIL ?? `noreply@repai.fr`
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL ?? `support@repai.fr`
 
 export async function sendWelcomeEmail({ to, name }: { to: string; name?: string }) {
   const displayName = name ? name : "there"
