@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     })
 
     const body = await request.json()
-    const { name, date, calories, proteins, carbs, fats, fiber, notes } = body
+    const { name, date, calories, proteins, carbs, fats, fiber, notes, imageThumb } = body
 
     if (!name) return Response.json({ error: "name required" }, { status: 400 })
 
@@ -50,11 +50,13 @@ export async function POST(request: NextRequest) {
         fats: fats ?? null,
         fiber: fiber ?? null,
         notes: notes ?? null,
+        imageThumb: imageThumb ?? null,
       },
     })
 
     return Response.json(meal, { status: 201 })
-  } catch {
-    return Response.json({ error: "Database error" }, { status: 500 })
+  } catch (e) {
+    console.error("POST /api/nutrition error:", e)
+    return Response.json({ error: "Database error", detail: (e as Error)?.message }, { status: 500 })
   }
 }

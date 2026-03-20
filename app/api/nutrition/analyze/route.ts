@@ -16,47 +16,68 @@ export async function POST(request: NextRequest) {
     const authUser = await getAuthUser(request)
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
-    const { image } = await request.json()
-    if (!image || typeof image !== "string") {
-      return Response.json({ error: "Image required" }, { status: 400 })
-    }
-    if (!image.startsWith("data:image/")) {
-      return Response.json({ error: "Invalid image format" }, { status: 400 })
-    }
-    // ~4MB base64 limit (≈3MB raw)
-    if (image.length > 4 * 1024 * 1024) {
-      return Response.json({ error: "Image too large" }, { status: 413 })
+    const { composition, name } = await request.json()
+    if (!composition || typeof composition !== "string" || !composition.trim()) {
+      return Response.json({ error: "Composition required" }, { status: 400 })
     }
 
-    const prompt = `Tu es un nutritionniste expert. Analyse cette photo de nourriture et estime les informations nutritionnelles pour la portion visible.
-Réponds UNIQUEMENT avec un objet JSON valide (sans bloc markdown, sans texte avant ni après) :
-{"name":"nom du plat ou aliment","calories":450,"proteins":35.2,"carbs":42.5,"fats":12.3,"fiber":4.2,"notes":"description courte des ingrédients principaux"}
-Estime les portions visuellement. Si tu ne peux pas identifier de nourriture, mets null pour les valeurs numériques et "Aliment non identifié" pour le nom.`
+    const prompt = `You are an expert nutritionist. Calculate the complete nutritional values for this meal using the exact quantities listed:
+
+${composition}
+
+Rules:
+- Calculate each ingredient separately then sum up
+- Use standard nutritional reference values (USDA/CIQUAL)
+- Account for cooking method (grilled/steamed = no added fat unless stated)
+- ALL 5 numeric fields are REQUIRED — never omit or use null
+
+Respond with ONLY this exact JSON structure, no markdown, no text before or after:
+{"calories":247,"proteins":18.5,"carbs":12.3,"fats":14.2,"fiber":3.1,"notes":"short optional note"}`
 
     const completion = await groq.chat.completions.create({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      model: "llama-3.3-70b-versatile",
       messages: [
-        {
-          role: "user",
-          content: [
-            { type: "image_url", image_url: { url: image } },
-            { type: "text", text: prompt },
-          ],
-        },
-      ] as any,
-      temperature: 0.2,
-      max_tokens: 400,
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.1,
+      max_tokens: 500,
     })
 
     const text = completion.choices[0].message.content ?? "{}"
-    const jsonMatch = text.match(/\{[\s\S]*?\}/)
-    if (!jsonMatch) return Response.json({ error: "Impossible d'analyser l'image" }, { status: 500 })
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return Response.json({ error: `JSON introuvable dans la réponse du modèle. Réponse brute : "${text.slice(0, 200)}"` }, { status: 500 })
 
-    const result = JSON.parse(jsonMatch[0])
+    const sanitized = jsonMatch[0].replace(/"(?:[^"\\]|\\.)*"/g, m =>
+      m.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")
+    )
+
+    let raw
+    try {
+      raw = JSON.parse(sanitized)
+    } catch (parseErr) {
+      return Response.json({ error: `Échec du parsing JSON : ${(parseErr as Error).message}. Extrait : "${sanitized.slice(0, 200)}"` }, { status: 500 })
+    }
+
+    // Normalize alternative field names the model might use
+    const result = {
+      name:     name ?? raw.name ?? "Repas",
+      calories: raw.calories ?? raw.kcal ?? raw.energy ?? null,
+      proteins: raw.proteins ?? raw.protein ?? raw.proteines ?? raw.protéines ?? null,
+      carbs:    raw.carbs ?? raw.carbohydrates ?? raw.carbohydrate ?? raw.glucides ?? null,
+      fats:     raw.fats ?? raw.fat ?? raw.lipids ?? raw.lipides ?? null,
+      fiber:    raw.fiber ?? raw.fibre ?? raw.fibres ?? raw.dietary_fiber ?? raw.fibres_alimentaires ?? null,
+      notes:    raw.notes ?? raw.note ?? null,
+    }
+
+    // Log raw response to help debug if values are still missing
+    if (!result.proteins && !result.carbs && !result.fats) {
+      console.warn("Nutrition analyze: macros missing. Raw model output:", text.slice(0, 500))
+    }
+
     return Response.json(result)
   } catch (e) {
+    const msg = (e as Error)?.message ?? String(e)
     console.error("Nutrition analyze error:", e)
-    return Response.json({ error: "Erreur d'analyse IA" }, { status: 500 })
+    return Response.json({ error: `Erreur Groq/analyze : ${msg}` }, { status: 500 })
   }
 }

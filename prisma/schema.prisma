@@ -34,8 +34,9 @@ model Meal {
   carbs     Float?
   fats      Float?
   fiber     Float?
-  notes     String?
-  createdAt DateTime @default(now())
+  notes      String?
+  imageThumb String?
+  createdAt  DateTime @default(now())
 
   @@index([userId, date])
 }

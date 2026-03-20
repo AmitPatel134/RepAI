@@ -15,6 +15,12 @@ type Meal = {
   fats: number | null
   fiber: number | null
   notes: string | null
+  imageThumb: string | null
+}
+
+type CompositionResult = {
+  name: string
+  composition: string
 }
 
 type AnalysisResult = {
@@ -31,6 +37,28 @@ type AnalysisResult = {
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })
+}
+
+function createThumbnail(dataUrl: string, size = 80, quality = 0.5): Promise<string | null> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas")
+        canvas.width = size; canvas.height = size
+        const ctx = canvas.getContext("2d")!
+        const s = Math.min(img.width, img.height)
+        const ox = (img.width - s) / 2
+        const oy = (img.height - s) / 2
+        ctx.drawImage(img, ox, oy, s, s, 0, 0, size, size)
+        resolve(canvas.toDataURL("image/jpeg", quality))
+      } catch {
+        resolve(null)
+      }
+    }
+    img.onerror = () => resolve(null)
+    img.src = dataUrl
+  })
 }
 
 function resizeImage(file: File, maxPx = 900, quality = 0.75): Promise<string> {
@@ -79,8 +107,11 @@ export default function NutritionPage() {
   const [openYears, setOpenYears] = useState<Set<string>>(new Set())
 
   // Image analysis flow
-  const [analyzing, setAnalyzing] = useState(false)
+  const [analyzingStep, setAnalyzingStep] = useState<"describe" | "calculate" | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [compositionResult, setCompositionResult] = useState<CompositionResult | null>(null)
+  const [compositionText, setCompositionText] = useState("")
+  const [editingComposition, setEditingComposition] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [editName, setEditName] = useState("")
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
@@ -158,20 +189,20 @@ export default function NutritionPage() {
     if (!file) return
     e.target.value = ""
     setAnalyzeError(null)
-    setAnalyzing(true)
+    setAnalyzingStep("describe")
     try {
       const base64 = await resizeImage(file)
       setPreviewUrl(base64)
-      const r = await authFetch("/api/nutrition/analyze", {
+      const r = await authFetch("/api/nutrition/describe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: base64 }),
       })
       const data = await r.json()
-      if (!r.ok) { setAnalyzeError(data.error ?? "Erreur d'analyse"); setAnalyzing(false); return }
-      setAnalysisResult(data)
-      setEditName(data.name ?? "")
-      setMealDate(new Date().toISOString().slice(0, 10))
+      if (!r.ok) { setAnalyzeError(data.error ?? "Erreur d'analyse"); setAnalyzingStep(null); return }
+      setCompositionResult(data)
+      setCompositionText(typeof data.composition === "string" ? data.composition : "")
+      setEditName(typeof data.name === "string" ? data.name : "")
     } catch (err) {
       if ((err as Error)?.message === "format") {
         setAnalyzeError("Format non supporté. Utilise une photo JPG ou PNG.")
@@ -179,11 +210,41 @@ export default function NutritionPage() {
         setAnalyzeError("Erreur réseau")
       }
     }
-    setAnalyzing(false)
+    setAnalyzingStep(null)
+  }
+
+  async function handleCalculate() {
+    if (!compositionResult) return
+    setAnalyzingStep("calculate")
+    try {
+      const r = await authFetch("/api/nutrition/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ composition: compositionText, name: editName }),
+      })
+      const data = await r.json()
+      if (!r.ok) { setAnalyzeError(data.error ?? "Erreur de calcul"); setAnalyzingStep(null); return }
+      // Garantir que toutes les valeurs numériques sont présentes
+      setAnalysisResult({
+        ...data,
+        calories: data.calories ?? 0,
+        proteins: data.proteins ?? 0,
+        carbs:    data.carbs    ?? 0,
+        fats:     data.fats     ?? 0,
+        fiber:    data.fiber    ?? 0,
+      })
+      setMealDate(new Date().toISOString().slice(0, 10))
+    } catch {
+      setAnalyzeError("Erreur réseau")
+    }
+    setAnalyzingStep(null)
   }
 
   function closeAnalysis() {
     setPreviewUrl(null)
+    setCompositionResult(null)
+    setCompositionText("")
+    setEditingComposition(false)
     setAnalysisResult(null)
     setEditName("")
     setAnalyzeError(null)
@@ -192,6 +253,7 @@ export default function NutritionPage() {
   async function handleSaveMeal() {
     if (!analysisResult) return
     setSaving(true)
+    const imageThumb = previewUrl ? (await createThumbnail(previewUrl)) : null
     const r = await authFetch("/api/nutrition", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -204,6 +266,7 @@ export default function NutritionPage() {
         fats: analysisResult.fats,
         fiber: analysisResult.fiber,
         notes: analysisResult.notes,
+        imageThumb,
       }),
     })
     if (r.ok) {
@@ -427,10 +490,15 @@ export default function NutritionPage() {
                                     )}
                                   </div>
                                 )}
-                                <div className="w-9 h-9 rounded-xl bg-orange-500/15 flex items-center justify-center shrink-0 text-orange-400">
-                                  <svg className="w-4.5 h-4.5 w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                                  </svg>
+                                <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 bg-orange-500/15 flex items-center justify-center text-orange-400">
+                                  {meal.imageThumb ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={meal.imageThumb} alt="" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                                    </svg>
+                                  )}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-bold text-white truncate">{meal.name}</p>
@@ -503,17 +571,24 @@ export default function NutritionPage() {
         </div>
       )}
 
-      {/* ── Analyzing overlay ── */}
-      {analyzing && (
+      {/* ── Step 1: Analyzing image overlay ── */}
+      {analyzingStep === "describe" && (
         <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center gap-5 px-6">
-          <div className="w-16 h-16 rounded-full bg-violet-600/20 flex items-center justify-center">
-            <svg className="w-8 h-8 text-violet-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          {previewUrl && (
+            <div className="w-28 h-28 rounded-2xl overflow-hidden border border-white/10">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={previewUrl} alt="" className="w-full h-full object-cover" />
+            </div>
+          )}
+          <div className="w-14 h-14 rounded-full bg-violet-600/20 flex items-center justify-center">
+            <svg className="w-7 h-7 text-violet-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
           <div className="text-center">
-            <p className="text-white font-bold text-lg mb-1">Analyse en cours…</p>
-            <p className="text-gray-500 text-sm">L&apos;IA analyse les valeurs nutritionnelles</p>
+            <p className="text-white font-bold text-lg mb-1">Identification des aliments…</p>
+            <p className="text-gray-500 text-sm">L&apos;IA analyse le contenu de l&apos;assiette</p>
           </div>
           <div className="flex gap-1.5">
             {[0, 1, 2].map(i => (
@@ -523,87 +598,249 @@ export default function NutritionPage() {
         </div>
       )}
 
-      {/* ── Analysis result sheet ── */}
-      {!analyzing && analysisResult && (
-        <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"
-          onClick={closeAnalysis}
-        >
+      {/* ── Step 2: Calculating macros overlay ── */}
+      {analyzingStep === "calculate" && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center gap-5 px-6">
+          <div className="w-14 h-14 rounded-full bg-orange-500/20 flex items-center justify-center">
+            <svg className="w-7 h-7 text-orange-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25v-.008zm2.498-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008v-.008zm2.504-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008v-.008zm2.498-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008v-.008zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.656 4.5 4.77V19.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V4.77c0-1.114-.806-2.07-1.907-2.198A48.424 48.424 0 0012 2.25z" />
+            </svg>
+          </div>
+          <div className="text-center">
+            <p className="text-white font-bold text-lg mb-1">Calcul des valeurs nutritionnelles…</p>
+            <p className="text-gray-500 text-sm">Calories, protéines, glucides, lipides</p>
+          </div>
+          <div className="flex gap-1.5">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="w-2 h-2 rounded-full bg-orange-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Step 1 result: Composition sheet ── */}
+      {!analyzingStep && compositionResult && !analysisResult && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={!editingComposition ? closeAnalysis : undefined}>
           <div
-            className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[92vh] flex flex-col"
             onClick={e => e.stopPropagation()}
           >
             <div
-              className="flex justify-center pt-3 pb-1 cursor-grab"
+              className="flex justify-center pt-3 pb-1 cursor-grab shrink-0"
               onTouchStart={onSheetHandleTouchStart}
               onTouchEnd={e => onSheetHandleTouchEnd(e, closeAnalysis)}
             >
               <div className="w-10 h-1 rounded-full bg-white/20" />
             </div>
-            <div className="px-5 pb-8 pt-2">
-              {/* Preview */}
-              {previewUrl && (
-                <div className="w-full h-44 rounded-2xl overflow-hidden mb-4 bg-white/5">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={previewUrl} alt="Repas" className="w-full h-full object-cover" />
+
+            {/* ── Mode lecture (défaut) ── */}
+            {!editingComposition ? (
+              <>
+                <div className="overflow-y-auto flex-1 px-5 pt-1">
+                  {previewUrl && (
+                    <div className="w-full h-44 rounded-2xl overflow-hidden mb-4 bg-white/5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={previewUrl} alt="Repas" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+
+                  <p className="text-lg font-extrabold text-white mb-1">{editName || compositionResult.name}</p>
+                  <p className="text-[11px] text-gray-500 mb-4">Quantités estimées visuellement — vérifiez avant de calculer</p>
+
+                  {/* Composition en lecture seule */}
+                  <div className="bg-white/[0.04] border border-white/[0.07] rounded-2xl px-4 py-3 mb-2">
+                    {compositionText.split("\n").filter(l => l.trim()).map((line, i) => (
+                      <p key={i} className="text-sm text-gray-200 leading-relaxed py-1 border-b border-white/[0.05] last:border-0">
+                        {line.trim()}
+                      </p>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-gray-600 italic mb-5 px-1">
+                    Cliquez sur &ldquo;Modifier&rdquo; pour corriger ou compléter.
+                  </p>
                 </div>
-              )}
 
-              <h3 className="text-base font-black text-white mb-4">Résultat de l&apos;analyse</h3>
+                <div className="px-5 pb-8 pt-3 shrink-0 border-t border-white/[0.07] flex flex-col gap-3">
+                  {/* Bouton principal */}
+                  <button
+                    onClick={handleCalculate}
+                    disabled={!compositionText.trim()}
+                    className="w-full py-4 bg-orange-500 rounded-2xl text-base font-extrabold text-white hover:bg-orange-400 transition-colors disabled:opacity-40 shadow-lg shadow-orange-500/20"
+                  >
+                    Calculer les valeurs nutritionnelles
+                  </button>
+                  {/* Boutons secondaires */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={closeAnalysis}
+                      className="flex-1 py-3 border border-white/10 rounded-xl text-sm font-bold text-gray-500 hover:text-white transition-colors"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={() => setEditingComposition(true)}
+                      className="flex-1 py-3 border border-white/15 rounded-xl text-sm font-bold text-gray-300 hover:text-white hover:border-white/30 transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+                      </svg>
+                      Modifier
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              /* ── Mode édition ── */
+              <>
+                <div className="overflow-y-auto flex-1 px-5 pt-2">
+                  <p className="text-sm font-extrabold text-white mb-3">Modifier la composition</p>
 
-              {/* Editable name */}
-              <div className="mb-4">
-                <label className="text-xs font-bold text-gray-400 block mb-1.5">Nom du repas</label>
+                  <div className="mb-3">
+                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide block mb-1">Nom du repas</label>
+                    <input
+                      value={editName}
+                      onChange={e => setEditName(e.target.value)}
+                      placeholder="ex: Poulet riz légumes"
+                      className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none focus:border-orange-500/50"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide block mb-1">
+                      Ingrédients &amp; quantités
+                    </label>
+                    <textarea
+                      autoFocus
+                      value={compositionText}
+                      onChange={e => setCompositionText(e.target.value)}
+                      rows={Math.max(5, (compositionText || "").split("\n").length + 1)}
+                      placeholder={"- 150g de poulet grillé\n- 100g de riz basmati\n- 60g de légumes sautés\n..."}
+                      className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 outline-none focus:border-orange-500/50 resize-none leading-relaxed"
+                    />
+                  </div>
+                </div>
+
+                <div className="px-5 pb-8 pt-3 shrink-0 border-t border-white/[0.07] flex flex-col gap-3">
+                  <button
+                    onClick={() => { setEditingComposition(false) }}
+                    className="w-full py-4 bg-orange-500 rounded-2xl text-base font-extrabold text-white hover:bg-orange-400 transition-colors shadow-lg shadow-orange-500/20"
+                  >
+                    Valider les modifications
+                  </button>
+                  <button
+                    onClick={() => setEditingComposition(false)}
+                    className="w-full py-3 border border-white/10 rounded-xl text-sm font-bold text-gray-500 hover:text-white transition-colors"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Step 2 result: Macros sheet ── */}
+      {!analyzingStep && analysisResult && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={closeAnalysis}>
+          <div
+            className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="pb-8">
+
+              {/* Photo pleine largeur — flush en haut, angles arrondis en haut */}
+              <div
+                className="relative cursor-grab"
+                onTouchStart={onSheetHandleTouchStart}
+                onTouchEnd={e => onSheetHandleTouchEnd(e, closeAnalysis)}
+              >
+                {previewUrl && (
+                  <div className="w-full overflow-hidden rounded-t-3xl bg-white/5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={previewUrl} alt="Repas" className="w-full object-cover" style={{ maxHeight: "240px" }} />
+                  </div>
+                )}
+                {/* Drag handle superposé sur la photo */}
+                <div className="absolute top-2.5 left-0 right-0 flex justify-center pointer-events-none">
+                  <div className="w-10 h-1 rounded-full bg-white/40" />
+                </div>
+              </div>
+
+              {/* Nom + composition sous la photo */}
+              <div className="px-5 pt-3 mb-4">
                 <input
                   value={editName}
                   onChange={e => setEditName(e.target.value)}
-                  className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-violet-500/50"
+                  placeholder="Nom du repas"
+                  className="w-full bg-transparent text-base font-extrabold text-white placeholder-gray-600 outline-none truncate mb-1.5"
                 />
-              </div>
-
-              {/* Date */}
-              <div className="mb-4">
-                <label className="text-xs font-bold text-gray-400 block mb-1.5">Date</label>
-                <input
-                  type="date"
-                  value={mealDate}
-                  onChange={e => setMealDate(e.target.value)}
-                  className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-violet-500/50"
-                />
-              </div>
-
-              {/* Macros */}
-              <div className="bg-white/[0.04] border border-white/[0.07] rounded-2xl p-4 mb-4">
-                <div className="grid grid-cols-4 gap-2 mb-3">
-                  <MacroBar label="Calories" value={analysisResult.calories} unit="kcal" color="#f97316" />
-                  <MacroBar label="Protéines" value={analysisResult.proteins} unit="g" color="#3b82f6" />
-                  <MacroBar label="Glucides" value={analysisResult.carbs} unit="g" color="#22c55e" />
-                  <MacroBar label="Lipides" value={analysisResult.fats} unit="g" color="#f59e0b" />
-                </div>
-                {analysisResult.fiber != null && (
-                  <p className="text-[11px] text-gray-500 text-center">Fibres : {Math.round(analysisResult.fiber)}g</p>
+                {compositionText && (
+                  <div className="mt-1">
+                    {compositionText.split("\n").filter(l => l.trim()).map((line, i) => (
+                      <p key={i} className="text-[11px] text-gray-500 leading-snug py-1">{line.trim().replace(/~/g, "")}</p>
+                    ))}
+                  </div>
                 )}
               </div>
 
-              {/* Notes from AI */}
-              {analysisResult.notes && (
-                <p className="text-xs text-gray-500 italic mb-4 px-1">{analysisResult.notes}</p>
-              )}
+              <div className="border-t border-white/[0.07] mx-5 mb-2" />
 
-              <button
-                onClick={handleSaveMeal}
-                disabled={saving}
-                className="w-full py-3 bg-violet-600 rounded-xl text-sm font-bold text-white hover:bg-violet-500 transition-colors disabled:opacity-50"
-              >
-                {saving ? "Enregistrement…" : "Enregistrer ce repas"}
-              </button>
+              {/* Calories — big */}
+              <div className="text-center mb-6 px-5 pt-2">
+                <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-1">Calories</p>
+                <p className="text-6xl font-black text-white leading-none">
+                  {analysisResult.calories != null ? Math.round(analysisResult.calories) : "—"}
+                  <span className="text-2xl font-bold text-gray-400 ml-2">kcal</span>
+                </p>
+              </div>
+
+              {/* Macros — ligne colorée + titre + valeur */}
+              <div className="grid grid-cols-4 px-5 mb-4">
+                {[
+                  { label: "Protéines", value: analysisResult.proteins, color: "#3b82f6", daily: 50 },
+                  { label: "Glucides",  value: analysisResult.carbs,    color: "#22c55e", daily: 260 },
+                  { label: "Lipides",   value: analysisResult.fats,     color: "#f59e0b", daily: 70 },
+                  { label: "Fibres",    value: analysisResult.fiber,    color: "#a78bfa", daily: 25 },
+                ].map((m, i) => (
+                  <div key={m.label} className={`flex flex-col items-center pt-3 ${i > 0 ? "border-l border-white/[0.06]" : ""}`}>
+                    <div className="w-8 h-0.5 rounded-full mb-2" style={{ backgroundColor: m.color }} />
+                    <span className="text-[9px] font-black uppercase tracking-wider mb-1" style={{ color: m.color }}>{m.label}</span>
+                    <span className="text-xl font-black text-white leading-none">
+                      {m.value != null ? Math.round(m.value) : "—"}
+                    </span>
+                    <span className="text-[10px] font-bold mt-0.5" style={{ color: m.color + "99" }}>
+                      /{m.daily}g
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+
+              {/* Actions */}
+              <div className="h-4" />
+              <div className="px-5">
+                <button
+                  onClick={handleSaveMeal}
+                  disabled={saving}
+                  className="w-full py-4 bg-violet-600 rounded-2xl text-base font-extrabold text-white hover:bg-violet-500 transition-colors disabled:opacity-50 shadow-lg shadow-violet-600/20 mb-3"
+                >
+                  {saving ? "Enregistrement…" : "Enregistrer ce repas"}
+                </button>
+                <button
+                  onClick={() => setAnalysisResult(null)}
+                  className="w-full py-3 text-sm font-bold text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  ← Modifier la composition
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* ── Error sheet ── */}
-      {analyzeError && !analyzing && (
+      {analyzeError && !analyzingStep && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={() => setAnalyzeError(null)}>
           <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg px-5 py-8 text-center" onClick={e => e.stopPropagation()}>
             <p className="text-red-400 font-bold mb-2">Erreur d&apos;analyse</p>

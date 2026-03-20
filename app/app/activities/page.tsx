@@ -23,7 +23,7 @@ type Activity = {
 type UnifiedItem = { kind: "workout"; data: Workout } | { kind: "activity"; data: Activity }
 
 type VoiceSet = { reps: number | null; weight: number | null }
-type VoiceExercise = { name: string; sets: VoiceSet[] }
+type VoiceExercise = { name: string; sets: VoiceSet[]; ambiguous?: boolean; options?: string[] }
 type VoiceActivityData = {
   type: string; durationSec?: number | null; distanceM?: number | null
   elevationM?: number | null; avgHeartRate?: number | null; calories?: number | null; notes?: string | null
@@ -33,6 +33,47 @@ type VoiceItem =
   | { kind: "workout"; workout: VoiceWorkoutData; date?: string }
   | { kind: "cardio"; activity: VoiceActivityData; date?: string }
 type VoiceResult = { items: VoiceItem[] }
+
+// ─── Exercise disambiguation ──────────────────────────────────────────────────
+
+const EXERCISE_DISAMBIG: Record<string, string[]> = {
+  "tractions":    ["Tractions pronation", "Tractions supination"],
+  "développé":    ["Développé couché barre", "Développé couché haltères", "Développé incliné barre", "Développé incliné haltères", "Développé décliné", "Développé militaire"],
+  "curl":         ["Curl barre", "Curl haltères", "Curl marteau", "Curl poulie basse", "Curl incliné"],
+  "squat":        ["Squat barre", "Squat haltères", "Squat bulgare"],
+  "soulevé":      ["Soulevé de terre", "Soulevé de terre roumain"],
+  "élévations":   ["Élévations latérales", "Élévations latérales poulie"],
+  "extension":    ["Extension triceps poulie", "Extension triceps haltère"],
+  "gainage":      ["Gainage", "Gainage latéral"],
+  "tirage":       ["Tirage vertical", "Tirage poulie haute", "Tirage horizontal poulie"],
+  "rowing":       ["Rowing barre", "Rowing haltère"],
+  "écarté":       ["Écarté haltères", "Écarté poulie basse"],
+  "dips":         ["Dips", "Dips banc"],
+  "fentes":       ["Fentes", "Fentes bulgares"],
+}
+
+function findDisambigOptions(name: string): string[] | null {
+  const firstWord = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(" ")[0]
+  for (const [key, options] of Object.entries(EXERCISE_DISAMBIG)) {
+    const normKey = key.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    if (firstWord === normKey) {
+      const exactMatch = options.some(o => o.toLowerCase() === name.toLowerCase())
+      return exactMatch ? null : options
+    }
+  }
+  return null
+}
+
+function postProcessVoiceItems(items: VoiceItem[]): VoiceItem[] {
+  return items.map(item => {
+    if (item.kind !== "workout") return item
+    const exercises = item.workout.exercises.map(ex => {
+      const options = findDisambigOptions(ex.name)
+      return options ? { ...ex, ambiguous: true, options } : ex
+    })
+    return { ...item, workout: { ...item.workout, exercises } }
+  })
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -65,8 +106,9 @@ function fmtDate(iso: string) {
 }
 function fmtDuration(sec: number | null) {
   if (!sec) return null
-  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60)
-  return h > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${m}min`
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60
+  if (h > 0) return s > 0 ? `${h}h${m.toString().padStart(2, "0")}m${s.toString().padStart(2, "0")}s` : `${h}h${m.toString().padStart(2, "0")}`
+  return s > 0 ? `${m}min${s}s` : `${m}min`
 }
 function fmtDist(m: number | null) {
   if (!m) return null
@@ -167,18 +209,20 @@ export default function ActivitiesPage() {
 
   // Workout form
   const [wName, setWName] = useState("")
-  const [wType, setWType] = useState("fullbody")
-  const [wCustomType, setWCustomType] = useState("")
   const [wDate, setWDate] = useState(new Date().toISOString().slice(0, 10))
   const [wNotes, setWNotes] = useState("")
   const [wSaving, setWSaving] = useState(false)
   const [wExercises, setWExercises] = useState<VoiceExercise[]>([])
+
+  // Voice preview
+  const [voicePreview, setVoicePreview] = useState<VoiceItem[] | null>(null)
 
   // Cardio form
   const [cType, setCType] = useState("running")
   const [cDate, setCDate] = useState(new Date().toISOString().slice(0, 10))
   const [cDurH, setCDurH] = useState("")
   const [cDurM, setCDurM] = useState("")
+  const [cDurS, setCDurS] = useState("")
   const [cDist, setCDist] = useState("")
   const [cElev, setCElev] = useState("")
   const [cHR, setCHR] = useState("")
@@ -200,7 +244,7 @@ export default function ActivitiesPage() {
       Promise.all([
         authFetch("/api/workouts").then(r => r.json()).catch(() => []),
         authFetch("/api/activities").then(r => r.json()).catch(() => []),
-        fetch(`/api/plan?email=${encodeURIComponent(email)}`).then(r => r.json()).catch(() => ({ plan: "free" })),
+        authFetch("/api/plan").then(r => r.json()).catch(() => ({ plan: "free" })),
       ]).then(([w, a, p]) => {
         setWorkouts(Array.isArray(w) ? w : [])
         setActivities(Array.isArray(a) ? a : [])
@@ -296,17 +340,6 @@ export default function ActivitiesPage() {
 
   // ─── Edit actions ─────────────────────────────────────────────────────────
 
-  function handleEditSelected() {
-    const key = [...selectedIds][0]
-    if (!key) return
-    exitEditMode()
-    if (key.startsWith("a:")) {
-      const act = activities.find(a => a.id === key.slice(2))
-      if (act) openEditActivity(act)
-    }
-    // workouts are not editable from here
-  }
-
   async function handleDeleteSelected() {
     setDeletingSelected(true)
     for (const key of selectedIds) {
@@ -359,11 +392,10 @@ export default function ActivitiesPage() {
       }
     }
     setWSaving(true)
-    const finalType = wType === "custom" ? (wCustomType.trim() || "autre") : wType
     const r = await authFetch("/api/workouts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: wName.trim(), type: finalType, notes: wNotes, date: wDate, exercises: wExercises }),
+      body: JSON.stringify({ name: wName.trim(), type: "", notes: wNotes, date: wDate, exercises: wExercises }),
     })
     if (r.ok) {
       const workout = await r.json()
@@ -382,8 +414,10 @@ export default function ActivitiesPage() {
     setCDate(act.date.slice(0, 10))
     const h = act.durationSec ? Math.floor(act.durationSec / 3600) : 0
     const m = act.durationSec ? Math.floor((act.durationSec % 3600) / 60) : 0
+    const s = act.durationSec ? act.durationSec % 60 : 0
     setCDurH(h > 0 ? String(h) : "")
     setCDurM(m > 0 ? String(m) : "")
+    setCDurS(s > 0 ? String(s) : "")
     setCDist(act.distanceM ? String((act.distanceM / 1000).toFixed(2)).replace(/\.?0+$/, "") : "")
     setCElev(act.elevationM ? String(act.elevationM) : "")
     setCHR(act.avgHeartRate ? String(act.avgHeartRate) : "")
@@ -401,7 +435,7 @@ export default function ActivitiesPage() {
   async function handleSaveActivity() {
     setCSaving(true)
     const autoName = CARDIO_TYPES.find(t => t.key === cType)?.label ?? cType
-    const durationSec = cDurH || cDurM ? parseInt(cDurH || "0") * 3600 + parseInt(cDurM || "0") * 60 : null
+    const durationSec = cDurH || cDurM || cDurS ? parseInt(cDurH || "0") * 3600 + parseInt(cDurM || "0") * 60 + parseInt(cDurS || "0") : null
     const distanceM = cDist ? parseFloat(cDist) * 1000 : null
     const body = {
       type: cType, name: autoName, date: cDate, durationSec, distanceM,
@@ -441,7 +475,7 @@ export default function ActivitiesPage() {
 
   function resetCardioForm() {
     setCType("running"); setCDate(new Date().toISOString().slice(0, 10))
-    setCDurH(""); setCDurM(""); setCDist(""); setCElev(""); setCHR(""); setCCal(""); setCNotes("")
+    setCDurH(""); setCDurM(""); setCDurS(""); setCDist(""); setCElev(""); setCHR(""); setCCal(""); setCNotes("")
   }
 
   // ─── Voice ────────────────────────────────────────────────────────────────
@@ -522,7 +556,6 @@ export default function ActivitiesPage() {
     const items = result?.items
     if (!items || items.length === 0) { setVoiceError("empty"); return }
 
-    // Check all items have meaningful data
     const usefulItems = items.filter(item => {
       if (item.kind === "workout") {
         const w = item.workout
@@ -534,37 +567,9 @@ export default function ActivitiesPage() {
     })
     if (usefulItems.length === 0) { setVoiceError("empty"); return }
 
-    if (usefulItems.length === 1) {
-      // Single item → open pre-filled form
-      const item = usefulItems[0]
-      const localToday = new Date().toLocaleDateString("fr-CA")
-      if (item.kind === "workout") {
-        const w = item.workout
-        setWName(w.name || "Séance")
-        setWType(w.type || "fullbody")
-        setWDate(item.date || localToday)
-        setWNotes(w.notes || "")
-        setWExercises(w.exercises || [])
-        setShowWorkoutForm(true)
-      } else {
-        const a = item.activity
-        setCType(a.type || "running")
-        setCDate(item.date || localToday)
-        const h = a.durationSec ? Math.floor(a.durationSec / 3600) : 0
-        const m = a.durationSec ? Math.floor((a.durationSec % 3600) / 60) : 0
-        setCDurH(h > 0 ? String(h) : "")
-        setCDurM(m > 0 ? String(m) : "")
-        setCDist(a.distanceM ? String((a.distanceM / 1000).toFixed(2)).replace(/\.?0+$/, "") : "")
-        setCElev(a.elevationM ? String(a.elevationM) : "")
-        setCHR(a.avgHeartRate ? String(a.avgHeartRate) : "")
-        setCCal(a.calories ? String(a.calories) : "")
-        setCNotes(a.notes || "")
-        setShowCardioForm(true)
-      }
-    } else {
-      // Multiple items → auto-save all
-      saveVoiceItems(usefulItems)
-    }
+    // Post-process for exercise disambiguation, then show preview
+    const processed = postProcessVoiceItems(usefulItems)
+    setVoicePreview(processed)
   }
 
   async function saveVoiceItems(items: VoiceItem[]) {
@@ -652,19 +657,10 @@ export default function ActivitiesPage() {
         <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">
-                {editMode ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? "s" : ""}` : "Journal"}
-              </p>
-              <h1 className="text-2xl font-extrabold text-white">{editMode ? "Modifier" : "Activités"}</h1>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Journal</p>
+              <h1 className="text-2xl font-extrabold text-white">Activités</h1>
             </div>
-            {editMode ? (
-              <button
-                onClick={exitEditMode}
-                className="text-sm font-bold text-gray-400 hover:text-white transition-colors px-3 py-2"
-              >
-                Annuler
-              </button>
-            ) : (
+            {!editMode && (
               <div className="flex items-center gap-2">
                 {/* Voice button */}
                 <button
@@ -768,7 +764,6 @@ export default function ActivitiesPage() {
                             if (item.kind === "workout") {
                               const w = item.data
                               const totalSets = w.exercises.reduce((s, e) => s + e.sets.length, 0)
-                              const typeLabel = WORKOUT_TYPES.find(t => t.value === w.type)?.label ?? w.type
                               return (
                                 <div
                                   key={`w-${w.id}`}
@@ -778,7 +773,7 @@ export default function ActivitiesPage() {
                                   onTouchStart={e => onItemTouchStart(e, key)}
                                   onTouchMove={onItemTouchMove}
                                   onTouchEnd={onItemTouchEnd}
-                                  onClick={() => onItemClick(key, () => {})}
+                                  onClick={() => onItemClick(key, () => router.push(`/app/workouts/${w.id}`))}
                                 >
                                   {editMode && (
                                     <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
@@ -796,12 +791,9 @@ export default function ActivitiesPage() {
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-bold text-white truncate">{w.name}</p>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                      <span className="text-[11px] font-bold text-violet-400">{typeLabel}</span>
-                                      {w.exercises.length > 0 && (
-                                        <span className="text-[11px] text-gray-500">{w.exercises.length} exo{w.exercises.length > 1 ? "s" : ""} · {totalSets} série{totalSets > 1 ? "s" : ""}</span>
-                                      )}
-                                    </div>
+                                    {w.exercises.length > 0 && (
+                                      <p className="text-[11px] text-gray-500 mt-0.5">{w.exercises.length} exo{w.exercises.length > 1 ? "s" : ""} · {totalSets} série{totalSets > 1 ? "s" : ""}</p>
+                                    )}
                                   </div>
                                   <p className="text-xs text-gray-500 shrink-0">{fmtDate(w.date)}</p>
                                 </div>
@@ -818,7 +810,7 @@ export default function ActivitiesPage() {
                                   onTouchStart={e => onItemTouchStart(e, key)}
                                   onTouchMove={onItemTouchMove}
                                   onTouchEnd={onItemTouchEnd}
-                                  onClick={() => onItemClick(key, () => {})}
+                                  onClick={() => onItemClick(key, () => router.push(`/app/activities/${a.id}`))}
                                 >
                                   {editMode && (
                                     <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
@@ -893,45 +885,19 @@ export default function ActivitiesPage() {
           style={{ bottom: "calc(env(safe-area-inset-bottom) + 72px)" }}
         >
           <div className="w-full max-w-sm bg-gray-900/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-3 flex items-center gap-2">
-            {selectedIds.size === 1 ? (
-              <>
-                <button
-                  onClick={exitEditMode}
-                  className="flex-1 py-2.5 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={handleEditSelected}
-                  className="flex-1 py-2.5 bg-white/10 border border-white/20 rounded-xl text-sm font-bold text-white hover:bg-white/20 transition-colors"
-                >
-                  Éditer
-                </button>
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  disabled={deletingSelected}
-                  className="flex-1 py-2.5 bg-red-500/20 border border-red-500/40 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
-                >
-                  {deletingSelected ? "..." : "Supprimer"}
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={exitEditMode}
-                  className="flex-1 py-2.5 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  disabled={deletingSelected}
-                  className="flex-[2] py-2.5 bg-red-500/20 border border-red-500/40 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
-                >
-                  {deletingSelected ? "..." : `Supprimer (${selectedIds.size})`}
-                </button>
-              </>
-            )}
+            <button
+              onClick={exitEditMode}
+              className="flex-1 py-2.5 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={deletingSelected}
+              className="flex-[2] py-2.5 bg-red-500/20 border border-red-500/40 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+            >
+              {deletingSelected ? "..." : selectedIds.size > 1 ? `Supprimer (${selectedIds.size})` : "Supprimer"}
+            </button>
           </div>
         </div>
       )}
@@ -955,7 +921,7 @@ export default function ActivitiesPage() {
               <h3 className="text-base font-black text-white mb-5">Quel type d&apos;activité ?</h3>
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => { setShowTypeSelector(false); setWName(""); setWType("fullbody"); setWCustomType(""); setWDate(new Date().toISOString().slice(0, 10)); setWNotes(""); setShowWorkoutForm(true) }}
+                  onClick={() => { setShowTypeSelector(false); setWName(""); setWDate(new Date().toISOString().slice(0, 10)); setWNotes(""); setWExercises([]); setShowWorkoutForm(true) }}
                   className="flex items-center gap-4 p-4 bg-violet-600/10 border border-violet-500/30 rounded-2xl text-left hover:border-violet-500/60 transition-colors"
                 >
                   <div className="w-12 h-12 rounded-xl bg-violet-600/20 flex items-center justify-center text-violet-400 shrink-0">
@@ -1008,25 +974,6 @@ export default function ActivitiesPage() {
                   <label className="text-xs font-bold text-gray-400 block mb-1.5">Nom de la séance</label>
                   <input value={wName} onChange={e => setWName(e.target.value)} placeholder="ex: Push Day A" autoFocus
                     className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-violet-500/50"/>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-400 block mb-2">Type</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {WORKOUT_TYPES.map(t => (
-                      <button key={t.value} onClick={() => setWType(t.value)}
-                        className={`py-2 rounded-xl text-xs font-bold transition-all border ${wType === t.value ? "bg-violet-600/20 border-violet-500 text-violet-300" : "bg-white/[0.04] border-white/10 text-gray-400 hover:border-white/20"}`}>
-                        {t.label}
-                      </button>
-                    ))}
-                    <button onClick={() => setWType("custom")}
-                      className={`py-2 rounded-xl text-xs font-bold transition-all border ${wType === "custom" ? "bg-violet-600/20 border-violet-500 text-violet-300" : "bg-white/[0.04] border-white/10 text-gray-400 hover:border-white/20"}`}>
-                      Perso
-                    </button>
-                  </div>
-                  {wType === "custom" && (
-                    <input value={wCustomType} onChange={e => setWCustomType(e.target.value)} placeholder="ex: Yoga, Escalade..."
-                      className="mt-2 w-full bg-white/[0.06] border border-violet-500/50 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none"/>
-                  )}
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-400 block mb-1.5">Date</label>
@@ -1128,9 +1075,11 @@ export default function ActivitiesPage() {
                     <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wide ml-1">Durée</label>
                     <div className="flex gap-1 mt-1">
                       <input type="number" min="0" value={cDurH} onChange={e => setCDurH(e.target.value)} placeholder="0h"
-                        className="w-1/2 bg-white/[0.06] border border-white/10 rounded-xl px-2 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                        className="w-1/3 bg-white/[0.06] border border-white/10 rounded-xl px-1 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
                       <input type="number" min="0" max="59" value={cDurM} onChange={e => setCDurM(e.target.value)} placeholder="min"
-                        className="w-1/2 bg-white/[0.06] border border-white/10 rounded-xl px-2 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                        className="w-1/3 bg-white/[0.06] border border-white/10 rounded-xl px-1 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                      <input type="number" min="0" max="59" value={cDurS} onChange={e => setCDurS(e.target.value)} placeholder="sec"
+                        className="w-1/3 bg-white/[0.06] border border-white/10 rounded-xl px-1 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
                     </div>
                   </div>
                 </div>
@@ -1328,6 +1277,160 @@ export default function ActivitiesPage() {
                   {deletingSelected ? "..." : "Supprimer"}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Voice preview bottom sheet ── */}
+      {voicePreview && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={() => setVoicePreview(null)}>
+          <div
+            className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[85vh] flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            <div
+              className="flex justify-center pt-3 pb-1 cursor-grab shrink-0"
+              onTouchStart={onSheetHandleTouchStart}
+              onTouchEnd={e => onSheetHandleTouchEnd(e, () => setVoicePreview(null))}
+            >
+              <div className="w-10 h-1 rounded-full bg-white/20" />
+            </div>
+            <div className="px-5 pt-2 pb-2 shrink-0">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-violet-600/20 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-extrabold text-white">Activités détectées</p>
+                  {voiceTranscript && (
+                    <p className="text-[11px] text-gray-500 italic truncate max-w-[240px]">&ldquo;{voiceTranscript}&rdquo;</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="overflow-y-auto flex-1 px-5 pb-2">
+              <div className="flex flex-col gap-3">
+                {voicePreview.map((item, idx) => (
+                  <div key={idx} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden">
+                    {item.kind === "workout" ? (
+                      <div className="p-3.5">
+                        <div className="flex items-center gap-2.5 mb-3">
+                          <div className="w-8 h-8 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0 text-violet-400">
+                            <DumbbellIcon size={15} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-white">{item.workout.name || "Séance"}</p>
+                            <p className="text-[11px] text-violet-400">
+                              {WORKOUT_TYPES.find(t => t.value === item.workout.type)?.label ?? item.workout.type}
+                              {item.date ? ` · ${fmtDate(item.date)}` : ""}
+                            </p>
+                          </div>
+                        </div>
+                        {item.workout.exercises.length > 0 && (
+                          <div className="flex flex-col gap-2">
+                            {item.workout.exercises.map((ex, ei) => (
+                              <div key={ei} className={`rounded-xl p-2.5 ${ex.ambiguous ? "bg-amber-500/10 border border-amber-500/30" : "bg-white/[0.04]"}`}>
+                                {ex.ambiguous ? (
+                                  <>
+                                    <div className="flex items-center gap-1.5 mb-2">
+                                      <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
+                                      <p className="text-[11px] font-bold text-amber-400">Préciser : &ldquo;{ex.name}&rdquo;</p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {ex.options!.map(opt => (
+                                        <button
+                                          key={opt}
+                                          onClick={() => setVoicePreview(prev => prev ? prev.map((it, i) => {
+                                            if (i !== idx || it.kind !== "workout") return it
+                                            return {
+                                              ...it,
+                                              workout: {
+                                                ...it.workout,
+                                                exercises: it.workout.exercises.map((e, j) =>
+                                                  j === ei ? { ...e, name: opt, ambiguous: false, options: undefined } : e
+                                                )
+                                              }
+                                            }
+                                          }) : prev)}
+                                          className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 hover:bg-amber-500/25 transition-colors"
+                                        >
+                                          {opt}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className="text-[12px] font-bold text-white">{ex.name}</p>
+                                    <div className="flex flex-wrap gap-1 justify-end">
+                                      {ex.sets.map((s, si) => (
+                                        <span key={si} className="text-[10px] text-gray-400 bg-white/5 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                          {s.reps != null ? `${s.reps}` : "—"}
+                                          {s.weight != null ? `×${s.weight}kg` : ""}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-3.5 flex items-center gap-3">
+                        {(() => {
+                          const info = getCardioInfo(item.activity.type)
+                          return (
+                            <>
+                              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: info.color + "22" }}>
+                                <span style={{ color: info.color }}><CardioIcon type={item.activity.type} size={15} /></span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold" style={{ color: info.color }}>{info.label}</p>
+                                <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                                  {item.activity.distanceM && <span className="text-[11px] text-gray-400">{fmtDist(item.activity.distanceM)}</span>}
+                                  {item.activity.durationSec && <span className="text-[11px] text-gray-400">{fmtDuration(item.activity.durationSec)}</span>}
+                                  {item.activity.calories && <span className="text-[11px] text-gray-500">{item.activity.calories} kcal</span>}
+                                  {item.activity.avgHeartRate && <span className="text-[11px] text-red-400">{item.activity.avgHeartRate} bpm</span>}
+                                  {item.date && <span className="text-[11px] text-gray-500">{fmtDate(item.date)}</span>}
+                                </div>
+                              </div>
+                            </>
+                          )
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-5 pb-6 pt-3 flex gap-3 shrink-0 border-t border-white/[0.07]">
+              <button
+                onClick={() => setVoicePreview(null)}
+                className="flex-1 py-3 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => { const p = voicePreview; setVoicePreview(null); saveVoiceItems(p!) }}
+                disabled={voicePreview.some(item => item.kind === "workout" && item.workout.exercises.some(e => e.ambiguous))}
+                className="flex-[2] py-3 bg-violet-600 rounded-xl text-sm font-bold text-white hover:bg-violet-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {(() => {
+                  const n = voicePreview.length
+                  const hasAmbig = voicePreview.some(item => item.kind === "workout" && item.workout.exercises.some(e => e.ambiguous))
+                  if (hasAmbig) return "Précisez les exercices"
+                  return `Enregistrer ${n} activité${n > 1 ? "s" : ""} →`
+                })()}
+              </button>
             </div>
           </div>
         </div>
