@@ -407,6 +407,7 @@ export default function WorkoutDetailPage() {
   const [saving, setSaving] = useState(false)
   const [notes, setNotes] = useState("")
   const [showPicker, setShowPicker] = useState(false)
+  const [renamingExIdx, setRenamingExIdx] = useState<number | null>(null)
   const [editMode, setEditMode] = useState(false)
   const [plan, setPlan] = useState("free")
   const [upgradeMsg, setUpgradeMsg] = useState<string | null>(null)
@@ -416,7 +417,7 @@ export default function WorkoutDetailPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user.email) {
-        fetch(`/api/plan?email=${encodeURIComponent(session.user.email)}`)
+        authFetch(`/api/plan`)
           .then(r => r.json())
           .then(d => setPlan(d.plan ?? "free"))
           .catch(() => {})
@@ -425,7 +426,7 @@ export default function WorkoutDetailPage() {
     authFetch(`/api/workouts/${id}`)
       .then(r => r.json())
       .then(d => {
-        if (d.error) { router.push("/app/workouts"); return }
+        if (d.error) { router.push("/app/activities"); return }
         setWorkout(d)
         setNotes(d.notes ?? "")
         setExercises(
@@ -442,7 +443,7 @@ export default function WorkoutDetailPage() {
         )
         setReady(true)
       })
-      .catch(() => router.push("/app/workouts"))
+      .catch(() => router.push("/app/activities"))
   }, [id, router])
 
   function enterEditMode() {
@@ -458,6 +459,13 @@ export default function WorkoutDetailPage() {
   }
 
   function handleSelectExercise(name: string) {
+    if (renamingExIdx !== null) {
+      // Replace only the name, keep all sets intact
+      setExercises(prev => prev.map((ex, i) => i === renamingExIdx ? { ...ex, name } : ex))
+      setRenamingExIdx(null)
+      setShowPicker(false)
+      return
+    }
     if (plan === "free" && exercises.length >= 3) {
       setShowPicker(false)
       setUpgradeMsg("Vous avez atteint la limite de 3 exercices par séance avec le plan Gratuit. Passez Pro pour des exercices illimités.")
@@ -465,6 +473,11 @@ export default function WorkoutDetailPage() {
     }
     setExercises(prev => [...prev, { name, sets: [{ reps: "", weight: "", rpe: "" }] }])
     setShowPicker(false)
+  }
+
+  function startRenameExercise(idx: number) {
+    setRenamingExIdx(idx)
+    setShowPicker(true)
   }
 
   function removeExercise(i: number) {
@@ -540,7 +553,7 @@ export default function WorkoutDetailPage() {
       {/* Sticky header */}
       <div className="sticky top-0 z-40 bg-gray-950/90 backdrop-blur border-b border-white/10 px-4 py-3 flex items-center gap-3">
         <button
-          onClick={() => router.push("/app/workouts")}
+          onClick={() => router.push("/app/activities")}
           className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors shrink-0"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -658,8 +671,8 @@ export default function WorkoutDetailPage() {
               <div key={exIdx} className="bg-white/5 border border-white/10 overflow-hidden">
                 {/* Exercise header */}
                 <div className="flex items-center gap-2 px-4 pt-4 pb-3">
-                  <div className="flex-1">
-                    <p className="text-sm font-extrabold text-white">{ex.name}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-extrabold text-white truncate">{ex.name}</p>
                     {(() => {
                       const info = EXERCISE_DB.find(e => e.name === ex.name)
                       return info ? (
@@ -673,6 +686,15 @@ export default function WorkoutDetailPage() {
                       ) : null
                     })()}
                   </div>
+                  <button
+                    onClick={() => startRenameExercise(exIdx)}
+                    className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors shrink-0"
+                    title="Renommer l'exercice"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
                   <button
                     onClick={() => removeExercise(exIdx)}
                     className="w-8 h-8 rounded-xl bg-red-900/30 flex items-center justify-center text-red-400 hover:bg-red-900/50 transition-colors shrink-0"

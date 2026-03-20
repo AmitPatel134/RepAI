@@ -63,13 +63,25 @@ export async function POST(request: NextRequest) {
     const authUser = await getAuthUser(request)
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
-    const { transcript } = await request.json()
+    const { transcript, today } = await request.json()
     if (!transcript?.trim()) return Response.json({ error: "Transcript required" }, { status: 400 })
+
+    const dateContext = today
+      ? `Aujourd'hui nous sommes le ${today} (format YYYY-MM-DD). Utilise cette date pour résoudre les références temporelles :
+- "aujourd'hui" → ${today}
+- "hier" → calcule la date d'hier
+- "avant-hier" → calcule la date d'avant-hier
+- "lundi dernier", "mardi", etc. → calcule la date correspondante
+Si aucune date n'est mentionnée, utilise aujourd'hui (${today}).
+Le champ "date" de chaque item doit être au format YYYY-MM-DD.`
+      : "Si aucune date n'est mentionnée, n'inclus pas le champ date (il sera mis à aujourd'hui)."
+
+    const systemWithDate = SYSTEM_PROMPT + `\n\nCONTEXTE DATE :\n${dateContext}\n\nAjoute un champ "date" (YYYY-MM-DD) à chaque item si une date est mentionnée ou déduite.`
 
     const completion = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemWithDate },
         { role: "user", content: `Description vocale : "${transcript.trim()}"` },
       ],
       temperature: 0.1,

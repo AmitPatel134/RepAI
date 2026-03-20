@@ -30,8 +30,8 @@ type VoiceActivityData = {
 }
 type VoiceWorkoutData = { name: string; type: string; exercises: VoiceExercise[]; notes?: string | null }
 type VoiceItem =
-  | { kind: "workout"; workout: VoiceWorkoutData }
-  | { kind: "cardio"; activity: VoiceActivityData }
+  | { kind: "workout"; workout: VoiceWorkoutData; date?: string }
+  | { kind: "cardio"; activity: VoiceActivityData; date?: string }
 type VoiceResult = { items: VoiceItem[] }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -137,6 +137,7 @@ export default function ActivitiesPage() {
   const [editMode, setEditMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deletingSelected, setDeletingSelected] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // Long press detection
   const lpTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -503,10 +504,12 @@ export default function ActivitiesPage() {
 
   async function parseVoice(text: string) {
     try {
+      // Pass local date so AI can resolve "hier", "avant-hier", etc.
+      const localDate = new Date().toLocaleDateString("fr-CA") // YYYY-MM-DD in local TZ
       const r = await authFetch("/api/voice/parse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: text }),
+        body: JSON.stringify({ transcript: text, today: localDate }),
       })
       const result: VoiceResult = await r.json()
       applyVoiceResult(result)
@@ -534,18 +537,19 @@ export default function ActivitiesPage() {
     if (usefulItems.length === 1) {
       // Single item → open pre-filled form
       const item = usefulItems[0]
+      const localToday = new Date().toLocaleDateString("fr-CA")
       if (item.kind === "workout") {
         const w = item.workout
         setWName(w.name || "Séance")
         setWType(w.type || "fullbody")
-        setWDate(new Date().toISOString().slice(0, 10))
+        setWDate(item.date || localToday)
         setWNotes(w.notes || "")
         setWExercises(w.exercises || [])
         setShowWorkoutForm(true)
       } else {
         const a = item.activity
         setCType(a.type || "running")
-        setCDate(new Date().toISOString().slice(0, 10))
+        setCDate(item.date || localToday)
         const h = a.durationSec ? Math.floor(a.durationSec / 3600) : 0
         const m = a.durationSec ? Math.floor((a.durationSec % 3600) / 60) : 0
         setCDurH(h > 0 ? String(h) : "")
@@ -566,7 +570,7 @@ export default function ActivitiesPage() {
   async function saveVoiceItems(items: VoiceItem[]) {
     setVoiceSaving(true)
     let savedCount = 0
-    const today = new Date().toISOString().slice(0, 10)
+    const localToday = new Date().toLocaleDateString("fr-CA")
 
     for (const item of items) {
       if (item.kind === "workout") {
@@ -578,7 +582,7 @@ export default function ActivitiesPage() {
             name: w.name || "Séance",
             type: w.type || "fullbody",
             notes: w.notes || null,
-            date: today,
+            date: item.date || localToday,
             exercises: w.exercises || [],
           }),
         })
@@ -598,7 +602,7 @@ export default function ActivitiesPage() {
           body: JSON.stringify({
             type: a.type,
             name: autoName,
-            date: today,
+            date: item.date || localToday,
             durationSec: a.durationSec ?? null,
             distanceM: a.distanceM ?? null,
             elevationM: a.elevationM ?? null,
@@ -904,7 +908,7 @@ export default function ActivitiesPage() {
                   Éditer
                 </button>
                 <button
-                  onClick={handleDeleteSelected}
+                  onClick={() => setShowDeleteConfirm(true)}
                   disabled={deletingSelected}
                   className="flex-1 py-2.5 bg-red-500/20 border border-red-500/40 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
                 >
@@ -920,7 +924,7 @@ export default function ActivitiesPage() {
                   Annuler
                 </button>
                 <button
-                  onClick={handleDeleteSelected}
+                  onClick={() => setShowDeleteConfirm(true)}
                   disabled={deletingSelected}
                   className="flex-[2] py-2.5 bg-red-500/20 border border-red-500/40 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
                 >
@@ -1285,6 +1289,45 @@ export default function ActivitiesPage() {
               >
                 OK
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete confirmation ── */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-white/20" /></div>
+            <div className="px-5 pb-8 pt-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-11 h-11 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-extrabold text-white">
+                    Supprimer {selectedIds.size} activité{selectedIds.size > 1 ? "s" : ""} ?
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Cette action est irréversible.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-3 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => { setShowDeleteConfirm(false); handleDeleteSelected() }}
+                  disabled={deletingSelected}
+                  className="flex-[2] py-3 bg-red-500/20 border border-red-500/40 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                >
+                  {deletingSelected ? "..." : "Supprimer"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
