@@ -21,41 +21,54 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Composition required" }, { status: 400 })
     }
 
-    const prompt = `You are an expert nutritionist. Calculate the complete nutritional values for this meal using the exact quantities listed:
+    const prompt = `You are an expert nutritionist. Your task is to calculate the TOTAL nutritional values for the following list of ingredients.
 
+INGREDIENTS:
 ${composition}
 
-Rules:
-- Calculate each ingredient separately then sum up
-- Use standard nutritional reference values (USDA/CIQUAL)
-- Account for cooking method (grilled/steamed = no added fat unless stated)
-- ALL 5 numeric fields are REQUIRED — never omit or use null
+INSTRUCTIONS:
+1. Calculate the nutritional values for EACH ingredient based on its weight
+2. Sum all values to get the total for the meal
+3. Use USDA/CIQUAL reference values
+4. Account for cooking methods (grilled/steamed = minimal fat unless stated)
 
-Respond with ONLY this exact JSON structure, no markdown, no text before or after:
-{"calories":247,"proteins":18.5,"carbs":12.3,"fats":14.2,"fiber":3.1,"notes":"short optional note"}`
+OUTPUT: Return ONLY a JSON object with these exact keys. Do NOT include "name", "composition", or any other keys.
+Required output format:
+{"calories":247,"proteins":18.5,"carbs":12.3,"fats":14.2,"fiber":3.1,"notes":"optional brief note"}
+
+IMPORTANT: You must compute and return numeric values for calories, proteins, carbs, and fats. These are not optional.`
 
     const completion = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
         { role: "user", content: prompt },
       ],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      response_format: { type: "json_object" } as any,
       temperature: 0.1,
-      max_tokens: 500,
+      max_tokens: 300,
     })
 
     const text = completion.choices[0].message.content ?? "{}"
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) return Response.json({ error: `JSON introuvable dans la réponse du modèle. Réponse brute : "${text.slice(0, 200)}"` }, { status: 500 })
-
-    const sanitized = jsonMatch[0].replace(/"(?:[^"\\]|\\.)*"/g, m =>
-      m.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")
-    )
 
     let raw
     try {
-      raw = JSON.parse(sanitized)
-    } catch (parseErr) {
-      return Response.json({ error: `Échec du parsing JSON : ${(parseErr as Error).message}. Extrait : "${sanitized.slice(0, 200)}"` }, { status: 500 })
+      raw = JSON.parse(text)
+    } catch {
+      // Fallback: try to extract JSON with regex
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) return Response.json({ error: `Réponse IA invalide. Réessayez.` }, { status: 500 })
+      try {
+        raw = JSON.parse(jsonMatch[0])
+      } catch {
+        return Response.json({ error: `Réponse IA invalide. Réessayez.` }, { status: 500 })
+      }
+    }
+
+    // Validate the model returned nutritional data, not the describe format
+    if (!raw.calories && !raw.proteins && !raw.carbs && !raw.fats && (raw.composition || raw.name)) {
+      console.warn("Nutrition analyze: model returned describe format instead of nutrition:", text.slice(0, 200))
+      return Response.json({ error: "Le modèle n'a pas calculé les valeurs nutritionnelles. Réessayez." }, { status: 500 })
     }
 
     // Normalize alternative field names the model might use

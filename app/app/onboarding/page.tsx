@@ -1,7 +1,9 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { authFetch } from "@/lib/authFetch"
+import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
+import LoadingScreen from "@/components/LoadingScreen"
 
 const GOALS = [
   { value: "prise_de_masse", label: "Prise de masse", icon: "💪" },
@@ -27,6 +29,7 @@ const ACTIVITY_LEVELS = [
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const [authReady, setAuthReady] = useState(false)
   const [step, setStep] = useState(1)
   const [sex, setSex] = useState("")
   const [age, setAge] = useState("")
@@ -38,6 +41,27 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) { router.push("/login"); return }
+      // Load existing profile if any
+      authFetch("/api/profile").then(r => r.json()).then(prof => {
+        if (prof?.profileComplete) router.push("/app")
+        else {
+          if (prof?.age) setAge(String(prof.age))
+          if (prof?.heightCm) setHeightCm(String(prof.heightCm))
+          if (prof?.weightKg) setWeightKg(String(prof.weightKg))
+          if (prof?.sex) setSex(prof.sex)
+          if (prof?.goal) setGoal(prof.goal)
+          if (prof?.activityLevel) setActivityLevel(prof.activityLevel)
+          if (prof?.restingHR) setRestingHR(String(prof.restingHR))
+          setAuthReady(true)
+        }
+      }).catch(() => setAuthReady(true))
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const totalSteps = 3
 
   async function handleFinish() {
@@ -47,26 +71,33 @@ export default function OnboardingPage() {
     }
     setSaving(true)
     setError("")
-    const res = await authFetch("/api/profile", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sex: sex || null,
-        age: Number(age),
-        heightCm: Number(heightCm),
-        weightKg: Number(weightKg),
-        goal,
-        activityLevel: activityLevel || null,
-        restingHR: restingHR ? Number(restingHR) : null,
-      }),
-    })
-    setSaving(false)
-    if (res.ok) {
-      router.push("/app")
-    } else {
-      setError("Erreur lors de la sauvegarde. Réessayez.")
+    try {
+      const res = await authFetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sex: sex || null,
+          age: Number(age),
+          heightCm: Number(heightCm),
+          weightKg: Number(weightKg),
+          goal,
+          activityLevel: activityLevel || null,
+          restingHR: restingHR ? Number(restingHR) : null,
+        }),
+      })
+      if (res.ok) {
+        router.push("/app")
+      } else {
+        const body = await res.json().catch(() => ({}))
+        setError(body.error ?? "Erreur lors de la sauvegarde. Réessayez.")
+      }
+    } catch {
+      setError("Erreur réseau. Vérifiez votre connexion.")
     }
+    setSaving(false)
   }
+
+  if (!authReady) return <LoadingScreen />
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4 py-10">
