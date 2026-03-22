@@ -9,18 +9,28 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  name          String?
-  telephone     String?
-  company       String?
-  plan          String         @default("free")
-  planExpiresAt DateTime?
-  createdAt     DateTime       @default(now())
-  workouts      Workout[]
-  coachSessions CoachSession[]
-  activities    Activity[]
-  meals         Meal[]
+  id              String         @id @default(cuid())
+  email           String         @unique
+  name            String?
+  telephone       String?
+  company         String?
+  plan            String         @default("free")
+  planExpiresAt   DateTime?
+  createdAt       DateTime       @default(now())
+  // Fitness profile
+  age             Int?
+  heightCm        Int?
+  weightKg        Float?
+  sex             String?        // "homme" | "femme" | "autre"
+  goal            String?        // "prise_de_masse" | "perte_de_poids" | "performance_cardio" | "sante_cardiaque" | "endurance" | "force_max" | "flexibilite" | "maintien" | "bien_etre" | "competition" | "reeducation"
+  activityLevel   String?        // "sedentaire" | "leger" | "modere" | "actif" | "tres_actif"
+  restingHR       Int?           // fréquence cardiaque au repos
+  dailySteps      Int?           // nombre de pas journaliers moyen
+  profileComplete Boolean        @default(false)
+  workouts        Workout[]
+  coachSessions   CoachSession[]
+  activities      Activity[]
+  meals           Meal[]
 }
 
 model Meal {

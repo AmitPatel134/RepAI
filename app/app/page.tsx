@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
 import LoadingScreen from "@/components/LoadingScreen"
@@ -11,12 +12,38 @@ const TYPE_LABELS: Record<string, string> = {
   bras: "Bras", epaules: "Épaules", abdos: "Abdominaux",
 }
 
+const GOAL_LABELS: Record<string, string> = {
+  prise_de_masse: "Prise de masse 💪",
+  perte_de_poids: "Perte de poids 🔥",
+  performance_cardio: "Performance cardio 🏃",
+  sante_cardiaque: "Santé cardiaque ❤️",
+  endurance: "Endurance 🚴",
+  force_max: "Force maximale 🏋️",
+  flexibilite: "Souplesse & mobilité 🧘",
+  maintien: "Maintien du poids ⚖️",
+  bien_etre: "Bien-être général 🌿",
+  competition: "Compétition sportive 🏆",
+  reeducation: "Rééducation 🩹",
+}
+
 type DashboardData = {
   recommendation: string | null
   lastWorkout: { name: string; type: string; date: string } | null
   thisWeek: number
   habitualTypes: string[]
   missingHabitual: string[]
+}
+
+type UserProfile = {
+  age: number | null
+  heightCm: number | null
+  weightKg: number | null
+  sex: string | null
+  goal: string | null
+  activityLevel: string | null
+  restingHR: number | null
+  dailySteps: number | null
+  profileComplete: boolean
 }
 
 function getGreeting() {
@@ -31,10 +58,17 @@ function timeAgo(iso: string) {
   return `il y a ${days} jours`
 }
 
+function bmi(weight: number, height: number) {
+  const h = height / 100
+  return (weight / (h * h)).toFixed(1)
+}
+
 export default function HomePage() {
+  const router = useRouter()
   const [ready, setReady] = useState(false)
   const [firstName, setFirstName] = useState<string | null>(null)
   const [data, setData] = useState<DashboardData | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loadingReco, setLoadingReco] = useState(false)
   const [noSession, setNoSession] = useState(false)
 
@@ -45,13 +79,23 @@ export default function HomePage() {
       const name = meta?.full_name?.split(" ")[0] ?? meta?.name?.split(" ")[0] ?? null
       setFirstName(name)
       setLoadingReco(true)
-      authFetch("/api/dashboard")
-        .then(r => r.json())
-        .then(d => { setData(d); setReady(true) })
-        .catch(() => setReady(true))
+      Promise.all([
+        authFetch("/api/dashboard").then(r => r.json()).catch(() => null),
+        authFetch("/api/profile").then(r => r.json()).catch(() => null),
+      ]).then(([dashboard, prof]) => {
+        if (dashboard) setData(dashboard)
+        if (prof) {
+          setProfile(prof)
+          if (!prof.profileComplete) {
+            router.push("/app/onboarding")
+            return
+          }
+        }
+        setReady(true)
+      }).catch(() => setReady(true))
         .finally(() => setLoadingReco(false))
     })
-  }, [])
+  }, [router])
 
   if (!ready) return <LoadingScreen />
 
@@ -83,6 +127,49 @@ export default function HomePage() {
             </svg>
           </a>
         </div>
+
+        {/* Profile card */}
+        {profile?.profileComplete ? (
+          <a href="/app/profil" className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-4 hover:border-violet-300 transition-colors group">
+            <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
+              <svg className="w-6 h-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mb-1.5">
+                {profile.age && <span className="text-xs font-semibold text-gray-500">{profile.age} ans</span>}
+                {profile.heightCm && <span className="text-xs font-semibold text-gray-500">{profile.heightCm} cm</span>}
+                {profile.weightKg && <span className="text-xs font-semibold text-gray-500">{profile.weightKg} kg</span>}
+                {profile.weightKg && profile.heightCm && (
+                  <span className="text-xs font-semibold text-gray-500">IMC {bmi(profile.weightKg, profile.heightCm)}</span>
+                )}
+                {profile.restingHR && <span className="text-xs font-semibold text-gray-500">FC repos {profile.restingHR} bpm</span>}
+              </div>
+              {profile.goal && (
+                <p className="text-sm font-bold text-gray-900 truncate">{GOAL_LABELS[profile.goal] ?? profile.goal}</p>
+              )}
+            </div>
+            <svg className="w-4 h-4 text-gray-300 group-hover:text-violet-400 shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        ) : (
+          <a href="/app/onboarding" className="bg-violet-50 border border-violet-200 rounded-2xl p-4 flex items-center gap-3 hover:bg-violet-100 transition-colors">
+            <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-violet-800">Complète ton profil</p>
+              <p className="text-xs text-violet-600">Âge, taille, poids, objectif — pour des conseils IA personnalisés</p>
+            </div>
+            <svg className="w-4 h-4 text-violet-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
