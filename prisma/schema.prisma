@@ -36,6 +36,7 @@ model Meal {
   fiber     Float?
   notes      String?
   imageThumb String?
+  imageUrl   String?
   createdAt  DateTime @default(now())
 
   @@index([userId, date])

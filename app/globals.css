@@ -129,6 +129,14 @@
   animation: pageFadeIn 0.18s ease forwards;
 }
 
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.sheet-enter {
+  animation: sheet-slide-up 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

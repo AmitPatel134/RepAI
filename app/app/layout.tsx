@@ -12,10 +12,8 @@ const PAGE_ORDER = [
 ]
 
 function getPageIndex(pathname: string) {
-  // Disable swipe on sub-pages (e.g. /app/workouts/[id])
   const isSubPage = PAGE_ORDER.some(p => p !== "/app" && pathname.startsWith(p + "/"))
   if (isSubPage) return -1
-
   const base = PAGE_ORDER.find(p => p !== "/app" && pathname.startsWith(p))
     ?? (pathname === "/app" ? "/app" : null)
   return base ? PAGE_ORDER.indexOf(base) : -1
@@ -47,28 +45,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       touchStartX.current = e.touches[0].clientX
       touchStartY.current = e.touches[0].clientY
     }
-
     function onTouchEnd(e: TouchEvent) {
       if (touchStartX.current === null || touchStartY.current === null) return
-
       const dx = e.changedTouches[0].clientX - touchStartX.current
       const dy = e.changedTouches[0].clientY - touchStartY.current
-
       if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return
-
       const currentIndex = getPageIndex(pathname)
       if (currentIndex === -1) return
-
-      if (dx < 0 && currentIndex < PAGE_ORDER.length - 1) {
-        router.push(PAGE_ORDER[currentIndex + 1])
-      } else if (dx > 0 && currentIndex > 0) {
-        router.push(PAGE_ORDER[currentIndex - 1])
-      }
-
+      if (dx < 0 && currentIndex < PAGE_ORDER.length - 1) router.push(PAGE_ORDER[currentIndex + 1])
+      else if (dx > 0 && currentIndex > 0) router.push(PAGE_ORDER[currentIndex - 1])
       touchStartX.current = null
       touchStartY.current = null
     }
-
     document.addEventListener("touchstart", onTouchStart, { passive: true })
     document.addEventListener("touchend", onTouchEnd, { passive: true })
     return () => {
@@ -78,9 +66,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [pathname, router])
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-gray-100">
       <AppSidebar />
-      <div className={`flex-1 md:ml-52 overflow-y-auto min-w-0 bg-gray-950 ${animClass}`}>
+      <div className={`flex-1 md:ml-52 overflow-y-auto min-w-0 bg-gray-100 ${animClass}`}>
         {children}
       </div>
     </div>

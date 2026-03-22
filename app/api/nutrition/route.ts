@@ -15,6 +15,11 @@ export async function GET(request: NextRequest) {
     const meals = await prisma.meal.findMany({
       where: { userId: user.id },
       orderBy: { date: "desc" },
+      select: {
+        id: true, name: true, date: true,
+        calories: true, proteins: true, carbs: true, fats: true, fiber: true,
+        notes: true, imageThumb: true,
+      },
     })
 
     return Response.json(meals)
@@ -35,7 +40,7 @@ export async function POST(request: NextRequest) {
     })
 
     const body = await request.json()
-    const { name, date, calories, proteins, carbs, fats, fiber, notes, imageThumb } = body
+    const { name, date, calories, proteins, carbs, fats, fiber, notes, imageThumb, imageUrl } = body
 
     if (!name) return Response.json({ error: "name required" }, { status: 400 })
 
@@ -51,6 +56,7 @@ export async function POST(request: NextRequest) {
         fiber: fiber ?? null,
         notes: notes ?? null,
         imageThumb: imageThumb ?? null,
+        imageUrl: imageUrl ?? null,
       },
     })
 

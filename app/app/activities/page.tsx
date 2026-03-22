@@ -90,7 +90,7 @@ const WORKOUT_TYPES = [
 
 const CARDIO_TYPES = [
   { key: "running",    label: "Course",     color: "#f97316" },
-  { key: "cycling",    label: "Vélo",       color: "#3b82f6" },
+  { key: "cycling",    label: "Vélo",       color: "#0ea5e9" },
   { key: "swimming",   label: "Natation",   color: "#06b6d4" },
   { key: "walking",    label: "Marche",     color: "#22c55e" },
   { key: "hiking",     label: "Randonnée",  color: "#a3a3a3" },
@@ -161,6 +161,56 @@ function CardioIcon({ type, size = 18 }: { type: string; size?: number }) {
   )
 }
 
+// ─── useSheetDrag ─────────────────────────────────────────────────────────────
+
+function useSheetDrag(onClose: () => void) {
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+  const [translateY, setTranslateY] = useState(0)
+  const [transitioning, setTransitioning] = useState(false)
+  const yRef = useRef(0)
+  const startY = useRef(0)
+  const lastY = useRef(0)
+  const lastT = useRef(0)
+  const vel = useRef(0)
+  const onDragStart = (e: React.TouchEvent) => {
+    startY.current = e.touches[0].clientY
+    lastY.current = e.touches[0].clientY
+    lastT.current = Date.now()
+    vel.current = 0
+    setTransitioning(false)
+  }
+  const onDragMove = (e: React.TouchEvent) => {
+    const y = e.touches[0].clientY
+    const now = Date.now()
+    const dt = now - lastT.current
+    if (dt > 0) vel.current = (y - lastY.current) / dt
+    lastY.current = y
+    lastT.current = now
+    const newY = Math.max(0, y - startY.current)
+    yRef.current = newY
+    setTranslateY(newY)
+  }
+  const onDragEnd = () => {
+    setTransitioning(true)
+    if (yRef.current > 120 || vel.current > 0.6) {
+      setTranslateY(window.innerHeight)
+      setTimeout(() => { onCloseRef.current(); yRef.current = 0; setTranslateY(0); setTransitioning(false) }, 300)
+    } else {
+      yRef.current = 0; setTranslateY(0)
+      setTimeout(() => setTransitioning(false), 300)
+    }
+  }
+  const reset = () => { yRef.current = 0; setTranslateY(0); setTransitioning(false) }
+  const style: React.CSSProperties = (yRef.current > 0 || transitioning)
+    ? {
+        transform: `translateY(${translateY}px)`,
+        transition: transitioning ? "transform 0.3s cubic-bezier(0.4,0,0.2,1)" : "none",
+      }
+    : {}
+  return { style, onDragStart, onDragMove, onDragEnd, reset }
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function ActivitiesPage() {
@@ -172,8 +222,7 @@ export default function ActivitiesPage() {
   const [plan, setPlan] = useState("free")
   const [upgradeMsg, setUpgradeMsg] = useState<string | null>(null)
 
-  const [openMonths, setOpenMonths] = useState<Set<string>>(new Set())
-  const [openYears, setOpenYears] = useState<Set<string>>(new Set())
+  const [selectedMonthIdx, setSelectedMonthIdx] = useState(0)
 
   // Edit mode
   const [editMode, setEditMode] = useState(false)
@@ -190,6 +239,10 @@ export default function ActivitiesPage() {
 
   // Bottom sheet drag-to-dismiss
   const sheetDragY = useRef<number | null>(null)
+  const typeSelectorDrag = useSheetDrag(() => setShowTypeSelector(false))
+  const workoutFormDrag = useSheetDrag(() => setShowWorkoutForm(false))
+  const cardioFormDrag = useSheetDrag(() => closeCardioForm())
+  const voicePreviewDrag = useSheetDrag(() => setVoicePreview(null))
 
   // Modals
   const [showTypeSelector, setShowTypeSelector] = useState(false)
@@ -236,7 +289,7 @@ export default function ActivitiesPage() {
         setIsDemo(true)
         setWorkouts(DEMO_WORKOUTS as unknown as Workout[])
         const label = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-        setOpenMonths(new Set([label]))
+        // month nav
         setLoading(false)
         return
       }
@@ -250,7 +303,7 @@ export default function ActivitiesPage() {
         setActivities(Array.isArray(a) ? a : [])
         setPlan(p?.plan ?? "free")
         const label = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-        setOpenMonths(new Set([label]))
+        // month nav
       }).finally(() => setLoading(false))
     })
   }, [])
@@ -262,26 +315,42 @@ export default function ActivitiesPage() {
     ...activities.map(a => ({ kind: "activity" as const, data: a })),
   ].sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
 
-  const currentYear = String(new Date().getFullYear())
-  type MonthGroup = { label: string; items: UnifiedItem[] }
-  type YearGroup = { year: string; months: MonthGroup[] }
-  const yearGroups: YearGroup[] = []
+  type DayGroup   = { dayKey: string; dayLabel: string; items: UnifiedItem[] }
+  type MonthGroup = { label: string; days: DayGroup[] }
+
+  // Build items indexed by month/day
+  const _dataMonths = new Map<string, DayGroup[]>()
   for (const item of unified) {
-    const year = String(new Date(item.data.date).getFullYear())
-    const label = new Date(item.data.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-    let yg = yearGroups.find(g => g.year === year)
-    if (!yg) { yg = { year, months: [] }; yearGroups.push(yg) }
-    const last = yg.months[yg.months.length - 1]
-    if (last?.label === label) last.items.push(item)
-    else yg.months.push({ label, items: [item] })
+    const d = new Date(item.data.date)
+    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+    const dayKey = item.data.date.slice(0, 10)
+    const dayLabel = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })
+    if (!_dataMonths.has(monthKey)) _dataMonths.set(monthKey, [])
+    const days = _dataMonths.get(monthKey)!
+    let dg = days.find(dg => dg.dayKey === dayKey)
+    if (!dg) { dg = { dayKey, dayLabel, items: [] }; days.push(dg) }
+    dg.items.push(item)
   }
 
-  function toggleMonth(label: string) {
-    setOpenMonths(prev => { const n = new Set(prev); n.has(label) ? n.delete(label) : n.add(label); return n })
+  // Generate full range — at least 12 months back
+  const allMonths: MonthGroup[] = []
+  const _now = new Date()
+  const _oldest = unified.length > 0 ? new Date(unified[unified.length - 1].data.date) : _now
+  let _cur = new Date(_now.getFullYear(), _now.getMonth(), 1)
+  const _minBack = new Date(_now.getFullYear(), _now.getMonth() - 11, 1)
+  const _oldestStart = new Date(Math.min(
+    new Date(_oldest.getFullYear(), _oldest.getMonth(), 1).getTime(),
+    _minBack.getTime()
+  ))
+  while (_cur >= _oldestStart) {
+    const monthKey = `${_cur.getFullYear()}-${String(_cur.getMonth() + 1).padStart(2, "0")}`
+    const label = _cur.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+    allMonths.push({ label, days: _dataMonths.get(monthKey) ?? [] })
+    _cur = new Date(_cur.getFullYear(), _cur.getMonth() - 1, 1)
   }
-  function toggleYear(year: string) {
-    setOpenYears(prev => { const n = new Set(prev); n.has(year) ? n.delete(year) : n.add(year); return n })
-  }
+
+  const safeMonthIdx = Math.min(selectedMonthIdx, Math.max(0, allMonths.length - 1))
+  const currentMonth = allMonths[safeMonthIdx] ?? null
 
   // ─── Edit mode ────────────────────────────────────────────────────────────
 
@@ -401,7 +470,7 @@ export default function ActivitiesPage() {
       const workout = await r.json()
       setWorkouts(prev => [workout, ...prev])
       const label = new Date(workout.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-      setOpenMonths(prev => new Set([...prev, label]))
+      setSelectedMonthIdx(0)
       setShowWorkoutForm(false)
       setWExercises([])
     }
@@ -467,7 +536,7 @@ export default function ActivitiesPage() {
         setActivities(prev => [act, ...prev])
         closeCardioForm()
         const label = new Date(act.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-        setOpenMonths(prev => new Set([...prev, label]))
+        setSelectedMonthIdx(0)
       }
     }
     setCSaving(false)
@@ -595,7 +664,7 @@ export default function ActivitiesPage() {
           const workout = await r.json()
           setWorkouts(prev => [workout, ...prev])
           const label = new Date(workout.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-          setOpenMonths(prev => new Set([...prev, label]))
+          setSelectedMonthIdx(0)
           savedCount++
         }
       } else {
@@ -620,7 +689,7 @@ export default function ActivitiesPage() {
           const act = await r.json()
           setActivities(prev => [act, ...prev])
           const label = new Date(act.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-          setOpenMonths(prev => new Set([...prev, label]))
+          setSelectedMonthIdx(0)
           savedCount++
         }
       }
@@ -634,31 +703,31 @@ export default function ActivitiesPage() {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-      <div className="w-6 h-6 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="w-6 h-6 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-100 text-gray-900">
 
       {/* Demo banner */}
       {isDemo && (
-        <div className="bg-violet-600/20 border-b border-violet-500/30 px-4 py-2 flex items-center justify-between">
-          <p className="text-xs font-semibold text-violet-300">
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center justify-between">
+          <p className="text-xs font-semibold text-blue-700">
             Mode démo — <a href="/login" className="underline">Connectez-vous</a> pour sauvegarder.
           </p>
-          <a href="/login" className="text-xs font-bold text-white bg-violet-600 px-3 py-1 rounded-full">Se connecter</a>
+          <a href="/login" className="text-xs font-bold text-white bg-blue-600 px-3 py-1 rounded-full">Se connecter</a>
         </div>
       )}
 
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-gray-950/95 backdrop-blur-md border-b border-white/[0.07]">
+      <div className="sticky top-0 z-30 bg-gray-100/95 backdrop-blur-md border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Journal</p>
-              <h1 className="text-2xl font-extrabold text-white">Activités</h1>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Journal</p>
+              <h1 className="text-2xl font-extrabold text-gray-900">Activités</h1>
             </div>
             {!editMode && (
               <div className="flex items-center gap-2">
@@ -668,18 +737,18 @@ export default function ActivitiesPage() {
                   className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
                     voiceRecording
                       ? "bg-red-500 shadow-lg shadow-red-500/40 animate-pulse"
-                      : "bg-white/[0.07] border border-white/10 hover:bg-white/15"
+                      : "bg-gray-100 border border-gray-200 hover:bg-gray-200"
                   }`}
                   title="Commande vocale"
                 >
-                  <svg className={`w-4 h-4 ${voiceRecording ? "text-white" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className={`w-4 h-4 ${voiceRecording ? "text-white" : "text-gray-500"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                   </svg>
                 </button>
                 {/* Add button */}
                 <button
                   onClick={handleAdd}
-                  className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors"
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors"
                 >
                   <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -702,12 +771,12 @@ export default function ActivitiesPage() {
                 <div className="flex items-center gap-1.5">
                   <div className="flex gap-0.5">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className={`w-4 h-1.5 rounded-full ${i < used ? "bg-violet-500" : "bg-white/10"}`} />
+                      <div key={i} className={`w-4 h-1.5 rounded-full ${i < used ? "bg-blue-600" : "bg-gray-100"}`} />
                     ))}
                   </div>
-                  <span className="text-[10px] font-bold text-gray-500">{used}/5 séances ce mois</span>
+                  <span className="text-[10px] font-bold text-gray-400">{used}/5 séances ce mois</span>
                 </div>
-                <a href="/pricing" className="text-[10px] font-bold text-violet-400 hover:text-violet-300">Passer Pro →</a>
+                <a href="/pricing" className="text-[10px] font-bold text-blue-500 hover:text-blue-400">Passer Pro →</a>
               </div>
             )
           })()}
@@ -719,161 +788,147 @@ export default function ActivitiesPage() {
         {unified.length === 0 ? (
           <div className="text-center py-20 px-4">
             <p className="text-4xl mb-4">🏋️</p>
-            <p className="text-gray-400 font-semibold mb-2">Aucune activité enregistrée</p>
-            <p className="text-gray-600 text-sm mb-6">Ajoutez votre première séance ou activité cardio</p>
-            <button onClick={handleAdd} className="bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm px-6 py-3 rounded-xl transition-colors">
+            <p className="text-gray-500 font-semibold mb-2">Aucune activité enregistrée</p>
+            <p className="text-gray-400 text-sm mb-6">Ajoutez votre première séance ou activité cardio</p>
+            <button onClick={handleAdd} className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm px-6 py-3 rounded-xl transition-colors">
               Ajouter une activité
             </button>
           </div>
         ) : (
           <div className="flex flex-col gap-0">
-            {yearGroups.map(yg => {
-              const isCurrentYear = yg.year === currentYear
-              const isYearOpen = openYears.has(yg.year)
-              const totalInYear = yg.months.reduce((s, m) => s + m.items.length, 0)
+            {/* Month navigator */}
+            <div className="flex items-center justify-between px-2 py-3 border-b border-gray-200 bg-white">
+              <button
+                onClick={() => setSelectedMonthIdx(i => Math.min(i + 1, allMonths.length - 1))}
+                disabled={safeMonthIdx >= allMonths.length - 1}
+                className="p-2 text-gray-500 hover:text-gray-900 disabled:opacity-20 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="text-center">
+                <p className="text-sm font-extrabold text-gray-900 capitalize">{currentMonth?.label}</p>
+                {currentMonth && (() => {
+                  const count = currentMonth.days.reduce((s, d) => s + d.items.length, 0)
+                  if (count === 0) return <p className="text-[10px] text-gray-400 mt-0.5">Aucune activité ce mois</p>
+                  return <p className="text-[10px] text-gray-400 mt-0.5">{count} activité{count > 1 ? "s" : ""}</p>
+                })()}
+              </div>
+              {safeMonthIdx > 0 ? (
+                <button
+                  onClick={() => setSelectedMonthIdx(i => Math.max(i - 1, 0))}
+                  className="p-2 text-gray-500 hover:text-gray-900 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              ) : (
+                <div className="w-9" />
+              )}
+            </div>
 
-              const monthBlocks = yg.months.map(group => {
-                const isOpen = openMonths.has(group.label)
-                return (
-                  <div key={group.label} className="border-b border-white/10">
-                    <button
-                      onClick={() => !editMode && toggleMonth(group.label)}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-white/[0.04] border-t border-white/10 hover:bg-white/[0.07] transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <p className="text-sm font-extrabold text-white capitalize">{group.label}</p>
-                        <span className="text-[10px] font-bold text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">
-                          {group.items.length} activité{group.items.length > 1 ? "s" : ""}
-                        </span>
-                      </div>
-                      {!editMode && (
-                        <svg className="w-4 h-4 text-gray-500 transition-transform duration-300"
-                          style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      )}
-                    </button>
-                    <div style={{ display: "grid", gridTemplateRows: (isOpen || editMode) ? "1fr" : "0fr", transition: "grid-template-rows 0.3s cubic-bezier(0.4,0,0.2,1)" }}>
-                      <div style={{ overflow: "hidden" }}>
-                        <div className="divide-y divide-white/[0.07]">
-                          {group.items.map(item => {
-                            const key = getItemKey(item)
-                            const isSelected = selectedIds.has(key)
+            {/* Empty state for months without data */}
+            {currentMonth && currentMonth.days.length === 0 && (
+              <div className="text-center py-12 px-4">
+                <p className="text-gray-400 text-sm">Aucune activité enregistrée ce mois</p>
+              </div>
+            )}
 
-                            if (item.kind === "workout") {
-                              const w = item.data
-                              const totalSets = w.exercises.reduce((s, e) => s + e.sets.length, 0)
-                              return (
-                                <div
-                                  key={`w-${w.id}`}
-                                  className={`flex items-center gap-3 py-3 px-4 md:px-6 cursor-pointer transition-colors select-none ${
-                                    isSelected ? "bg-violet-500/10" : "hover:bg-white/[0.03]"
-                                  } ${editMode && !isSelected ? "opacity-50" : ""}`}
-                                  onTouchStart={e => onItemTouchStart(e, key)}
-                                  onTouchMove={onItemTouchMove}
-                                  onTouchEnd={onItemTouchEnd}
-                                  onClick={() => onItemClick(key, () => router.push(`/app/workouts/${w.id}`))}
-                                >
-                                  {editMode && (
-                                    <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
-                                      isSelected ? "bg-violet-600 border-violet-600" : "border-gray-600"
-                                    }`}>
-                                      {isSelected && (
-                                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                      )}
-                                    </div>
-                                  )}
-                                  <div className="w-9 h-9 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0 text-violet-400">
-                                    <DumbbellIcon />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-white truncate">{w.name}</p>
-                                    {w.exercises.length > 0 && (
-                                      <p className="text-[11px] text-gray-500 mt-0.5">{w.exercises.length} exo{w.exercises.length > 1 ? "s" : ""} · {totalSets} série{totalSets > 1 ? "s" : ""}</p>
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-gray-500 shrink-0">{fmtDate(w.date)}</p>
-                                </div>
-                              )
-                            } else {
-                              const a = item.data
-                              const info = getCardioInfo(a.type)
-                              return (
-                                <div
-                                  key={`a-${a.id}`}
-                                  className={`flex items-center gap-3 py-3 px-4 md:px-6 cursor-pointer transition-colors select-none ${
-                                    isSelected ? "bg-violet-500/10" : "hover:bg-white/[0.03]"
-                                  } ${editMode && !isSelected ? "opacity-50" : ""}`}
-                                  onTouchStart={e => onItemTouchStart(e, key)}
-                                  onTouchMove={onItemTouchMove}
-                                  onTouchEnd={onItemTouchEnd}
-                                  onClick={() => onItemClick(key, () => router.push(`/app/activities/${a.id}`))}
-                                >
-                                  {editMode && (
-                                    <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
-                                      isSelected ? "bg-violet-600 border-violet-600" : "border-gray-600"
-                                    }`}>
-                                      {isSelected && (
-                                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                      )}
-                                    </div>
-                                  )}
-                                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: info.color + "22" }}>
-                                    <span style={{ color: info.color }}><CardioIcon type={a.type} /></span>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold truncate" style={{ color: info.color }}>{info.label}</p>
-                                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                      {a.distanceM && <span className="text-[11px] text-gray-400">{fmtDist(a.distanceM)}</span>}
-                                      {a.durationSec && <span className="text-[11px] text-gray-400">{fmtDuration(a.durationSec)}</span>}
-                                      {a.avgPaceSecKm && <span className="text-[11px] text-gray-500">{fmtPace(a.avgPaceSecKm)}</span>}
-                                      {!a.avgPaceSecKm && a.avgSpeedKmh && <span className="text-[11px] text-gray-500">{a.avgSpeedKmh.toFixed(1)} km/h</span>}
-                                      {a.avgHeartRate && <span className="text-[11px] text-red-400">{a.avgHeartRate} bpm</span>}
-                                    </div>
-                                  </div>
-                                  <p className="text-xs text-gray-500 shrink-0">{fmtDate(a.date)}</p>
-                                </div>
-                              )
-                            }
-                          })}
-                        </div>
-                      </div>
-                    </div>
+            {/* Items grouped by day */}
+            <div className="flex flex-col gap-0 pb-3">
+              {currentMonth?.days.map(dayGroup => (
+                <div key={dayGroup.dayKey} className="px-3 md:px-4 pt-3">
+                  <div className="flex items-center justify-between px-1 pb-1.5 mb-1 border-b border-gray-200">
+                    <p className="text-[11px] font-bold text-gray-500 capitalize">{dayGroup.dayLabel}</p>
                   </div>
-                )
-              })
-
-              if (isCurrentYear) {
-                return <React.Fragment key={yg.year}>{monthBlocks}</React.Fragment>
-              }
-
-              return (
-                <div key={yg.year}>
-                  <button
-                    onClick={() => toggleYear(yg.year)}
-                    className="w-full flex items-center justify-between px-4 py-3.5 bg-white/[0.06] border-t border-white/10 hover:bg-white/[0.09] transition-colors"
-                  >
-                    <p className="text-base font-black text-white">{yg.year}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-gray-500">{totalInYear} activité{totalInYear > 1 ? "s" : ""}</span>
-                      <svg className="w-4 h-4 text-gray-500 transition-transform duration-300"
-                        style={{ transform: isYearOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </button>
-                  <div style={{ display: "grid", gridTemplateRows: isYearOpen ? "1fr" : "0fr", transition: "grid-template-rows 0.3s cubic-bezier(0.4,0,0.2,1)" }}>
-                    <div style={{ overflow: "hidden" }}>{monthBlocks}</div>
+                  <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 divide-y divide-gray-100">
+                    {dayGroup.items.map(item => {
+                      const key = getItemKey(item)
+                      const isSelected = selectedIds.has(key)
+                      if (item.kind === "workout") {
+                        const w = item.data
+                        const totalSets = w.exercises.reduce((s, e) => s + e.sets.length, 0)
+                        return (
+                          <div
+                            key={`w-${w.id}`}
+                            className={`flex items-center gap-3 py-3 px-4 cursor-pointer transition-colors select-none ${
+                              isSelected ? "bg-blue-50" : "hover:bg-gray-50"
+                            } ${editMode && !isSelected ? "opacity-50" : ""}`}
+                            onTouchStart={e => onItemTouchStart(e, key)}
+                            onTouchMove={onItemTouchMove}
+                            onTouchEnd={onItemTouchEnd}
+                            onClick={() => onItemClick(key, () => router.push(`/app/workouts/${w.id}`))}
+                          >
+                            {editMode && (
+                              <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
+                                isSelected ? "bg-blue-600 border-blue-600" : "border-gray-600"
+                              }`}>
+                                {isSelected && (
+                                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+                            )}
+                            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 text-blue-600">
+                              <DumbbellIcon />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-gray-900 truncate">{w.name}</p>
+                              {w.exercises.length > 0 && (
+                                <p className="text-[11px] text-gray-400 mt-0.5">{w.exercises.length} exo{w.exercises.length > 1 ? "s" : ""} · {totalSets} série{totalSets > 1 ? "s" : ""}</p>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      } else {
+                        const a = item.data
+                        const info = getCardioInfo(a.type)
+                        return (
+                          <div
+                            key={`a-${a.id}`}
+                            className={`flex items-center gap-3 py-3 px-4 cursor-pointer transition-colors select-none ${
+                              isSelected ? "bg-sky-50" : "hover:bg-gray-50"
+                            } ${editMode && !isSelected ? "opacity-50" : ""}`}
+                            onTouchStart={e => onItemTouchStart(e, key)}
+                            onTouchMove={onItemTouchMove}
+                            onTouchEnd={onItemTouchEnd}
+                            onClick={() => onItemClick(key, () => router.push(`/app/activities/${a.id}`))}
+                          >
+                            {editMode && (
+                              <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
+                                isSelected ? "bg-sky-500 border-sky-500" : "border-gray-600"
+                              }`}>
+                                {isSelected && (
+                                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+                            )}
+                            <div className="w-9 h-9 rounded-xl bg-sky-100 flex items-center justify-center shrink-0 text-sky-500">
+                              <CardioIcon type={a.type} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold truncate text-gray-900">{info.label}</p>
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                {a.distanceM && <span className="text-[11px] text-gray-500">{fmtDist(a.distanceM)}</span>}
+                                {a.durationSec && <span className="text-[11px] text-gray-500">{fmtDuration(a.durationSec)}</span>}
+                                {a.avgPaceSecKm && <span className="text-[11px] text-gray-400">{fmtPace(a.avgPaceSecKm)}</span>}
+                                {!a.avgPaceSecKm && a.avgSpeedKmh && <span className="text-[11px] text-gray-400">{a.avgSpeedKmh.toFixed(1)} km/h</span>}
+                                {a.avgHeartRate && <span className="text-[11px] text-red-400">{a.avgHeartRate} bpm</span>}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      }
+                    })}
                   </div>
                 </div>
-              )
-            })}
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -884,10 +939,10 @@ export default function ActivitiesPage() {
           className="fixed left-0 right-0 z-40 flex justify-center px-4"
           style={{ bottom: "calc(env(safe-area-inset-bottom) + 72px)" }}
         >
-          <div className="w-full max-w-sm bg-gray-900/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-3 flex items-center gap-2">
+          <div className="w-full max-w-sm bg-white border border-gray-200 shadow-xl rounded-2xl p-3 flex items-center gap-2">
             <button
               onClick={exitEditMode}
-              className="flex-1 py-2.5 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors"
+              className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
             >
               Annuler
             </button>
@@ -905,43 +960,47 @@ export default function ActivitiesPage() {
       {/* ── Type Selector (bottom sheet, swipe-to-dismiss) ── */}
       {showTypeSelector && (
         <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"
+          className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
           onClick={() => setShowTypeSelector(false)}
         >
           <div
-            className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg"
+            className="sheet-enter bg-white border border-gray-200 shadow-2xl rounded-t-3xl w-full max-w-lg"
+            style={typeSelectorDrag.style}
             onClick={e => e.stopPropagation()}
-            onTouchStart={onSheetHandleTouchStart}
-            onTouchEnd={e => onSheetHandleTouchEnd(e, () => setShowTypeSelector(false))}
           >
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full bg-white/20" />
+            <div
+              className="flex justify-center pt-3 pb-1 cursor-grab"
+              onTouchStart={typeSelectorDrag.onDragStart}
+              onTouchMove={typeSelectorDrag.onDragMove}
+              onTouchEnd={typeSelectorDrag.onDragEnd}
+            >
+              <div className="w-10 h-1 rounded-full bg-gray-300" />
             </div>
             <div className="px-5 pb-8 pt-2">
-              <h3 className="text-base font-black text-white mb-5">Quel type d&apos;activité ?</h3>
+              <h3 className="text-base font-black text-gray-900 mb-5">Quel type d&apos;activité ?</h3>
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => { setShowTypeSelector(false); setWName(""); setWDate(new Date().toISOString().slice(0, 10)); setWNotes(""); setWExercises([]); setShowWorkoutForm(true) }}
-                  className="flex items-center gap-4 p-4 bg-violet-600/10 border border-violet-500/30 rounded-2xl text-left hover:border-violet-500/60 transition-colors"
+                  className="flex items-center gap-4 p-4 bg-blue-50 border border-blue-200 rounded-2xl text-left hover:border-blue-400 transition-colors"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-violet-600/20 flex items-center justify-center text-violet-400 shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
                     <DumbbellIcon size={22} />
                   </div>
                   <div>
-                    <p className="text-sm font-extrabold text-white">Séance de sport</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Exercices avec séries, répétitions et charges</p>
+                    <p className="text-sm font-extrabold text-gray-900">Séance de sport</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Exercices avec séries, répétitions et charges</p>
                   </div>
                 </button>
                 <button
                   onClick={() => { setShowTypeSelector(false); resetCardioForm(); setShowCardioForm(true) }}
-                  className="flex items-center gap-4 p-4 bg-orange-500/10 border border-orange-500/30 rounded-2xl text-left hover:border-orange-500/60 transition-colors"
+                  className="flex items-center gap-4 p-4 bg-sky-50 border border-sky-200 rounded-2xl text-left hover:border-sky-400 transition-colors"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center text-orange-400 shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-sky-100 flex items-center justify-center text-sky-500 shrink-0">
                     <CardioIcon type="running" size={22} />
                   </div>
                   <div>
-                    <p className="text-sm font-extrabold text-white">Activité cardio</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Course, vélo, natation, randonnée…</p>
+                    <p className="text-sm font-extrabold text-gray-900">Activité cardio</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Course, vélo, natation, randonnée…</p>
                   </div>
                 </button>
               </div>
@@ -953,37 +1012,39 @@ export default function ActivitiesPage() {
       {/* ── Workout Form (bottom sheet, swipe-to-dismiss) ── */}
       {showWorkoutForm && (
         <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"
+          className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
           onClick={() => setShowWorkoutForm(false)}
         >
           <div
-            className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            className="sheet-enter bg-white border border-gray-200 shadow-2xl rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            style={workoutFormDrag.style}
             onClick={e => e.stopPropagation()}
           >
             <div
               className="flex justify-center pt-3 pb-1 cursor-grab"
-              onTouchStart={onSheetHandleTouchStart}
-              onTouchEnd={e => onSheetHandleTouchEnd(e, () => setShowWorkoutForm(false))}
+              onTouchStart={workoutFormDrag.onDragStart}
+              onTouchMove={workoutFormDrag.onDragMove}
+              onTouchEnd={workoutFormDrag.onDragEnd}
             >
-              <div className="w-10 h-1 rounded-full bg-white/20" />
+              <div className="w-10 h-1 rounded-full bg-gray-300" />
             </div>
             <div className="px-5 pb-6 pt-2">
-              <h3 className="text-base font-black text-white mb-4">Nouvelle séance</h3>
+              <h3 className="text-base font-black text-gray-900 mb-4">Nouvelle séance</h3>
               <div className="flex flex-col gap-4">
                 <div>
-                  <label className="text-xs font-bold text-gray-400 block mb-1.5">Nom de la séance</label>
+                  <label className="text-xs font-bold text-gray-500 block mb-1.5">Nom de la séance</label>
                   <input value={wName} onChange={e => setWName(e.target.value)} placeholder="ex: Push Day A" autoFocus
-                    className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-violet-500/50"/>
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500/50"/>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-400 block mb-1.5">Date</label>
+                  <label className="text-xs font-bold text-gray-500 block mb-1.5">Date</label>
                   <input type="date" value={wDate} onChange={e => setWDate(e.target.value)}
-                    className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-violet-500/50"/>
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-blue-500/50"/>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-400 block mb-1.5">Notes <span className="text-gray-600 font-normal">(optionnel)</span></label>
+                  <label className="text-xs font-bold text-gray-500 block mb-1.5">Notes <span className="text-gray-400 font-normal">(optionnel)</span></label>
                   <textarea value={wNotes} onChange={e => setWNotes(e.target.value)} placeholder="Ressenti, objectifs..." rows={2}
-                    className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none resize-none"/>
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none resize-none"/>
                 </div>
               </div>
 
@@ -991,23 +1052,23 @@ export default function ActivitiesPage() {
               {wExercises.length > 0 && (
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
                       Exercices détectés ({wExercises.length})
                     </p>
-                    <button onClick={() => setWExercises([])} className="text-[11px] text-gray-600 hover:text-red-400 transition-colors">
+                    <button onClick={() => setWExercises([])} className="text-[11px] text-gray-400 hover:text-red-400 transition-colors">
                       Effacer
                     </button>
                   </div>
                   <div className="flex flex-col gap-2">
                     {wExercises.map((ex, i) => (
-                      <div key={i} className="bg-white/[0.04] border border-white/[0.07] rounded-xl px-3 py-2.5">
+                      <div key={i} className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-bold text-white">{ex.name}</p>
-                          <span className="text-[11px] font-bold text-violet-400">{ex.sets.length} série{ex.sets.length > 1 ? "s" : ""}</span>
+                          <p className="text-sm font-bold text-gray-900">{ex.name}</p>
+                          <span className="text-[11px] font-bold text-blue-500">{ex.sets.length} série{ex.sets.length > 1 ? "s" : ""}</span>
                         </div>
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {ex.sets.map((s, j) => (
-                            <span key={j} className="text-[11px] text-gray-400 bg-white/5 px-2 py-0.5 rounded-full">
+                            <span key={j} className="text-[11px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                               {s.reps != null ? `${s.reps} rép` : "—"}
                               {s.weight != null ? ` × ${s.weight} kg` : ""}
                             </span>
@@ -1019,7 +1080,7 @@ export default function ActivitiesPage() {
                 </div>
               )}
 
-              <button onClick={handleCreateWorkout} disabled={wSaving || !wName.trim()} className="w-full mt-5 py-3 bg-violet-600 rounded-xl text-sm font-bold text-white hover:bg-violet-500 transition-colors disabled:opacity-50">
+              <button onClick={handleCreateWorkout} disabled={wSaving || !wName.trim()} className="w-full mt-5 py-3 bg-blue-600 rounded-xl text-sm font-bold text-white hover:bg-blue-500 transition-colors disabled:opacity-50">
                 {wSaving ? "..." : wExercises.length > 0 ? `Créer avec ${wExercises.length} exercice${wExercises.length > 1 ? "s" : ""} →` : "Créer →"}
               </button>
             </div>
@@ -1030,22 +1091,24 @@ export default function ActivitiesPage() {
       {/* ── Cardio Form (bottom sheet, swipe-to-dismiss) ── */}
       {showCardioForm && (
         <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"
+          className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
           onClick={closeCardioForm}
         >
           <div
-            className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            className="sheet-enter bg-white border border-gray-200 shadow-2xl rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            style={cardioFormDrag.style}
             onClick={e => e.stopPropagation()}
           >
             <div
               className="flex justify-center pt-3 pb-1 cursor-grab"
-              onTouchStart={onSheetHandleTouchStart}
-              onTouchEnd={e => onSheetHandleTouchEnd(e, closeCardioForm)}
+              onTouchStart={cardioFormDrag.onDragStart}
+              onTouchMove={cardioFormDrag.onDragMove}
+              onTouchEnd={cardioFormDrag.onDragEnd}
             >
-              <div className="w-10 h-1 rounded-full bg-white/20" />
+              <div className="w-10 h-1 rounded-full bg-gray-300" />
             </div>
             <div className="px-5 pb-6 pt-2">
-              <h3 className="text-base font-black text-white mb-4">
+              <h3 className="text-base font-black text-gray-900 mb-4">
                 {editingActivity ? "Modifier l'activité" : "Nouvelle activité cardio"}
               </h3>
               <div className="overflow-x-auto mb-4">
@@ -1055,7 +1118,7 @@ export default function ActivitiesPage() {
                       className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl border transition-all"
                       style={cType === t.key
                         ? { backgroundColor: t.color + "22", borderColor: t.color + "66", color: t.color }
-                        : { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)", color: "#6b7280" }}>
+                        : { backgroundColor: "rgb(249,250,251)", borderColor: "rgb(229,231,235)", color: "#6b7280" }}>
                       <CardioIcon type={t.key} />
                       <span className="text-[10px] font-bold">{t.label}</span>
                     </button>
@@ -1064,48 +1127,48 @@ export default function ActivitiesPage() {
               </div>
               <div className="flex flex-col gap-3">
                 <input type="date" value={cDate} onChange={e => setCDate(e.target.value)}
-                  className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-violet-500/50"/>
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-sky-500/50"/>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wide ml-1">Distance (km)</label>
+                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Distance (km)</label>
                     <input type="number" min="0" step="0.1" value={cDist} onChange={e => setCDist(e.target.value)} placeholder="ex: 5.2"
-                      className="w-full mt-1 bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 outline-none"/>
+                      className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none"/>
                   </div>
                   <div>
-                    <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wide ml-1">Durée</label>
+                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Durée</label>
                     <div className="flex gap-1 mt-1">
                       <input type="number" min="0" value={cDurH} onChange={e => setCDurH(e.target.value)} placeholder="0h"
-                        className="w-1/3 bg-white/[0.06] border border-white/10 rounded-xl px-1 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                        className="w-1/3 bg-gray-50 border border-gray-200 rounded-xl px-1 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none text-center"/>
                       <input type="number" min="0" max="59" value={cDurM} onChange={e => setCDurM(e.target.value)} placeholder="min"
-                        className="w-1/3 bg-white/[0.06] border border-white/10 rounded-xl px-1 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                        className="w-1/3 bg-gray-50 border border-gray-200 rounded-xl px-1 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none text-center"/>
                       <input type="number" min="0" max="59" value={cDurS} onChange={e => setCDurS(e.target.value)} placeholder="sec"
-                        className="w-1/3 bg-white/[0.06] border border-white/10 rounded-xl px-1 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                        className="w-1/3 bg-gray-50 border border-gray-200 rounded-xl px-1 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none text-center"/>
                     </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {(cType === "running" || cType === "cycling" || cType === "hiking") && (
                     <div>
-                      <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wide ml-1">Dénivelé (m)</label>
+                      <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Dénivelé (m)</label>
                       <input type="number" min="0" value={cElev} onChange={e => setCElev(e.target.value)} placeholder="—"
-                        className="w-full mt-1 bg-white/[0.06] border border-white/10 rounded-xl px-2 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                        className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none text-center"/>
                     </div>
                   )}
                   <div>
-                    <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wide ml-1">FC moy</label>
+                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">FC moy</label>
                     <input type="number" min="0" value={cHR} onChange={e => setCHR(e.target.value)} placeholder="bpm"
-                      className="w-full mt-1 bg-white/[0.06] border border-white/10 rounded-xl px-2 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                      className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none text-center"/>
                   </div>
                   <div>
-                    <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wide ml-1">Calories</label>
+                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Calories</label>
                     <input type="number" min="0" value={cCal} onChange={e => setCCal(e.target.value)} placeholder="kcal"
-                      className="w-full mt-1 bg-white/[0.06] border border-white/10 rounded-xl px-2 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                      className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none text-center"/>
                   </div>
                 </div>
                 <textarea value={cNotes} onChange={e => setCNotes(e.target.value)} placeholder="Notes (optionnel)" rows={2}
-                  className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 outline-none resize-none"/>
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none resize-none"/>
               </div>
-              <button onClick={handleSaveActivity} disabled={cSaving} className="w-full mt-5 py-3 bg-orange-500 rounded-xl text-sm font-bold text-white hover:bg-orange-400 transition-colors disabled:opacity-50">
+              <button onClick={handleSaveActivity} disabled={cSaving} className="w-full mt-5 py-3 bg-sky-500 rounded-xl text-sm font-bold text-white hover:bg-sky-400 transition-colors disabled:opacity-50">
                 {cSaving ? "..." : editingActivity ? "Enregistrer" : "Ajouter"}
               </button>
             </div>
@@ -1140,8 +1203,8 @@ export default function ActivitiesPage() {
       {/* ── Voice parsing overlay ── */}
       {voiceParsing && (
         <div className="fixed inset-0 bg-black/85 z-50 flex flex-col items-center justify-center gap-5 px-6">
-          <div className="w-16 h-16 rounded-full bg-violet-600/20 flex items-center justify-center">
-            <svg className="w-8 h-8 text-violet-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <div className="w-16 h-16 rounded-full bg-blue-600/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-blue-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
           </div>
@@ -1153,7 +1216,7 @@ export default function ActivitiesPage() {
           </div>
           <div className="flex gap-1.5">
             {[0, 1, 2].map(i => (
-              <div key={i} className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+              <div key={i} className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
             ))}
           </div>
         </div>
@@ -1162,8 +1225,8 @@ export default function ActivitiesPage() {
       {/* ── Voice saving overlay ── */}
       {voiceSaving && (
         <div className="fixed inset-0 bg-black/85 z-50 flex flex-col items-center justify-center gap-5 px-6">
-          <div className="w-16 h-16 rounded-full bg-violet-600/20 flex items-center justify-center">
-            <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+          <div className="w-16 h-16 rounded-full bg-blue-600/20 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
           </div>
           <div className="text-center">
             <p className="text-white font-bold text-lg mb-1">Enregistrement…</p>
@@ -1193,9 +1256,9 @@ export default function ActivitiesPage() {
 
       {/* ── Voice error overlay ── */}
       {voiceError && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={() => setVoiceError(null)}>
-          <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-white/20" /></div>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setVoiceError(null)}>
+          <div className="bg-white border border-gray-200 shadow-2xl rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-gray-300" /></div>
             <div className="px-5 pb-8 pt-3">
               <div className="flex items-start gap-4 mb-5">
                 <div className="w-12 h-12 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
@@ -1206,35 +1269,35 @@ export default function ActivitiesPage() {
                 <div>
                   {voiceError === "empty" && (
                     <>
-                      <p className="text-sm font-extrabold text-white mb-1">On n&apos;a pas compris</p>
-                      <p className="text-sm text-gray-400">Décris ton activité plus précisément et réessaie.</p>
-                      <p className="text-xs text-gray-500 mt-2">Ex : &ldquo;Course 10 km en 50 min&rdquo; ou &ldquo;Développé couché 3×10 à 80 kg&rdquo;</p>
+                      <p className="text-sm font-extrabold text-gray-900 mb-1">On n&apos;a pas compris</p>
+                      <p className="text-sm text-gray-500">Décris ton activité plus précisément et réessaie.</p>
+                      <p className="text-xs text-gray-400 mt-2">Ex : &ldquo;Course 10 km en 50 min&rdquo; ou &ldquo;Développé couché 3×10 à 80 kg&rdquo;</p>
                     </>
                   )}
                   {voiceError === "permission" && (
                     <>
-                      <p className="text-sm font-extrabold text-white mb-1">Microphone bloqué</p>
-                      <p className="text-sm text-gray-400">Autorisez l&apos;accès au microphone dans les réglages de votre navigateur, puis réessayez.</p>
-                      <p className="text-xs text-gray-500 mt-2">Sur iOS : Réglages → Safari → Microphone → Autoriser</p>
+                      <p className="text-sm font-extrabold text-gray-900 mb-1">Microphone bloqué</p>
+                      <p className="text-sm text-gray-500">Autorisez l&apos;accès au microphone dans les réglages de votre navigateur, puis réessayez.</p>
+                      <p className="text-xs text-gray-400 mt-2">Sur iOS : Réglages → Safari → Microphone → Autoriser</p>
                     </>
                   )}
                   {voiceError === "notfound" && (
                     <>
-                      <p className="text-sm font-extrabold text-white mb-1">Aucun microphone détecté</p>
-                      <p className="text-sm text-gray-400">Vérifiez qu&apos;un microphone est connecté et accessible.</p>
+                      <p className="text-sm font-extrabold text-gray-900 mb-1">Aucun microphone détecté</p>
+                      <p className="text-sm text-gray-500">Vérifiez qu&apos;un microphone est connecté et accessible.</p>
                     </>
                   )}
                   {voiceError === "unknown" && (
                     <>
-                      <p className="text-sm font-extrabold text-white mb-1">Erreur microphone</p>
-                      <p className="text-sm text-gray-400">Impossible d&apos;accéder au microphone. Vérifiez vos permissions et réessayez.</p>
+                      <p className="text-sm font-extrabold text-gray-900 mb-1">Erreur microphone</p>
+                      <p className="text-sm text-gray-500">Impossible d&apos;accéder au microphone. Vérifiez vos permissions et réessayez.</p>
                     </>
                   )}
                 </div>
               </div>
               <button
                 onClick={() => setVoiceError(null)}
-                className="w-full py-3 bg-white/10 border border-white/20 rounded-xl text-sm font-bold text-white hover:bg-white/15 transition-colors"
+                className="w-full py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-200 transition-colors"
               >
                 OK
               </button>
@@ -1245,9 +1308,9 @@ export default function ActivitiesPage() {
 
       {/* ── Delete confirmation ── */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-white/20" /></div>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="sheet-enter bg-white border border-gray-200 shadow-2xl rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-gray-300" /></div>
             <div className="px-5 pb-8 pt-4">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-11 h-11 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
@@ -1256,16 +1319,16 @@ export default function ActivitiesPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-extrabold text-white">
+                  <p className="text-sm font-extrabold text-gray-900">
                     Supprimer {selectedIds.size} activité{selectedIds.size > 1 ? "s" : ""} ?
                   </p>
-                  <p className="text-xs text-gray-500 mt-0.5">Cette action est irréversible.</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Cette action est irréversible.</p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 py-3 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors"
+                  className="flex-1 py-3 border border-gray-200 rounded-xl text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
                 >
                   Annuler
                 </button>
@@ -1284,29 +1347,31 @@ export default function ActivitiesPage() {
 
       {/* ── Voice preview bottom sheet ── */}
       {voicePreview && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={() => setVoicePreview(null)}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setVoicePreview(null)}>
           <div
-            className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg max-h-[85vh] flex flex-col"
+            className="sheet-enter bg-white border border-gray-200 shadow-2xl rounded-t-3xl w-full max-w-lg max-h-[85vh] flex flex-col"
+            style={voicePreviewDrag.style}
             onClick={e => e.stopPropagation()}
           >
             <div
               className="flex justify-center pt-3 pb-1 cursor-grab shrink-0"
-              onTouchStart={onSheetHandleTouchStart}
-              onTouchEnd={e => onSheetHandleTouchEnd(e, () => setVoicePreview(null))}
+              onTouchStart={voicePreviewDrag.onDragStart}
+              onTouchMove={voicePreviewDrag.onDragMove}
+              onTouchEnd={voicePreviewDrag.onDragEnd}
             >
-              <div className="w-10 h-1 rounded-full bg-white/20" />
+              <div className="w-10 h-1 rounded-full bg-gray-300" />
             </div>
             <div className="px-5 pt-2 pb-2 shrink-0">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-violet-600/20 flex items-center justify-center shrink-0">
-                  <svg className="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-extrabold text-white">Activités détectées</p>
+                  <p className="text-sm font-extrabold text-gray-900">Activités détectées</p>
                   {voiceTranscript && (
-                    <p className="text-[11px] text-gray-500 italic truncate max-w-[240px]">&ldquo;{voiceTranscript}&rdquo;</p>
+                    <p className="text-[11px] text-gray-400 italic truncate max-w-[240px]">&ldquo;{voiceTranscript}&rdquo;</p>
                   )}
                 </div>
               </div>
@@ -1315,16 +1380,16 @@ export default function ActivitiesPage() {
             <div className="overflow-y-auto flex-1 px-5 pb-2">
               <div className="flex flex-col gap-3">
                 {voicePreview.map((item, idx) => (
-                  <div key={idx} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden">
+                  <div key={idx} className="bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden">
                     {item.kind === "workout" ? (
                       <div className="p-3.5">
                         <div className="flex items-center gap-2.5 mb-3">
-                          <div className="w-8 h-8 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0 text-violet-400">
+                          <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 text-blue-600">
                             <DumbbellIcon size={15} />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-white">{item.workout.name || "Séance"}</p>
-                            <p className="text-[11px] text-violet-400">
+                            <p className="text-sm font-bold text-gray-900">{item.workout.name || "Séance"}</p>
+                            <p className="text-[11px] text-blue-500">
                               {WORKOUT_TYPES.find(t => t.value === item.workout.type)?.label ?? item.workout.type}
                               {item.date ? ` · ${fmtDate(item.date)}` : ""}
                             </p>
@@ -1333,7 +1398,7 @@ export default function ActivitiesPage() {
                         {item.workout.exercises.length > 0 && (
                           <div className="flex flex-col gap-2">
                             {item.workout.exercises.map((ex, ei) => (
-                              <div key={ei} className={`rounded-xl p-2.5 ${ex.ambiguous ? "bg-amber-500/10 border border-amber-500/30" : "bg-white/[0.04]"}`}>
+                              <div key={ei} className={`rounded-xl p-2.5 ${ex.ambiguous ? "bg-amber-500/10 border border-amber-500/30" : "bg-gray-100"}`}>
                                 {ex.ambiguous ? (
                                   <>
                                     <div className="flex items-center gap-1.5 mb-2">
@@ -1367,10 +1432,10 @@ export default function ActivitiesPage() {
                                   </>
                                 ) : (
                                   <div className="flex items-start justify-between gap-2">
-                                    <p className="text-[12px] font-bold text-white">{ex.name}</p>
+                                    <p className="text-[12px] font-bold text-gray-900">{ex.name}</p>
                                     <div className="flex flex-wrap gap-1 justify-end">
                                       {ex.sets.map((s, si) => (
-                                        <span key={si} className="text-[10px] text-gray-400 bg-white/5 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                        <span key={si} className="text-[10px] text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded-full whitespace-nowrap">
                                           {s.reps != null ? `${s.reps}` : "—"}
                                           {s.weight != null ? `×${s.weight}kg` : ""}
                                         </span>
@@ -1389,17 +1454,17 @@ export default function ActivitiesPage() {
                           const info = getCardioInfo(item.activity.type)
                           return (
                             <>
-                              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: info.color + "22" }}>
-                                <span style={{ color: info.color }}><CardioIcon type={item.activity.type} size={15} /></span>
+                              <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center shrink-0 text-sky-500">
+                                <CardioIcon type={item.activity.type} size={15} />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold" style={{ color: info.color }}>{info.label}</p>
+                                <p className="text-sm font-bold text-gray-900">{info.label}</p>
                                 <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                                  {item.activity.distanceM && <span className="text-[11px] text-gray-400">{fmtDist(item.activity.distanceM)}</span>}
-                                  {item.activity.durationSec && <span className="text-[11px] text-gray-400">{fmtDuration(item.activity.durationSec)}</span>}
-                                  {item.activity.calories && <span className="text-[11px] text-gray-500">{item.activity.calories} kcal</span>}
+                                  {item.activity.distanceM && <span className="text-[11px] text-gray-500">{fmtDist(item.activity.distanceM)}</span>}
+                                  {item.activity.durationSec && <span className="text-[11px] text-gray-500">{fmtDuration(item.activity.durationSec)}</span>}
+                                  {item.activity.calories && <span className="text-[11px] text-gray-400">{item.activity.calories} kcal</span>}
                                   {item.activity.avgHeartRate && <span className="text-[11px] text-red-400">{item.activity.avgHeartRate} bpm</span>}
-                                  {item.date && <span className="text-[11px] text-gray-500">{fmtDate(item.date)}</span>}
+                                  {item.date && <span className="text-[11px] text-gray-400">{fmtDate(item.date)}</span>}
                                 </div>
                               </div>
                             </>
@@ -1412,17 +1477,17 @@ export default function ActivitiesPage() {
               </div>
             </div>
 
-            <div className="px-5 pb-6 pt-3 flex gap-3 shrink-0 border-t border-white/[0.07]">
+            <div className="px-5 pb-6 pt-3 flex gap-3 shrink-0 border-t border-gray-100">
               <button
                 onClick={() => setVoicePreview(null)}
-                className="flex-1 py-3 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors"
+                className="flex-1 py-3 border border-gray-200 rounded-xl text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
               >
                 Annuler
               </button>
               <button
                 onClick={() => { const p = voicePreview; setVoicePreview(null); saveVoiceItems(p!) }}
                 disabled={voicePreview.some(item => item.kind === "workout" && item.workout.exercises.some(e => e.ambiguous))}
-                className="flex-[2] py-3 bg-violet-600 rounded-xl text-sm font-bold text-white hover:bg-violet-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-[2] py-3 bg-blue-600 rounded-xl text-sm font-bold text-white hover:bg-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {(() => {
                   const n = voicePreview.length
