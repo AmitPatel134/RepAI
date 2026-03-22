@@ -23,9 +23,8 @@ export async function GET(request: NextRequest) {
       dailySteps: user.dailySteps,
       profileComplete: user.profileComplete,
     })
-  } catch (e) {
-    const msg = (e as Error)?.message ?? String(e)
-    return Response.json({ error: msg }, { status: 500 })
+  } catch {
+    return Response.json({ error: "Database error" }, { status: 500 })
   }
 }
 
@@ -67,8 +66,7 @@ export async function PUT(request: NextRequest) {
     })
 
     return Response.json({ ok: true, profileComplete: user.profileComplete })
-  } catch (e) {
-    const msg = (e as Error)?.message ?? String(e)
-    return Response.json({ error: msg }, { status: 500 })
+  } catch {
+    return Response.json({ error: "Database error" }, { status: 500 })
   }
 }
