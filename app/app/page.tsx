@@ -137,14 +137,32 @@ export default function HomePage() {
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mb-1.5">
-                {profile.age && <span className="text-xs font-semibold text-gray-500">{profile.age} ans</span>}
-                {profile.heightCm && <span className="text-xs font-semibold text-gray-500">{profile.heightCm} cm</span>}
-                {profile.weightKg && <span className="text-xs font-semibold text-gray-500">{profile.weightKg} kg</span>}
-                {profile.weightKg && profile.heightCm && (
-                  <span className="text-xs font-semibold text-gray-500">IMC {bmi(profile.weightKg, profile.heightCm)}</span>
+              <div className="flex flex-wrap gap-x-3 gap-y-1.5 mb-1.5">
+                {profile.age && (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-gray-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />{profile.age} ans
+                  </span>
                 )}
-                {profile.restingHR && <span className="text-xs font-semibold text-gray-500">FC repos {profile.restingHR} bpm</span>}
+                {profile.heightCm && (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-gray-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />{profile.heightCm} cm
+                  </span>
+                )}
+                {profile.weightKg && (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-gray-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />{profile.weightKg} kg
+                  </span>
+                )}
+                {profile.weightKg && profile.heightCm && (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-gray-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />IMC {bmi(profile.weightKg, profile.heightCm)}
+                  </span>
+                )}
+                {profile.restingHR && (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-gray-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />FC {profile.restingHR} bpm
+                  </span>
+                )}
               </div>
               {profile.goal && (
                 <p className="text-sm font-bold text-gray-900 truncate">{GOAL_LABELS[profile.goal] ?? profile.goal}</p>

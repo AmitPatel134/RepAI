@@ -249,8 +249,8 @@ export default function HomePage() {
               },
               {
                 icon: "🤖",
-                title: "Coach IA personnalisé",
-                desc: "Posez vos questions — le coach IA analyse vos vraies données pour vous donner des conseils sur mesure.",
+                title: "Coach personnalisé",
+                desc: "Posez vos questions — le coach analyse vos vraies données pour vous donner des conseils sur mesure.",
               },
               {
                 icon: "📊",

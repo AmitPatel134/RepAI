@@ -38,13 +38,13 @@ const navItems = [
     activeBg: "bg-red-50",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2 20h20M5 20V10l5-5 4 4 5-7" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 20h18M7 20V14m4 6V8m4 12V3" />
       </svg>
     ),
   },
   {
     href: "/app/coach",
-    label: "Coach IA",
+    label: "Coach",
     exact: false,
     activeColor: "text-violet-600",
     activeBg: "bg-violet-50",
@@ -64,12 +64,13 @@ const nutrition = {
   activeBg: "bg-orange-50",
   icon: (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18M3 9c0-3 2-6 5-6s5 3 5 6H3M17 3v5a2 2 0 002 2v11" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5C10.5 6.5 9 7 8 7c-1 0-2.2-.7-3.2-.7C2.5 6.3 1.5 8.5 1.5 11c0 4 3 8.5 5.5 8.5.9 0 1.8-.6 2.8-.6s1.9.6 2.8.6C15 19.5 18 15 18 11c0-2.5-1.5-4.7-4-4.7-.8 0-1.6.3-2.5.3z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5C12 4.5 13.5 3 15 2" />
     </svg>
   ),
 }
 
-// Left: Progrès, Activités — Center: Accueil — Right: Coach IA, Nutrition
+// Left: Progrès, Activités — Center: Accueil — Right: Coach, Nutrition
 const mobileNavSide = [navItems[2], navItems[1], navItems[3], nutrition]
 const mobileNavHome = navItems[0]
 
@@ -123,9 +124,9 @@ export default function AppSidebar() {
               pathname.startsWith("/app/nutrition") ? "bg-orange-50 text-orange-500" : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
             }`}
           >
-            <svg className={`w-4 h-4 ${pathname.startsWith("/app/nutrition") ? "text-orange-500" : "text-gray-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18M3 9c0-3 2-6 5-6s5 3 5 6H3M17 3v5a2 2 0 002 2v11" />
-            </svg>
+            <span className={pathname.startsWith("/app/nutrition") ? "text-orange-500" : "text-gray-400"}>
+              {nutrition.icon}
+            </span>
             Nutrition
           </a>
           <a href="/" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-all">

@@ -192,7 +192,7 @@ En regardant tes séances récentes, voici mes observations :
         {/* Header */}
         <div>
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Intelligence artificielle</p>
-          <h1 className="text-2xl font-extrabold text-gray-900">Coach IA</h1>
+          <h1 className="text-2xl font-extrabold text-gray-900">Coach</h1>
           <p className="text-sm text-gray-500 font-medium mt-1">
             Posez vos questions — le coach analyse vos données sportives et nutritionnelles.
           </p>
@@ -252,7 +252,7 @@ En regardant tes séances récentes, voici mes observations :
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
-              <p className="text-xs font-bold text-violet-600">Coach IA analyse vos données…</p>
+              <p className="text-xs font-bold text-violet-600">Coach analyse vos données…</p>
             </div>
             <div className="flex gap-1">
               {[0, 1, 2].map(i => (
