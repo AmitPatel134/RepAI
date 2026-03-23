@@ -129,8 +129,13 @@ function getItemKey(item: UnifiedItem) {
 
 function DumbbellIcon({ size = 18 }: { size?: number }) {
   return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 4v16M18 4v16M3 8h3M18 8h3M3 16h3M18 16h3M6 12h12" />
+    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      {/* Outer plates */}
+      <path strokeWidth={3.5} d="M4.5 10v4M19.5 10v4"/>
+      {/* Inner collars */}
+      <path strokeWidth={2.5} d="M7 8.5v7M17 8.5v7"/>
+      {/* Handle */}
+      <path strokeWidth={2} d="M7 12h10"/>
     </svg>
   )
 }
@@ -138,8 +143,11 @@ function DumbbellIcon({ size = 18 }: { size?: number }) {
 function CardioIcon({ type, size = 18 }: { type: string; size?: number }) {
   const s = size
   if (type === "running") return (
-    <svg width={s} height={s} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13 4a1 1 0 100-2 1 1 0 000 2zM7 8l3 2-2 5h5l2-5 2.5 1M6 20l2.5-5M15 20l-1.5-5" />
+    <svg width={s} height={s} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      {/* Head */}
+      <circle cx="15" cy="3.5" r="1.3"/>
+      {/* Body + arms + legs running pose */}
+      <path d="M14 5.5l-2 2m2-2l1 3M12 7.5l-3.5 2M13 8.5l1.5 3.5 2.5-1.5M8.5 9.5l.5 5.5M14.5 12l-1 6M9 15l-1.5 4.5M13.5 18l1 3"/>
     </svg>
   )
   if (type === "cycling") return (
