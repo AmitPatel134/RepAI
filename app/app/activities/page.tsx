@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
 import { DEMO_WORKOUTS } from "@/lib/demoData"
 import UpgradeModal from "@/components/UpgradeModal"
+import { Dumbbell } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -128,26 +129,18 @@ function getItemKey(item: UnifiedItem) {
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
 function DumbbellIcon({ size = 18 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      {/* Outer plates */}
-      <path strokeWidth={3.5} d="M4.5 10v4M19.5 10v4"/>
-      {/* Inner collars */}
-      <path strokeWidth={2.5} d="M7 8.5v7M17 8.5v7"/>
-      {/* Handle */}
-      <path strokeWidth={2} d="M7 12h10"/>
-    </svg>
-  )
+  return <Dumbbell size={size} />
 }
 
 function CardioIcon({ type, size = 18 }: { type: string; size?: number }) {
   const s = size
+  // Running figure — Phosphor Icons "PersonSimpleRun" stroke path
   if (type === "running") return (
-    <svg width={s} height={s} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      {/* Head */}
-      <circle cx="15" cy="3.5" r="1.3"/>
-      {/* Body + arms + legs running pose */}
-      <path d="M14 5.5l-2 2m2-2l1 3M12 7.5l-3.5 2M13 8.5l1.5 3.5 2.5-1.5M8.5 9.5l.5 5.5M14.5 12l-1 6M9 15l-1.5 4.5M13.5 18l1 3"/>
+    <svg width={s} height={s} fill="none" viewBox="0 0 256 256" stroke="currentColor" strokeWidth={16} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="176" cy="48" r="20"/>
+      <path d="M96 80l48 16 24 40-32 24 16 64"/>
+      <path d="M144 96l16 48-64 16"/>
+      <path d="M80 224l24-64"/>
     </svg>
   )
   if (type === "cycling") return (
