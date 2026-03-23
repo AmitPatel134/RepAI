@@ -134,13 +134,13 @@ function DumbbellIcon({ size = 18 }: { size?: number }) {
 
 function CardioIcon({ type, size = 18 }: { type: string; size?: number }) {
   const s = size
-  // Running figure — Phosphor Icons "PersonSimpleRun" stroke path
+  // Running figure — Tabler Icons "run" (MIT)
   if (type === "running") return (
-    <svg width={s} height={s} fill="none" viewBox="0 0 256 256" stroke="currentColor" strokeWidth={16} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="176" cy="48" r="20"/>
-      <path d="M96 80l48 16 24 40-32 24 16 64"/>
-      <path d="M144 96l16 48-64 16"/>
-      <path d="M80 224l24-64"/>
+    <svg width={s} height={s} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 4a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+      <path d="M4 17l5 1l.75 -1.5" />
+      <path d="M15 21l0 -4l-4 -3l1 -6" />
+      <path d="M7 12l0 -3l5 -1l3 3l3 1" />
     </svg>
   )
   if (type === "cycling") return (
