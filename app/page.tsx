@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import LoadingScreen from "@/components/LoadingScreen"
+import AppLogo from "@/components/AppLogo"
 
 const APP_NAME = "RepAI"
 
@@ -117,6 +118,7 @@ export default function HomePage() {
       {/* NAVBAR */}
       <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl flex items-center justify-between px-4 py-2.5 rounded-2xl bg-gray-950/80 backdrop-blur-xl border border-white/[0.08] shadow-2xl shadow-black/30">
         <a href={email ? "/app" : "/"} className="flex items-center gap-2">
+          <AppLogo size={28} variant="light" />
           <span className="text-base font-extrabold tracking-tight text-white">{APP_NAME}</span>
         </a>
         <div className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
@@ -451,6 +453,7 @@ export default function HomePage() {
       {/* FOOTER */}
       <footer className="bg-gray-950 text-gray-500 px-4 md:px-10 py-8 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-white/5">
         <div className="flex items-center gap-2">
+          <AppLogo size={24} variant="light" />
           <span className="text-white font-extrabold">{APP_NAME}</span>
         </div>
         <div className="flex gap-8 text-sm font-semibold">

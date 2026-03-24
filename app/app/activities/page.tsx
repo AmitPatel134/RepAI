@@ -39,7 +39,7 @@ type VoiceResult = { items: VoiceItem[] }
 
 const EXERCISE_DISAMBIG: Record<string, string[]> = {
   "tractions":    ["Tractions pronation", "Tractions supination"],
-  "développé":    ["Développé couché barre", "Développé couché haltères", "Développé incliné barre", "Développé incliné haltères", "Développé décliné", "Développé militaire"],
+  "développé":    ["Développé couché barre", "Développé couché haltères", "Développé couché machine", "Développé incliné barre", "Développé incliné haltères", "Développé incliné machine", "Développé décliné barre", "Développé décliné machine", "Développé militaire"],
   "curl":         ["Curl barre", "Curl haltères", "Curl marteau", "Curl poulie basse", "Curl incliné"],
   "squat":        ["Squat barre", "Squat haltères", "Squat bulgare"],
   "soulevé":      ["Soulevé de terre", "Soulevé de terre roumain"],
@@ -53,14 +53,25 @@ const EXERCISE_DISAMBIG: Record<string, string[]> = {
   "fentes":       ["Fentes", "Fentes bulgares"],
 }
 
+function normalize(s: string) {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+}
+
 function findDisambigOptions(name: string): string[] | null {
-  const firstWord = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(" ")[0]
+  const normName = normalize(name)
+  const words = normName.split(" ")
+  const firstWord = words[0]
   for (const [key, options] of Object.entries(EXERCISE_DISAMBIG)) {
-    const normKey = key.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    if (firstWord === normKey) {
-      const exactMatch = options.some(o => o.toLowerCase() === name.toLowerCase())
-      return exactMatch ? null : options
+    if (firstWord !== normalize(key)) continue
+    const exactMatch = options.some(o => normalize(o) === normName)
+    if (exactMatch) return null
+    // Filter options by additional qualifier words (e.g. "incliné" narrows to incliné variants only)
+    const extraWords = words.slice(1).filter(w => w.length > 2)
+    if (extraWords.length > 0) {
+      const filtered = options.filter(opt => extraWords.every(w => normalize(opt).includes(w)))
+      if (filtered.length > 0 && filtered.length < options.length) return filtered
     }
+    return options
   }
   return null
 }
@@ -753,10 +764,8 @@ export default function ActivitiesPage() {
           {/* Free plan usage */}
           {!isDemo && !editMode && plan === "free" && (() => {
             const now = new Date()
-            const used = workouts.filter(w => {
-              const d = new Date(w.date)
-              return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-            }).length
+            const inCurrentMonth = (date: string) => { const d = new Date(date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() }
+            const used = workouts.filter(w => inCurrentMonth(w.date)).length + activities.filter(a => inCurrentMonth(a.date)).length
             return (
               <div className="flex items-center justify-between mt-2">
                 <div className="flex items-center gap-1.5">

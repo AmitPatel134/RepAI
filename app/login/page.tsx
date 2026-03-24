@@ -1,9 +1,7 @@
 "use client"
 import { useState, useRef } from "react"
 import { supabase } from "@/lib/supabase"
-
-// TODO: Replace with your app name
-const APP_NAME = "RepAI"
+import AppLogo from "@/components/AppLogo"
 
 type View = "login" | "signup" | "forgot" | "forgot-sent" | "signup-sent"
 
@@ -124,7 +122,9 @@ export default function LoginPage() {
       <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
 
       <div className={`relative w-full transition-all duration-200 ${view === "signup" ? "max-w-md" : "max-w-sm"}`}>
-        <a href="/" className="block text-center text-white font-extrabold text-2xl mb-10 tracking-tight">{APP_NAME}</a>
+        <a href="/" className="flex justify-center mb-10">
+          <AppLogo size={56} variant="light" />
+        </a>
         <div className="bg-white rounded-3xl p-8 shadow-xl">
 
           {/* View: signup confirmation */}
@@ -211,7 +211,7 @@ export default function LoginPage() {
                   {view === "signup" ? "Create an account" : "Sign in"}
                 </h1>
                 <p className="text-sm text-gray-500 font-medium mb-6">
-                  {view === "signup" ? "Start free, no credit card required." : `Sign in to your ${APP_NAME} account.`}
+                  {view === "signup" ? "Start free, no credit card required." : "Sign in to your RepAI account."}
                 </p>
               </div>
 

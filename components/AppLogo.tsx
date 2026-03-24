@@ -1,57 +1,36 @@
-// Exact paths from logo2.svg (viewBox 0 0 1024 1024, fill transform applied)
+"use client"
+
 const TRANSFORM = "translate(0,1024) scale(0.1,-0.1)"
 const P1 = "M8015 8580 c-773 -329 -849 -364 -872 -399 -60 -89 6 -221 111 -221 36 0 187 55 461 168 66 28 121 49 123 47 1 -1 -54 -94 -124 -206 -70 -112 -260 -420 -422 -684 -350 -569 -911 -1478 -959 -1553 l-34 -53 -92 133 c-302 440 -321 467 -357 486 -51 28 -86 34 -131 22 -71 -20 -90 -48 -214 -325 -64 -143 -154 -343 -200 -445 -145 -323 -301 -672 -340 -762 -21 -49 -41 -88 -44 -88 -3 0 -33 53 -66 117 -33 64 -111 211 -173 327 -63 116 -133 250 -158 298 -59 116 -93 143 -184 143 -90 0 -124 -26 -181 -137 -23 -46 -83 -157 -134 -248 -51 -91 -159 -286 -240 -435 -81 -148 -152 -276 -158 -283 -8 -10 -143 -12 -643 -12 -445 1 -640 -2 -654 -10 -34 -18 -60 -71 -60 -119 0 -40 9 -56 98 -175 134 -180 316 -397 475 -568 350 -374 879 -806 1462 -1193 400 -266 504 -327 562 -333 28 -2 65 0 80 6 62 21 538 326 813 521 540 382 1002 785 1333 1163 353 403 617 901 707 1333 90 428 52 811 -113 1140 -48 97 -127 217 -175 267 l-35 37 -74 -107 c-40 -58 -75 -114 -78 -123 -3 -10 13 -48 39 -91 106 -175 156 -321 183 -533 70 -551 -221 -1229 -793 -1850 -195 -211 -471 -465 -724 -663 -58 -45 -121 -95 -140 -110 -189 -152 -967 -675 -1005 -675 -19 0 -491 312 -713 472 -74 53 -153 110 -176 126 -80 57 -321 249 -446 354 -227 193 -465 431 -687 689 -68 78 -123 144 -123 147 0 3 227 5 505 5 550 0 550 0 594 56 27 34 491 861 491 875 0 17 15 9 26 -14 5 -12 54 -105 109 -207 54 -102 147 -279 207 -395 124 -238 157 -279 231 -290 91 -14 155 26 199 124 17 36 70 154 118 261 48 107 122 272 165 365 42 94 149 332 237 530 88 198 163 364 167 368 5 4 97 -124 206 -286 158 -236 205 -299 235 -316 66 -37 149 -23 201 35 14 16 65 94 114 174 90 148 239 389 424 688 57 92 145 235 196 317 51 83 157 254 235 380 79 127 155 250 170 275 15 25 85 137 155 250 70 113 191 309 269 435 l141 230 7 -95 c4 -52 12 -174 18 -270 8 -114 17 -186 27 -207 22 -47 59 -67 123 -68 70 0 105 21 131 80 19 42 19 57 9 402 -20 638 -23 689 -46 720 -12 16 -36 38 -54 51 -60 40 -101 32 -335 -68z"
 const P2 = "M3410 7099 c-380 -34 -756 -206 -1015 -464 -233 -233 -373 -511 -426 -850 -18 -111 -15 -386 5 -515 30 -192 96 -405 182 -591 l36 -76 71 18 c39 11 104 19 144 19 40 0 73 2 73 5 0 3 -11 28 -25 55 -78 154 -153 385 -184 570 -26 152 -28 385 -6 516 91 520 491 908 1055 1021 119 23 381 23 515 -1 187 -33 415 -122 573 -222 93 -60 212 -157 297 -244 90 -91 118 -110 169 -110 59 0 86 17 206 133 202 197 452 343 700 411 257 70 541 70 799 0 51 -14 97 -22 101 -17 29 32 129 194 132 213 3 22 -4 26 -72 48 -538 171 -1107 87 -1596 -237 -66 -43 -152 -109 -192 -146 l-72 -67 -58 54 c-290 268 -691 442 -1097 477 -134 12 -178 12 -315 0z"
 
-export default function LoadingScreen() {
+interface AppLogoProps {
+  size?: number
+  /** "dark" = logo noir sur fond clair | "light" = logo blanc sur fond sombre */
+  variant?: "dark" | "light"
+  className?: string
+}
+
+export default function AppLogo({
+  size = 40,
+  variant = "dark",
+  className = "",
+}: AppLogoProps) {
+  const fill = variant === "light" ? "#ffffff" : "#111827"
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-      <svg viewBox="0 0 1024 1024" width={110} height={110} fill="none">
-        <defs>
-          {/* Logo shape used as a mask */}
-          <mask id="logoMask">
-            <g transform={TRANSFORM} fill="white">
-              <path d={P1} />
-              <path d={P2} />
-            </g>
-          </mask>
-
-          {/* Diagonal glow beam gradient */}
-          <linearGradient id="beamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor="transparent" />
-            <stop offset="35%"  stopColor="#7c3aed" stopOpacity="0.3" />
-            <stop offset="50%"  stopColor="#c4b5fd" stopOpacity="1" />
-            <stop offset="65%"  stopColor="#7c3aed" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="transparent" />
-          </linearGradient>
-
-          <style>{`
-            @keyframes beamSlide {
-              0%   { transform: translateX(-420px) rotate(-30deg); }
-              65%  { transform: translateX(650px)  rotate(-30deg); }
-              100% { transform: translateX(650px)  rotate(-30deg); }
-            }
-          `}</style>
-        </defs>
-
-        {/* Dim base logo */}
-        <g transform={TRANSFORM} fill="#d1d5db">
-          <path d={P1} />
-          <path d={P2} />
-        </g>
-
-        {/* Glow beam — only visible inside logo shape via mask */}
-        <g mask="url(#logoMask)">
-          {/* Soft ambient fill */}
-          <rect x="0" y="0" width="1024" height="1024" fill="#ede9fe" opacity="0.15" />
-          {/* Travelling beam */}
-          <rect
-            x="-200" y="-300" width="320" height="1600"
-            fill="url(#beamGrad)"
-            style={{ transformOrigin: "512px 512px", animation: "beamSlide 2.4s cubic-bezier(0.4,0,0.6,1) infinite" }}
-          />
-        </g>
-      </svg>
-    </div>
+    <svg
+      viewBox="0 0 1024 1024"
+      width={size}
+      height={size}
+      fill="none"
+      className={`shrink-0 ${className}`}
+      aria-label="RepAI"
+    >
+      <g transform={TRANSFORM} fill={fill}>
+        <path d={P1} />
+        <path d={P2} />
+      </g>
+    </svg>
   )
 }

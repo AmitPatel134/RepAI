@@ -70,6 +70,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       <div className={`flex-1 md:ml-52 overflow-y-auto min-w-0 bg-gray-100 ${animClass}`}>
         {children}
+        <div className="h-[calc(5rem+env(safe-area-inset-bottom))] md:hidden shrink-0" />
       </div>
     </div>
   )

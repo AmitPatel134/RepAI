@@ -11,7 +11,7 @@ import { DEMO_WORKOUTS } from "@/lib/demoData"
 
 type ActivityPoint = { day: string; dateNum: number; dateStr: string; count: number; isToday: boolean }
 
-function computeWeekData(workouts: typeof DEMO_WORKOUTS): ActivityPoint[] {
+function computeWeekData(items: { date: string }[]): ActivityPoint[] {
   const now = new Date()
   const todayStr = now.toISOString().slice(0, 10)
   const dayOfWeek = (now.getDay() + 6) % 7
@@ -21,13 +21,13 @@ function computeWeekData(workouts: typeof DEMO_WORKOUTS): ActivityPoint[] {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
     const dateStr = d.toISOString().slice(0, 10)
-    const count = workouts.filter(w => w.date.slice(0, 10) === dateStr).length
+    const count = items.filter(w => w.date.slice(0, 10) === dateStr).length
     const day = d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "").slice(0, 3)
     return { day: day.charAt(0).toUpperCase() + day.slice(1), dateNum: d.getDate(), dateStr, count, isToday: dateStr === todayStr }
   })
 }
 
-function computeMonthDays(workouts: typeof DEMO_WORKOUTS, offset = 0): (ActivityPoint | null)[] {
+function computeMonthDays(items: { date: string }[], offset = 0): (ActivityPoint | null)[] {
   const now = new Date()
   const todayStr = now.toISOString().slice(0, 10)
   const target = new Date(now.getFullYear(), now.getMonth() + offset, 1)
@@ -39,7 +39,7 @@ function computeMonthDays(workouts: typeof DEMO_WORKOUTS, offset = 0): (Activity
   for (let d = 1; d <= daysInMonth; d++) {
     const date = new Date(year, month, d)
     const dateStr = date.toISOString().slice(0, 10)
-    const count = workouts.filter(w => w.date.slice(0, 10) === dateStr).length
+    const count = items.filter(w => w.date.slice(0, 10) === dateStr).length
     const day = date.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "").slice(0, 3)
     cells.push({ day: day.charAt(0).toUpperCase() + day.slice(1), dateNum: d, dateStr, count, isToday: dateStr === todayStr })
   }
@@ -212,6 +212,7 @@ export default function ProgressPage() {
 
   const [monthOffset, setMonthOffset] = useState(0)
   const [rawWorkouts, setRawWorkouts] = useState<typeof DEMO_WORKOUTS>([])
+  const [rawActivities, setRawActivities] = useState<{ date: string }[]>([])
   const dragStartY = useRef(0)
   const weekPanelRef = useRef<HTMLDivElement>(null)
   const monthPanelRef = useRef<HTMLDivElement>(null)
@@ -231,10 +232,12 @@ export default function ProgressPage() {
       Promise.all([
         authFetch("/api/workouts").then(r => r.json()).catch(() => []),
         authFetch("/api/weight").then(r => r.json()).catch(() => []),
-      ]).then(([d, weights]) => {
+        authFetch("/api/activities").then(r => r.json()).catch(() => []),
+      ]).then(([d, weights, acts]) => {
           const hasData = Array.isArray(d) && d.length > 0
           const workouts: typeof DEMO_WORKOUTS = hasData ? d : []
           setRawWorkouts(workouts)
+          if (Array.isArray(acts)) setRawActivities(acts)
           const options = hasData ? computeProgressionByExercise(workouts) : []
           setExerciseOptions(options)
           setSelectedExercise(options[0] ?? null)
@@ -330,8 +333,9 @@ export default function ProgressPage() {
 
         {/* Activity chart */}
         {visible.activity && ((() => {
-          const weekData = computeWeekData(rawWorkouts)
-          const monthData = computeMonthDays(rawWorkouts, monthOffset)
+          const allItems = [...rawWorkouts, ...rawActivities]
+          const weekData = computeWeekData(allItems)
+          const monthData = computeMonthDays(allItems, monthOffset)
           const weekTotal = weekData.reduce((s, d) => s + d.count, 0)
           const monthTotal = monthData.reduce((s, d) => s + (d?.count ?? 0), 0)
           const targetDate = new Date(new Date().getFullYear(), new Date().getMonth() + monthOffset, 1)

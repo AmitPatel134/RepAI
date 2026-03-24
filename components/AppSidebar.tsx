@@ -2,8 +2,7 @@
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
-
-const APP_NAME = "RepAI"
+import AppLogo from "./AppLogo"
 
 const navItems = [
   {
@@ -93,8 +92,9 @@ export default function AppSidebar() {
       {/* DESKTOP SIDEBAR */}
       <aside className="hidden md:flex fixed left-0 top-0 h-screen w-52 bg-white border-r border-gray-200 flex-col z-50">
         <div className="px-5 py-5 border-b border-gray-100">
-          <a href="/app/workouts" className="flex items-center gap-2">
-            <span className="font-extrabold text-lg tracking-tight text-gray-900">{APP_NAME}</span>
+          <a href="/app" className="flex items-center gap-2">
+            <AppLogo size={32} />
+            <span className="font-extrabold text-lg tracking-tight text-gray-900">RepAI</span>
           </a>
           <p className="text-xs text-gray-400 font-medium mt-1">Suivi & Performance</p>
         </div>
@@ -170,11 +170,11 @@ export default function AppSidebar() {
               <a href={mobileNavHome.href} className="relative z-20 flex flex-col items-center gap-0.5 pb-1.5 w-16 shrink-0">
                 <div
                   className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-colors duration-200 ${
-                    active ? "bg-gray-900" : "bg-gray-100 border border-gray-200"
+                    active ? "bg-gray-900" : "bg-white border border-gray-200"
                   }`}
                   style={{ marginBottom: "2px", marginTop: "-14px" }}
                 >
-                  <span className={active ? "text-white" : "text-gray-500"}>{mobileNavHome.icon}</span>
+                  <AppLogo size={26} variant={active ? "light" : "dark"} />
                 </div>
                 <span className={`text-[9px] font-bold leading-none ${active ? "text-gray-900" : "text-gray-400"}`}>
                   {mobileNavHome.label}

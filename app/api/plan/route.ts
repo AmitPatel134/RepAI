@@ -21,16 +21,18 @@ export async function GET(request: Request) {
   firstOfMonth.setDate(1)
   firstOfMonth.setHours(0, 0, 0, 0)
 
-  const workoutsThisMonth = await prisma.workout.count({
-    where: { userId: user.id, createdAt: { gte: firstOfMonth } },
-  })
+  const [workoutsThisMonth, activitiesThisMonth] = await Promise.all([
+    prisma.workout.count({ where: { userId: user.id, createdAt: { gte: firstOfMonth } } }),
+    prisma.activity.count({ where: { userId: user.id, createdAt: { gte: firstOfMonth } } }),
+  ])
+  const sessionsThisMonth = workoutsThisMonth + activitiesThisMonth
 
   const plan = user.plan ?? "free"
   const pro = isPro(plan)
 
   return Response.json({
     plan,
-    usage: { workoutsThisMonth },
+    usage: { workoutsThisMonth: sessionsThisMonth },
     limits: {
       workoutsPerMonth: pro ? null : 5,
       exercisesPerWorkout: pro ? null : 3,
