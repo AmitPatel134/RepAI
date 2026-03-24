@@ -97,7 +97,7 @@ export default function HomePage() {
     })
   }, [router])
 
-  if (!ready) return <LoadingScreen />
+  if (!ready) return <LoadingScreen color="#111827" />
 
   if (noSession) {
     return (
