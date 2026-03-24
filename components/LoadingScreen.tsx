@@ -10,56 +10,50 @@ interface LoadingScreenProps {
 export default function LoadingScreen({ color = "#7c3aed" }: LoadingScreenProps) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-      <svg viewBox="0 0 1024 1024" width={110} height={110} fill="none">
+      <svg viewBox="0 0 1024 1024" width={110} height={110} fill="none"
+        style={{ transformOrigin: "55px 55px", animation: "logoBreathe 1s ease-in-out infinite" }}
+      >
         <defs>
-          {/* Glow filter — operates in SVG coordinate space (0-1024) */}
-          <filter id="logoGlow" filterUnits="userSpaceOnUse" x="-120" y="-120" width="1264" height="1264">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="38" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
+          {/* Mask = logo silhouette */}
+          <mask id="lsMask">
+            <g transform={TRANSFORM} fill="white">
+              <path d={P1} /><path d={P2} />
+            </g>
+          </mask>
+
+          {/* Flash beam gradient: transparent → white core → transparent */}
+          <linearGradient id="lsBeam" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stopColor="transparent" />
+            <stop offset="35%"  stopColor={color} stopOpacity="0.5" />
+            <stop offset="50%"  stopColor="white" stopOpacity="1" />
+            <stop offset="65%"  stopColor={color} stopOpacity="0.5" />
+            <stop offset="100%" stopColor="transparent" />
+          </linearGradient>
 
           <style>{`
-            @keyframes glowTravel {
-              from { stroke-dashoffset: 0; }
-              to   { stroke-dashoffset: -1; }
+            @keyframes lsFlash {
+              0%   { transform: translateX(-600px) rotate(-28deg); }
+              100% { transform: translateX(1600px) rotate(-28deg); }
+            }
+            @keyframes logoBreathe {
+              0%, 100% { transform: scale(1); }
+              50%       { transform: scale(1.05); }
             }
           `}</style>
         </defs>
 
-        {/* Dim base logo */}
-        <g transform={TRANSFORM} fill="#d1d5db">
-          <path d={P1} />
-          <path d={P2} />
+        {/* Tinted base logo — colored from the start */}
+        <g transform={TRANSFORM} fill={color} opacity="0.28">
+          <path d={P1} /><path d={P2} />
         </g>
 
-        {/* Glow segment travelling along the logo outline */}
-        <g transform={TRANSFORM}>
-          {/* P1 — main body */}
-          <path
-            d={P1}
-            fill="none"
-            stroke={color}
-            strokeWidth="420"
-            pathLength="1"
-            strokeDasharray="0.22 0.78"
-            strokeLinecap="round"
-            filter="url(#logoGlow)"
-            style={{ animation: "glowTravel 3.4s linear infinite" }}
-          />
-          {/* P2 — circular element, slightly offset */}
-          <path
-            d={P2}
-            fill="none"
-            stroke={color}
-            strokeWidth="420"
-            pathLength="1"
-            strokeDasharray="0.28 0.72"
-            strokeLinecap="round"
-            filter="url(#logoGlow)"
-            style={{ animation: "glowTravel 2.6s linear infinite 0.6s" }}
+        {/* Fast flash beam visible only inside logo shape */}
+        <g mask="url(#lsMask)">
+          <rect x="0" y="0" width="1024" height="1024" fill={color} opacity="0.08" />
+          <rect
+            x="-300" y="-600" width="500" height="2200"
+            fill="url(#lsBeam)"
+            style={{ transformOrigin: "512px 512px", animation: "lsFlash 0.75s linear infinite" }}
           />
         </g>
       </svg>
