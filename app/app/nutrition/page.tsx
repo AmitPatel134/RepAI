@@ -412,7 +412,7 @@ export default function NutritionPage() {
         <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-300 mb-1 capitalize">
+              <p className="text-xs font-medium text-gray-400 mb-1 capitalize">
                 {editMode ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? "s" : ""}` : new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
               </p>
               <h1 className="text-2xl font-extrabold text-gray-900">{editMode ? "Modifier" : "Nutrition"}</h1>

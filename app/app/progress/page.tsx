@@ -278,7 +278,7 @@ export default function ProgressPage() {
         {/* Header */}
         <div className="mb-6 md:mb-8 flex items-start justify-between">
           <div>
-            <p className="text-xs font-medium text-gray-300 mb-1 capitalize">{new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
+            <p className="text-xs font-medium text-gray-400 mb-1 capitalize">{new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
             <h1 className="text-2xl font-extrabold text-gray-900">Mes progrès</h1>
           </div>
           <div className="relative">
