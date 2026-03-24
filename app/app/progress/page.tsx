@@ -259,7 +259,7 @@ export default function ProgressPage() {
     return () => clearTimeout(t)
   }, [ready, monthOffset, rawWorkouts])
 
-  if (!ready) return <LoadingScreen />
+  if (!ready) return <LoadingScreen color="#dc2626" />
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">

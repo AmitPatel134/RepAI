@@ -174,7 +174,7 @@ export default function ActivityDetailPage() {
     router.push("/app/activities")
   }
 
-  if (!ready) return <LoadingScreen />
+  if (!ready) return <LoadingScreen color="#2563eb" />
   if (!activity) return null
 
   const info = getCardioInfo(activity.type)

@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
+import LoadingScreen from "@/components/LoadingScreen"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -150,6 +151,8 @@ export default function NutritionPage() {
   const [meals, setMeals] = useState<Meal[]>([])
   const [loading, setLoading] = useState(true)
   const [isDemo, setIsDemo] = useState(false)
+  const [plan, setPlan] = useState("free")
+  const [mealsThisMonth, setMealsThisMonth] = useState(0)
 
   const [selectedMonthIdx, setSelectedMonthIdx] = useState(0)
 
@@ -186,8 +189,13 @@ export default function NutritionPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { setIsDemo(true); setLoading(false); return }
-      authFetch("/api/nutrition").then(r => r.json()).then(data => {
+      Promise.all([
+        authFetch("/api/nutrition").then(r => r.json()).catch(() => []),
+        authFetch("/api/plan").then(r => r.json()).catch(() => ({ plan: "free", usage: { mealsThisMonth: 0 } })),
+      ]).then(([data, p]) => {
         setMeals(Array.isArray(data) ? data : [])
+        setPlan(p?.plan ?? "free")
+        setMealsThisMonth(p?.usage?.mealsThisMonth ?? 0)
       }).catch(() => {}).finally(() => setLoading(false))
     })
   }, [])
@@ -381,14 +389,13 @@ export default function NutritionPage() {
     setDeleting(false); exitEditMode()
   }
 
-  if (loading) return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="w-6 h-6 rounded-full border-2 border-gray-200 border-t-orange-500 animate-spin" />
-    </div>
-  )
+  if (loading) return <LoadingScreen color="#f97316" />
+
+  const mealLimit = 5
+  const mealLimitReached = plan === "free" && mealsThisMonth >= mealLimit
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900">
+    <div className={`${meals.length === 0 ? "h-screen overflow-hidden" : "min-h-screen"} bg-gray-100 text-gray-900`}>
 
       {/* Demo banner */}
       {isDemo && (
@@ -416,16 +423,32 @@ export default function NutritionPage() {
               </button>
             ) : (
               <button
-                onClick={() => { if (isDemo) return; fileInputRef.current?.click() }}
-                className="flex items-center gap-2 bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors"
+                onClick={() => { if (isDemo || mealLimitReached) return; fileInputRef.current?.click() }}
+                disabled={mealLimitReached}
+                className={`flex items-center gap-2 text-white font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors ${mealLimitReached ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-400"}`}
               >
                 <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
                 </svg>
-                <span className="hidden sm:inline">Analyser un repas</span>
+                <span className="hidden sm:inline">{mealLimitReached ? "Limite atteinte" : "Analyser un repas"}</span>
               </button>
             )}
           </div>
+
+          {/* Free plan meal usage */}
+          {!isDemo && !editMode && plan === "free" && (
+            <div className="flex items-center justify-between mt-3">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  {Array.from({ length: mealLimit }).map((_, i) => (
+                    <div key={i} className={`w-7 h-3 rounded ${i < mealsThisMonth ? "bg-orange-500" : "bg-gray-200"}`} />
+                  ))}
+                </div>
+                <span className="text-[11px] font-bold text-gray-400">{mealsThisMonth}/{mealLimit} repas ce mois</span>
+              </div>
+              <a href="/pricing" className="text-[10px] font-bold text-orange-500 hover:text-orange-400">Passer Pro →</a>
+            </div>
+          )}
 
           {!editMode && todayCal > 0 && (
             <div className="mt-3 flex items-center gap-4 py-2 px-3 bg-orange-50 border border-orange-200 rounded-xl">

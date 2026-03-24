@@ -753,7 +753,7 @@ export default function WorkoutDetailPage() {
     }
   }, [workout, id, notes, exercises])
 
-  if (!ready) return <LoadingScreen />
+  if (!ready) return <LoadingScreen color="#2563eb" />
   if (!workout) return null
 
   return (

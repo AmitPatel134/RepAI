@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
 import { DEMO_WORKOUTS } from "@/lib/demoData"
 import UpgradeModal from "@/components/UpgradeModal"
+import LoadingScreen from "@/components/LoadingScreen"
 import { Dumbbell } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -704,14 +705,12 @@ export default function ActivitiesPage() {
     }
   }
 
-  if (loading) return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="w-6 h-6 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
-    </div>
-  )
+  if (loading) return <LoadingScreen color="#2563eb" />
+
+  const isEmpty = unified.length === 0
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900">
+    <div className={`${isEmpty ? "h-screen overflow-hidden" : "min-h-screen"} bg-gray-100 text-gray-900`}>
 
       {/* Demo banner */}
       {isDemo && (
@@ -766,15 +765,16 @@ export default function ActivitiesPage() {
             const now = new Date()
             const inCurrentMonth = (date: string) => { const d = new Date(date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() }
             const used = workouts.filter(w => inCurrentMonth(w.date)).length + activities.filter(a => inCurrentMonth(a.date)).length
+            const limit = 5
             return (
-              <div className="flex items-center justify-between mt-2">
-                <div className="flex items-center gap-1.5">
-                  <div className="flex gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className={`w-4 h-1.5 rounded-full ${i < used ? "bg-blue-600" : "bg-gray-100"}`} />
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    {Array.from({ length: limit }).map((_, i) => (
+                      <div key={i} className={`w-7 h-3 rounded ${i < used ? "bg-blue-600" : "bg-gray-200"}`} />
                     ))}
                   </div>
-                  <span className="text-[10px] font-bold text-gray-400">{used}/5 séances ce mois</span>
+                  <span className="text-[11px] font-bold text-gray-400">{used}/{limit} séances ce mois</span>
                 </div>
                 <a href="/pricing" className="text-[10px] font-bold text-blue-500 hover:text-blue-400">Passer Pro →</a>
               </div>

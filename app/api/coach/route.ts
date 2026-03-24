@@ -69,6 +69,21 @@ export async function POST(request: NextRequest) {
       create: { email: authUser.email },
     })
 
+    // Enforce weekly question limit for free plan
+    const { isPro } = await import("@/lib/plans")
+    if (!isPro(user.plan ?? "free")) {
+      const dayOfWeek = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
+      const startOfWeek = new Date()
+      startOfWeek.setDate(new Date().getDate() - dayOfWeek)
+      startOfWeek.setHours(0, 0, 0, 0)
+      const questionsThisWeek = await prisma.coachSession.count({
+        where: { userId: user.id, createdAt: { gte: startOfWeek } },
+      })
+      if (questionsThisWeek >= 1) {
+        return Response.json({ error: "weekly_limit_reached" }, { status: 429 })
+      }
+    }
+
     // Build profile context
     const profileLines: string[] = []
     if (user.sex) profileLines.push(`Sexe : ${user.sex}`)

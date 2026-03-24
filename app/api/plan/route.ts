@@ -12,29 +12,39 @@ export async function GET(request: Request) {
   if (!user) {
     return Response.json({
       plan: "free",
-      usage: { workoutsThisMonth: 0 },
-      limits: { workoutsPerMonth: 5 },
+      usage: { sessionsThisMonth: 0, mealsThisMonth: 0, coachQuestionsThisWeek: 0 },
+      limits: { sessionsPerMonth: 5, mealsPerMonth: 5, coachQuestionsPerWeek: 1 },
     })
   }
 
-  const firstOfMonth = new Date()
-  firstOfMonth.setDate(1)
-  firstOfMonth.setHours(0, 0, 0, 0)
+  const now = new Date()
 
-  const [workoutsThisMonth, activitiesThisMonth] = await Promise.all([
+  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  // Start of current week (Monday)
+  const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1 // 0=Mon, 6=Sun
+  const startOfWeek = new Date(now)
+  startOfWeek.setDate(now.getDate() - dayOfWeek)
+  startOfWeek.setHours(0, 0, 0, 0)
+
+  const [workoutsThisMonth, activitiesThisMonth, mealsThisMonth, coachQuestionsThisWeek] = await Promise.all([
     prisma.workout.count({ where: { userId: user.id, createdAt: { gte: firstOfMonth } } }),
     prisma.activity.count({ where: { userId: user.id, createdAt: { gte: firstOfMonth } } }),
+    prisma.meal.count({ where: { userId: user.id, createdAt: { gte: firstOfMonth } } }),
+    prisma.coachSession.count({ where: { userId: user.id, createdAt: { gte: startOfWeek } } }),
   ])
-  const sessionsThisMonth = workoutsThisMonth + activitiesThisMonth
 
+  const sessionsThisMonth = workoutsThisMonth + activitiesThisMonth
   const plan = user.plan ?? "free"
   const pro = isPro(plan)
 
   return Response.json({
     plan,
-    usage: { workoutsThisMonth: sessionsThisMonth },
+    usage: { sessionsThisMonth, mealsThisMonth, coachQuestionsThisWeek },
     limits: {
-      workoutsPerMonth: pro ? null : 5,
+      sessionsPerMonth: pro ? null : 5,
+      mealsPerMonth: pro ? null : 5,
+      coachQuestionsPerWeek: pro ? null : 1,
       exercisesPerWorkout: pro ? null : 3,
     },
   })
