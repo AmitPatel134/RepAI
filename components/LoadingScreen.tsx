@@ -10,9 +10,7 @@ interface LoadingScreenProps {
 export default function LoadingScreen({ color = "#7c3aed" }: LoadingScreenProps) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-      <svg viewBox="0 0 1024 1024" width={110} height={110} fill="none"
-        style={{ transformOrigin: "55px 55px", animation: "logoBreathe 1s ease-in-out infinite" }}
-      >
+      <svg viewBox="0 0 1024 1024" width={110} height={110} fill="none">
         <defs>
           {/* Mask = logo silhouette */}
           <mask id="lsMask">
@@ -42,19 +40,23 @@ export default function LoadingScreen({ color = "#7c3aed" }: LoadingScreenProps)
           `}</style>
         </defs>
 
-        {/* Tinted base logo — colored from the start */}
-        <g transform={TRANSFORM} fill={color} opacity="0.28">
-          <path d={P1} /><path d={P2} />
-        </g>
+        {/* Animate inner group so the SVG viewport border never shows */}
+        <g style={{ transformOrigin: "512px 512px", animation: "logoBreathe 1s ease-in-out infinite" }}>
 
-        {/* Fast flash beam visible only inside logo shape */}
-        <g mask="url(#lsMask)">
-          <rect x="0" y="0" width="1024" height="1024" fill={color} opacity="0.08" />
-          <rect
-            x="-300" y="-600" width="500" height="2200"
-            fill="url(#lsBeam)"
-            style={{ transformOrigin: "512px 512px", animation: "lsFlash 0.75s linear infinite" }}
-          />
+          {/* Tinted base logo — colored from the start */}
+          <g transform={TRANSFORM} fill={color} opacity="0.28">
+            <path d={P1} /><path d={P2} />
+          </g>
+
+          {/* Fast flash beam visible only inside logo shape */}
+          <g mask="url(#lsMask)">
+            <rect
+              x="-300" y="-600" width="500" height="2200"
+              fill="url(#lsBeam)"
+              style={{ transformOrigin: "512px 512px", animation: "lsFlash 0.75s linear infinite" }}
+            />
+          </g>
+
         </g>
       </svg>
     </div>
