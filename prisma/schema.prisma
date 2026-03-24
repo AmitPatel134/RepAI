@@ -31,6 +31,7 @@ model User {
   coachSessions   CoachSession[]
   activities      Activity[]
   meals           Meal[]
+  weightEntries   WeightEntry[]
 }
 
 model Meal {
@@ -118,4 +119,15 @@ model CoachSession {
   question  String
   response  String
   createdAt DateTime @default(now())
+}
+
+model WeightEntry {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weightKg    Float
+  recordedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([userId, recordedAt])
 }

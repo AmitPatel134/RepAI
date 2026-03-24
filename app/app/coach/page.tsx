@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
 import LoadingScreen from "@/components/LoadingScreen"
@@ -17,15 +17,73 @@ function saveStored(s: Session) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(s)) } catch { /* noop */ }
 }
 
-function renderMarkdown(text: string) {
+type ResponseSection = { title: string | null; body: string }
+
+function parseResponseSections(text: string): ResponseSection[] {
+  const lines = text.split("\n")
+  const sections: ResponseSection[] = []
+  let current: ResponseSection = { title: null, body: "" }
+
+  for (const line of lines) {
+    const h2 = line.match(/^##\s+(.+)$/)
+    const h3 = line.match(/^###\s+(.+)$/)
+    const heading = h2?.[1] ?? h3?.[1]
+    if (heading) {
+      if (current.body.trim() || current.title) sections.push(current)
+      current = { title: heading, body: "" }
+    } else {
+      current.body += (current.body ? "\n" : "") + line
+    }
+  }
+  if (current.body.trim() || current.title) sections.push(current)
+  return sections.filter(s => s.title || s.body.trim())
+}
+
+function renderBody(text: string) {
   return text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/^### (.*$)/gm, "<h4 class='font-bold text-gray-900 mt-3 mb-1 text-sm'>$1</h4>")
-    .replace(/^## (.*$)/gm, "<h3 class='font-extrabold text-gray-900 mt-4 mb-2'>$1</h3>")
-    .replace(/^- (.*$)/gm, "<li class='ml-4 list-disc text-gray-600'>$1</li>")
-    .replace(/^\d+\. (.*$)/gm, "<li class='ml-4 list-decimal text-gray-600'>$1</li>")
-    .replace(/\n\n/g, "<br/><br/>")
+    .replace(/^- (.*$)/gm, "<li class='ml-4 list-disc text-gray-600 mb-0.5'>$1</li>")
+    .replace(/^\d+\. (.*$)/gm, "<li class='ml-4 list-decimal text-gray-600 mb-0.5'>$1</li>")
+    .replace(/\n\n/g, "<br/>")
     .replace(/\n/g, "<br/>")
+}
+
+function AccordionSection({ title, body, defaultOpen }: { title: string; body: string; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const [height, setHeight] = useState(defaultOpen ? "auto" : "0px")
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setHeight(open ? contentRef.current.scrollHeight + "px" : "0px")
+    }
+  }, [open])
+
+  return (
+    <div className="border-b border-gray-100 last:border-0">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between py-3 text-left"
+      >
+        <p className="text-sm font-bold text-violet-600">{title}</p>
+        <svg
+          className={`w-3.5 h-3.5 text-violet-400 transition-transform duration-300 shrink-0 ml-2 ${open ? "rotate-180" : ""}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      <div style={{ height, overflow: "hidden", transition: "height 0.28s ease" }}>
+        <div ref={contentRef} className="pb-3">
+          <div
+            className="text-sm text-gray-700 font-medium leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: renderBody(body) }}
+          />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function formatDate(iso: string) {
@@ -190,12 +248,18 @@ En regardant tes séances récentes, voici mes observations :
 
       <div className="max-w-3xl mx-auto w-full px-4 py-6 md:px-6 md:py-8 flex flex-col gap-6">
         {/* Header */}
-        <div>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Intelligence artificielle</p>
-          <h1 className="text-2xl font-extrabold text-gray-900">Coach</h1>
-          <p className="text-sm text-gray-500 font-medium mt-1">
-            Posez vos questions — le coach analyse vos données sportives et nutritionnelles.
-          </p>
+        <div className="flex items-start gap-4">
+          <div className="w-11 h-11 rounded-2xl bg-violet-600 flex items-center justify-center shrink-0 mt-0.5">
+            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold text-gray-900">Coach</h1>
+            <p className="text-sm text-gray-500 font-medium mt-0.5">
+              Posez vos questions — le coach analyse vos données sportives et nutritionnelles.
+            </p>
+          </div>
         </div>
 
         {/* Quick questions */}
@@ -263,39 +327,64 @@ En regardant tes séances récentes, voici mes observations :
         )}
 
         {/* Last session */}
-        {!loading && lastSession && (
-          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-start gap-3">
-              <div className="w-7 h-7 rounded-xl bg-gray-200 flex items-center justify-center shrink-0 mt-0.5">
-                <svg className="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+        {!loading && lastSession && (() => {
+          const sections = parseResponseSections(lastSession.response)
+          const hasSections = sections.some(s => s.title)
+          return (
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+              {/* Question */}
+              <div className="px-5 py-4 border-b border-gray-100 flex items-start gap-3">
+                <div className="w-7 h-7 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg className="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-900 leading-relaxed">{lastSession.question}</p>
+                  <p className="text-xs text-gray-400 mt-1">{formatDate(lastSession.createdAt)}</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-900 leading-relaxed">{lastSession.question}</p>
-                <p className="text-xs text-gray-400 mt-1">{formatDate(lastSession.createdAt)}</p>
+              {/* Response */}
+              <div className="px-5 py-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 rounded-lg bg-violet-600 flex items-center justify-center shrink-0">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                  <p className="text-xs font-bold text-violet-600 uppercase tracking-widest">Réponse du coach</p>
+                </div>
+                {hasSections ? (
+                  <div>
+                    {sections.map((s, i) =>
+                      s.title ? (
+                        <AccordionSection key={i} title={s.title} body={s.body} defaultOpen={true} />
+                      ) : (
+                        <div
+                          key={i}
+                          className="text-sm text-gray-700 font-medium leading-relaxed mb-3"
+                          dangerouslySetInnerHTML={{ __html: renderBody(s.body) }}
+                        />
+                      )
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    className="text-sm text-gray-700 font-medium leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: renderBody(lastSession.response) }}
+                  />
+                )}
               </div>
             </div>
-            <div className="px-5 py-4 flex items-start gap-3">
-              <div className="w-7 h-7 rounded-xl bg-violet-600 flex items-center justify-center shrink-0 mt-0.5">
-                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-              </div>
-              <div
-                className="flex-1 text-sm text-gray-700 font-medium leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(lastSession.response) }}
-              />
-            </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* Empty state */}
         {!loading && !lastSession && (
           <div className="text-center py-12">
             <p className="text-4xl mb-4">🤖</p>
             <p className="text-gray-700 font-semibold mb-2">Posez votre première question</p>
-            <p className="text-gray-400 text-sm">Le coach IA analysera vos données sportives et alimentaires pour vous répondre</p>
+            <p className="text-gray-400 text-sm">Le coach analysera vos données sportives et alimentaires pour vous répondre</p>
           </div>
         )}
       </div>

@@ -420,7 +420,7 @@ export default function NutritionPage() {
                 className="flex items-center gap-2 bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors"
               >
                 <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18M3 9c0-3 2-6 5-6s5 3 5 6H3M17 3v5a2 2 0 002 2v11" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
                 </svg>
                 <span className="hidden sm:inline">Analyser un repas</span>
               </button>

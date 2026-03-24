@@ -5,7 +5,7 @@ import { authFetch } from "@/lib/authFetch"
 import LoadingScreen from "@/components/LoadingScreen"
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, BarChart, Bar,
+  CartesianGrid,
 } from "recharts"
 import { DEMO_WORKOUTS } from "@/lib/demoData"
 
@@ -160,19 +160,7 @@ function computePRs(workouts: typeof DEMO_WORKOUTS): PRData[] {
   return Object.values(prMap).sort((a, b) => b.estimated1rm - a.estimated1rm)
 }
 
-function computeVolumeByExercise(workouts: typeof DEMO_WORKOUTS) {
-  const map: Record<string, number> = {}
-  for (const w of workouts) {
-    for (const ex of w.exercises) {
-      const vol = ex.sets.reduce((acc, s) => acc + (s.reps ?? 0) * (s.weight ?? 0), 0)
-      map[ex.name] = (map[ex.name] ?? 0) + vol
-    }
-  }
-  return Object.entries(map)
-    .map(([name, volume]) => ({ name: name.length > 20 ? name.slice(0, 18) + "…" : name, volume }))
-    .sort((a, b) => b.volume - a.volume)
-    .slice(0, 6)
-}
+type WeightPoint = { id: string; weightKg: number; recordedAt: string }
 
 export default function ProgressPage() {
   const [ready, setReady] = useState(false)
@@ -180,16 +168,20 @@ export default function ProgressPage() {
   const [exerciseOptions, setExerciseOptions] = useState<ExerciseOption[]>([])
   const [selectedExercise, setSelectedExercise] = useState<ExerciseOption | null>(null)
   const [prs, setPrs] = useState<PRData[]>([])
-  const [volumeByEx, setVolumeByEx] = useState<{ name: string; volume: number }[]>([])
+  const [weightEntries, setWeightEntries] = useState<WeightPoint[]>([])
+  const [showWeightInput, setShowWeightInput] = useState(false)
+  const [weightInput, setWeightInput] = useState("")
+  const [savingWeight, setSavingWeight] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [showExPicker, setShowExPicker] = useState(false)
   const [showEditor, setShowEditor] = useState(false)
   const [visible, setVisible] = useState(() => {
-    if (typeof window === "undefined") return { activity: true, progression: true, volume: true, prs: true }
+    if (typeof window === "undefined") return { activity: true, weight: true, progression: true, prs: true }
     try {
       const saved = localStorage.getItem("progress-sections")
-      return saved ? JSON.parse(saved) : { activity: true, progression: true, volume: true, prs: true }
-    } catch { return { activity: true, progression: true, volume: true, prs: true } }
+      const parsed = saved ? JSON.parse(saved) : {}
+      return { activity: true, weight: true, progression: true, prs: true, ...parsed, volume: undefined }
+    } catch { return { activity: true, weight: true, progression: true, prs: true } }
   })
 
   function toggleSection(key: string) {
@@ -199,6 +191,25 @@ export default function ProgressPage() {
       return next
     })
   }
+
+  async function handleAddWeight() {
+    const kg = parseFloat(weightInput.replace(",", "."))
+    if (!kg || isNaN(kg)) return
+    setSavingWeight(true)
+    const res = await authFetch("/api/weight", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ weightKg: kg }),
+    })
+    if (res.ok) {
+      const entry = await res.json()
+      setWeightEntries(prev => [...prev, entry].sort((a, b) => a.recordedAt.localeCompare(b.recordedAt)))
+      setWeightInput("")
+      setShowWeightInput(false)
+    }
+    setSavingWeight(false)
+  }
+
   const [monthOffset, setMonthOffset] = useState(0)
   const [rawWorkouts, setRawWorkouts] = useState<typeof DEMO_WORKOUTS>([])
   const dragStartY = useRef(0)
@@ -214,13 +225,13 @@ export default function ProgressPage() {
         setExerciseOptions([])
         setSelectedExercise(null)
         setPrs(computePRs(DEMO_WORKOUTS))
-        setVolumeByEx(computeVolumeByExercise(DEMO_WORKOUTS))
         setReady(true)
         return
       }
-      authFetch("/api/workouts")
-        .then(r => r.json())
-        .then(d => {
+      Promise.all([
+        authFetch("/api/workouts").then(r => r.json()).catch(() => []),
+        authFetch("/api/weight").then(r => r.json()).catch(() => []),
+      ]).then(([d, weights]) => {
           const hasData = Array.isArray(d) && d.length > 0
           const workouts: typeof DEMO_WORKOUTS = hasData ? d : []
           setRawWorkouts(workouts)
@@ -228,7 +239,7 @@ export default function ProgressPage() {
           setExerciseOptions(options)
           setSelectedExercise(options[0] ?? null)
           setPrs(hasData ? computePRs(workouts) : [])
-          setVolumeByEx(hasData ? computeVolumeByExercise(workouts) : [])
+          if (Array.isArray(weights)) setWeightEntries(weights)
           setReady(true)
         })
         .catch(() => { setExerciseOptions([]); setSelectedExercise(null); setReady(true) })
@@ -290,8 +301,8 @@ export default function ProgressPage() {
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Sections affichées</p>
               {[
                 { key: "activity", label: "Activité" },
+                { key: "weight", label: "Suivi du poids" },
                 { key: "progression", label: "Progression" },
-                { key: "volume", label: "Volume par exercice" },
                 { key: "prs", label: "Personal Records" },
               ].map(s => (
                 <button
@@ -504,77 +515,134 @@ export default function ProgressPage() {
           </div>
         )}
 
-        {/* Bottom grid */}
-        {(visible.volume || visible.prs) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            {visible.volume && (
-              <div className="bg-white border border-gray-200 rounded-3xl p-4 md:p-6">
-                <div className="mb-4 md:mb-5">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Distribution</p>
-                  <p className="text-sm font-extrabold text-gray-900">Volume total par exercice</p>
-                </div>
-                {volumeByEx.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-40 text-center">
-                    <p className="text-3xl mb-3">📊</p>
-                    <p className="text-gray-400 text-sm font-medium">Loggez des séances pour voir la distribution</p>
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={volumeByEx} layout="vertical" barSize={14}>
-                      <XAxis type="number" hide />
-                      <YAxis
-                        dataKey="name" type="category"
-                        tick={{ fill: "#9ca3af", fontSize: 11, fontWeight: 600 }}
-                        axisLine={false} tickLine={false} width={110}
-                      />
-                      <Tooltip
-                        contentStyle={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "12px", fontSize: "12px", color: "#111827" }}
-                        formatter={(v: unknown) => [`${(Number(v) / 1000).toFixed(1)}t`, "Volume"]}
-                        cursor={{ fill: "rgba(0,0,0,0.04)" }}
-                      />
-                      <Bar dataKey="volume" fill="#dc2626" radius={[0, 6, 6, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            )}
-
-            {visible.prs && (
-              <div className="bg-white border border-gray-200 rounded-3xl p-4 md:p-6">
-                <div className="mb-4 md:mb-5">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Records</p>
-                  <p className="text-sm font-extrabold text-gray-900">Personal Records (1RM estimé)</p>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {prs.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-40 text-center">
-                      <p className="text-3xl mb-3">🏆</p>
-                      <p className="text-gray-400 text-sm font-medium">Vos records apparaîtront ici</p>
-                    </div>
+        {/* Weight tracking */}
+        {visible.weight && !isDemo && (() => {
+          const chartData = weightEntries.map(e => ({
+            date: new Date(e.recordedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }),
+            weight: e.weightKg,
+            id: e.id,
+          }))
+          const latest = weightEntries[weightEntries.length - 1]
+          return (
+            <div className="bg-white border border-gray-200 rounded-3xl p-4 md:p-6 mb-3 md:mb-4">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Poids</p>
+                  <p className="text-sm font-extrabold text-gray-900">Suivi du poids</p>
+                  {latest && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Dernier : <span className="font-bold text-gray-700">{latest.weightKg} kg</span>
+                      {" · "}{new Date(latest.recordedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    </p>
                   )}
-                  {prs.slice(0, 6).map((pr, i) => (
-                    <div key={pr.exercise} className="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-3 py-2.5">
-                      <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-extrabold shrink-0 ${
-                        i === 0 ? "bg-amber-100 text-amber-500" :
-                        i === 1 ? "bg-gray-100 text-gray-400" :
-                        i === 2 ? "bg-orange-100 text-orange-500" :
-                        "bg-gray-50 text-gray-400"
-                      }`}>
-                        {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-gray-900 truncate">{pr.exercise}</p>
-                        <p className="text-xs text-gray-400">{pr.reps} × {pr.weight}kg</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-sm font-extrabold text-red-500">{pr.estimated1rm}kg</p>
-                        <p className="text-xs text-gray-400">1RM est.</p>
-                      </div>
-                    </div>
-                  ))}
                 </div>
+                <button
+                  onClick={() => setShowWeightInput(v => !v)}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 transition-colors text-xs font-bold text-gray-700"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                  </svg>
+                  Ajouter
+                </button>
               </div>
-            )}
+
+              {showWeightInput && (
+                <div className="flex items-center gap-2 mb-4">
+                  <input
+                    type="number" step="0.1" min="30" max="300"
+                    value={weightInput} onChange={e => setWeightInput(e.target.value)}
+                    placeholder="ex: 74.5"
+                    autoFocus
+                    onKeyDown={e => { if (e.key === "Enter") handleAddWeight() }}
+                    className="flex-1 px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 placeholder:text-gray-300 focus:outline-none focus:border-violet-400 transition-colors"
+                  />
+                  <span className="text-sm text-gray-400 font-medium shrink-0">kg</span>
+                  <button
+                    onClick={handleAddWeight} disabled={savingWeight || !weightInput}
+                    className="px-4 py-2 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-gray-700 transition-colors disabled:opacity-40"
+                  >
+                    {savingWeight ? "…" : "OK"}
+                  </button>
+                  <button onClick={() => { setShowWeightInput(false); setWeightInput("") }} className="p-2 text-gray-400 hover:text-gray-700">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+
+              {chartData.length < 2 ? (
+                <div className="flex flex-col items-center justify-center h-36 text-center">
+                  <p className="text-gray-400 text-sm font-medium">Ajoutez au moins 2 pesées pour voir la courbe</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={180}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fill: "#9ca3af", fontSize: 11, fontWeight: 600 }}
+                      axisLine={false} tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fill: "#9ca3af", fontSize: 11, fontWeight: 600 }}
+                      axisLine={false} tickLine={false}
+                      tickFormatter={v => `${v}kg`}
+                      domain={["auto", "auto"]}
+                    />
+                    <Tooltip
+                      contentStyle={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "12px", fontSize: "12px", color: "#111827" }}
+                      formatter={(v: unknown) => [`${v} kg`, "Poids"]}
+                    />
+                    <Line
+                      type="monotone" dataKey="weight"
+                      stroke="#7c3aed" strokeWidth={2.5}
+                      dot={{ fill: "#7c3aed", r: 4, strokeWidth: 0 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          )
+        })()}
+
+        {/* Personal Records */}
+        {visible.prs && (
+          <div className="bg-white border border-gray-200 rounded-3xl p-4 md:p-6">
+            <div className="mb-4 md:mb-5">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Records</p>
+              <p className="text-sm font-extrabold text-gray-900">Personal Records (1RM estimé)</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {prs.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-40 text-center">
+                  <p className="text-3xl mb-3">🏆</p>
+                  <p className="text-gray-400 text-sm font-medium">Vos records apparaîtront ici</p>
+                </div>
+              )}
+              {prs.slice(0, 6).map((pr, i) => (
+                <div key={pr.exercise} className="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-3 py-2.5">
+                  <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-extrabold shrink-0 ${
+                    i === 0 ? "bg-amber-100 text-amber-500" :
+                    i === 1 ? "bg-gray-100 text-gray-400" :
+                    i === 2 ? "bg-orange-100 text-orange-500" :
+                    "bg-gray-50 text-gray-400"
+                  }`}>
+                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-900 truncate">{pr.exercise}</p>
+                    <p className="text-xs text-gray-400">{pr.reps} × {pr.weight}kg</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-extrabold text-red-500">{pr.estimated1rm}kg</p>
+                    <p className="text-xs text-gray-400">1RM est.</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

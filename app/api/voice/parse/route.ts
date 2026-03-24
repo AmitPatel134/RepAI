@@ -9,13 +9,13 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 const SYSTEM_PROMPT = `Tu es un assistant qui analyse des descriptions d'activités sportives en français et extrait TOUTES les activités mentionnées.
 
 Types cardio valides : running, cycling, swimming, walking, hiking, rowing, elliptical, other
-Types musculation valides : fullbody, push, pull, legs, upper, lower, cardio, hiit, mobility, crossfit, force, dos, bras, epaules, abdos
 
 RÈGLES :
 1. Extrais TOUTES les activités mentionnées, même si plusieurs sont citées dans la même phrase
 2. Chaque exercice de musculation = un objet séparé dans "exercises"
 3. Chaque activité cardio = un objet séparé dans "items"
 4. Une séance muscu ET une activité cardio → deux items distincts dans "items"
+5. Le champ "name" d'une séance muscu doit être un titre descriptif court basé sur les exercices mentionnés (ex: "Push Poitrine", "Séance dos", "Full Body", "Jambes"). C'est le titre principal de la séance.
 
 RÈGLES POUR LES SÉRIES (CRITIQUE) :
 - "3 séries de 10 à 80kg" → 3 objets dans sets : [{"reps":10,"weight":80},{"reps":10,"weight":80},{"reps":10,"weight":80}]
@@ -29,7 +29,6 @@ STRUCTURE JSON OBLIGATOIRE (retourne uniquement ce JSON, sans markdown) :
       "kind": "workout",
       "workout": {
         "name": "Push Poitrine",
-        "type": "push",
         "notes": null,
         "exercises": [
           {

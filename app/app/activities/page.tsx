@@ -78,16 +78,6 @@ function postProcessVoiceItems(items: VoiceItem[]): VoiceItem[] {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const WORKOUT_TYPES = [
-  { value: "fullbody", label: "Full Body" }, { value: "push", label: "Push" },
-  { value: "pull", label: "Pull" }, { value: "legs", label: "Legs" },
-  { value: "upper", label: "Upper Body" }, { value: "lower", label: "Lower Body" },
-  { value: "cardio", label: "Cardio" }, { value: "hiit", label: "HIIT" },
-  { value: "mobility", label: "Mobilité" }, { value: "crossfit", label: "CrossFit" },
-  { value: "force", label: "Force" }, { value: "dos", label: "Dos" },
-  { value: "bras", label: "Bras" }, { value: "epaules", label: "Épaules" },
-  { value: "abdos", label: "Abdos" },
-]
 
 const CARDIO_TYPES = [
   { key: "running",    label: "Course",     color: "#f97316" },
@@ -655,7 +645,7 @@ export default function ActivitiesPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: w.name || "Séance",
-            type: w.type || "fullbody",
+            type: "",
             notes: w.notes || null,
             date: item.date || localToday,
             exercises: w.exercises || [],
@@ -1390,10 +1380,9 @@ export default function ActivitiesPage() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-gray-900">{item.workout.name || "Séance"}</p>
-                            <p className="text-[11px] text-blue-500">
-                              {WORKOUT_TYPES.find(t => t.value === item.workout.type)?.label ?? item.workout.type}
-                              {item.date ? ` · ${fmtDate(item.date)}` : ""}
-                            </p>
+                            {item.date && (
+                              <p className="text-[11px] text-blue-500">{fmtDate(item.date)}</p>
+                            )}
                           </div>
                         </div>
                         {item.workout.exercises.length > 0 && (

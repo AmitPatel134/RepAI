@@ -180,26 +180,26 @@ export default function ActivityDetailPage() {
   const info = getCardioInfo(activity.type)
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-100 text-gray-900">
 
       {/* Sticky header */}
-      <div className="sticky top-0 z-40 bg-gray-950/90 backdrop-blur border-b border-white/10 px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-40 bg-gray-100/95 backdrop-blur border-b border-gray-200 px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.push("/app/activities")}
-          className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors shrink-0"
+          className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-colors shrink-0"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-extrabold text-white truncate">{info.label}</p>
+          <p className="text-sm font-extrabold text-gray-900 truncate">{info.label}</p>
           <p className="text-xs text-gray-500 font-medium">{fmtDate(activity.date)}</p>
         </div>
         {!editMode && (
           <button
             onClick={() => setEditMode(true)}
-            className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors shrink-0"
+            className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-colors shrink-0"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -252,9 +252,9 @@ export default function ActivityDetailPage() {
 
             {/* Notes */}
             {activity.notes && (
-              <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Notes</p>
-                <p className="text-sm text-gray-300 leading-relaxed">{activity.notes}</p>
+              <div className="bg-white border border-gray-200 rounded-2xl p-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Notes</p>
+                <p className="text-sm text-gray-600 leading-relaxed">{activity.notes}</p>
               </div>
             )}
 
@@ -274,15 +274,15 @@ export default function ActivityDetailPage() {
 
             {/* Type selector */}
             <div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Type d&apos;activité</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Type d&apos;activité</p>
               <div className="overflow-x-auto">
                 <div className="flex gap-2 w-max pb-1">
                   {CARDIO_TYPES.map(t => (
                     <button key={t.key} onClick={() => setCType(t.key)}
                       className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl border transition-all"
                       style={cType === t.key
-                        ? { backgroundColor: t.color + "22", borderColor: t.color + "66", color: t.color }
-                        : { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.08)", color: "#6b7280" }}>
+                        ? { backgroundColor: t.color + "15", borderColor: t.color + "66", color: t.color }
+                        : { backgroundColor: "#f9fafb", borderColor: "#e5e7eb", color: "#6b7280" }}>
                       <CardioIcon type={t.key} size={18} />
                       <span className="text-[10px] font-bold">{t.label}</span>
                     </button>
@@ -293,27 +293,27 @@ export default function ActivityDetailPage() {
 
             {/* Date */}
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1.5">Date</label>
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wide block mb-1.5">Date</label>
               <input type="date" value={cDate} onChange={e => setCDate(e.target.value)}
-                className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-violet-500/50"/>
+                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-violet-400 transition-colors"/>
             </div>
 
             {/* Distance + Duration */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wide ml-1">Distance (km)</label>
+                <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Distance (km)</label>
                 <input type="number" min="0" step="0.1" value={cDist} onChange={e => setCDist(e.target.value)} placeholder="ex: 5.2"
-                  className="w-full mt-1 bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 outline-none"/>
+                  className="w-full mt-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none focus:border-violet-400 transition-colors"/>
               </div>
               <div>
-                <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wide ml-1">Durée</label>
+                <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Durée</label>
                 <div className="flex gap-1 mt-1">
                   <input type="number" min="0" value={cDurH} onChange={e => setCDurH(e.target.value)} placeholder="0h"
-                    className="w-1/3 bg-white/[0.06] border border-white/10 rounded-xl px-1 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                    className="w-1/3 bg-white border border-gray-200 rounded-xl px-1 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
                   <input type="number" min="0" max="59" value={cDurM} onChange={e => setCDurM(e.target.value)} placeholder="min"
-                    className="w-1/3 bg-white/[0.06] border border-white/10 rounded-xl px-1 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                    className="w-1/3 bg-white border border-gray-200 rounded-xl px-1 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
                   <input type="number" min="0" max="59" value={cDurS} onChange={e => setCDurS(e.target.value)} placeholder="sec"
-                    className="w-1/3 bg-white/[0.06] border border-white/10 rounded-xl px-1 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                    className="w-1/3 bg-white border border-gray-200 rounded-xl px-1 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
                 </div>
               </div>
             </div>
@@ -322,28 +322,28 @@ export default function ActivityDetailPage() {
             <div className="grid grid-cols-3 gap-2">
               {(cType === "running" || cType === "cycling" || cType === "hiking") && (
                 <div>
-                  <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wide ml-1">Dénivelé (m)</label>
+                  <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Dénivelé (m)</label>
                   <input type="number" min="0" value={cElev} onChange={e => setCElev(e.target.value)} placeholder="—"
-                    className="w-full mt-1 bg-white/[0.06] border border-white/10 rounded-xl px-2 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                    className="w-full mt-1 bg-white border border-gray-200 rounded-xl px-2 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
                 </div>
               )}
               <div>
-                <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wide ml-1">FC moy</label>
+                <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">FC moy</label>
                 <input type="number" min="0" value={cHR} onChange={e => setCHR(e.target.value)} placeholder="bpm"
-                  className="w-full mt-1 bg-white/[0.06] border border-white/10 rounded-xl px-2 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                  className="w-full mt-1 bg-white border border-gray-200 rounded-xl px-2 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
               </div>
               <div>
-                <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wide ml-1">Calories</label>
+                <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Calories</label>
                 <input type="number" min="0" value={cCal} onChange={e => setCCal(e.target.value)} placeholder="kcal"
-                  className="w-full mt-1 bg-white/[0.06] border border-white/10 rounded-xl px-2 py-3 text-sm text-white placeholder-gray-600 outline-none text-center"/>
+                  className="w-full mt-1 bg-white border border-gray-200 rounded-xl px-2 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
               </div>
             </div>
 
             {/* Notes */}
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1.5">Notes</label>
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wide block mb-1.5">Notes</label>
               <textarea value={cNotes} onChange={e => setCNotes(e.target.value)} placeholder="Notes (optionnel)" rows={3}
-                className="w-full bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 outline-none resize-none"/>
+                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none resize-none focus:border-violet-400 transition-colors"/>
             </div>
           </div>
         )}
@@ -357,7 +357,7 @@ export default function ActivityDetailPage() {
         >
           <button
             onClick={cancelEdit}
-            className="pointer-events-auto flex items-center gap-2 px-6 py-3 bg-gray-800 border border-white/15 rounded-2xl text-sm font-bold text-white shadow-2xl shadow-black/60 hover:bg-gray-700 transition-colors"
+            className="pointer-events-auto flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 shadow-xl hover:bg-gray-50 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -386,28 +386,28 @@ export default function ActivityDetailPage() {
 
       {/* Delete confirm sheet */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="bg-gray-900 border border-white/10 rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-white/20" /></div>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="bg-white border border-gray-200 rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-gray-300" /></div>
             <div className="px-5 pb-8 pt-4">
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-11 h-11 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <div className="w-11 h-11 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-extrabold text-white">Supprimer cette activité ?</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Cette action est irréversible.</p>
+                  <p className="text-sm font-extrabold text-gray-900">Supprimer cette activité ?</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Cette action est irréversible.</p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <button onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 py-3 border border-white/10 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-colors">
+                  className="flex-1 py-3 border border-gray-200 rounded-xl text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">
                   Annuler
                 </button>
                 <button onClick={handleDelete} disabled={deleting}
-                  className="flex-[2] py-3 bg-red-500/20 border border-red-500/40 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50">
+                  className="flex-[2] py-3 bg-red-50 border border-red-300 rounded-xl text-sm font-bold text-red-500 hover:bg-red-100 transition-colors disabled:opacity-50">
                   {deleting ? "..." : "Supprimer"}
                 </button>
               </div>
@@ -423,12 +423,12 @@ export default function ActivityDetailPage() {
 
 function StatCard({ label, value, icon }: { label: string; value: string; icon: string }) {
   return (
-    <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-1">
+    <div className="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col gap-1">
       <div className="flex items-center gap-1.5">
         <span className="text-base">{icon}</span>
-        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">{label}</p>
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">{label}</p>
       </div>
-      <p className="text-xl font-extrabold text-white">{value}</p>
+      <p className="text-xl font-extrabold text-gray-900">{value}</p>
     </div>
   )
 }

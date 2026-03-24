@@ -69,10 +69,11 @@ function AccordionSection({
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
+      {open && <div className="h-px bg-gray-100 mx-6" />}
       <div
         style={{ height, overflow: "hidden", transition: "height 0.3s ease" }}
       >
-        <div ref={contentRef} className="px-6 pb-6 pt-1">
+        <div ref={contentRef} className="px-6 pb-6 pt-4">
           {children}
         </div>
       </div>
@@ -264,9 +265,9 @@ export default function ProfilPage() {
 
         {/* Fitness */}
         <AccordionSection title="Profil fitness" open={openSection === "fitness"} onToggle={() => toggleSection("fitness")}>
-          <form onSubmit={handleSaveFitness} className="flex flex-col gap-5">
+          <form onSubmit={handleSaveFitness} className="flex flex-col gap-0">
             {/* Sexe */}
-            <div>
+            <div className="pb-5">
               <label className="text-xs font-semibold text-gray-400 mb-2 block uppercase tracking-wider">Genre</label>
               <div className="flex gap-2">
                 {[{ v: "homme", l: "Homme" }, { v: "femme", l: "Femme" }, { v: "autre", l: "Autre" }].map(({ v, l }) => (
@@ -278,8 +279,9 @@ export default function ProfilPage() {
               </div>
             </div>
 
+            <div className="h-px bg-gray-100 mb-5" />
             {/* Métriques */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-3 pb-5">
               {[
                 { label: "Âge", value: age, set: setAge, unit: "ans", min: 10, max: 100 },
                 { label: "Taille", value: heightCm, set: setHeightCm, unit: "cm", min: 100, max: 250 },
@@ -297,8 +299,9 @@ export default function ProfilPage() {
               ))}
             </div>
 
+            <div className="h-px bg-gray-100 mb-5" />
             {/* Objectif */}
-            <div>
+            <div className="pb-5">
               <label className="text-xs font-semibold text-gray-400 mb-2 block uppercase tracking-wider">Objectif principal</label>
               <div className="grid grid-cols-2 gap-2">
                 {GOALS.map(g => (
@@ -311,8 +314,9 @@ export default function ProfilPage() {
               </div>
             </div>
 
+            <div className="h-px bg-gray-100 mb-5" />
             {/* Niveau d'activité */}
-            <div>
+            <div className="pb-5">
               <label className="text-xs font-semibold text-gray-400 mb-2 block uppercase tracking-wider">Niveau d'activité</label>
               <div className="flex flex-col gap-1.5">
                 {ACTIVITY_LEVELS.map(a => (
@@ -332,8 +336,9 @@ export default function ProfilPage() {
               </div>
             </div>
 
+            <div className="h-px bg-gray-100 mb-5" />
             {/* Données santé */}
-            <div>
+            <div className="pb-5">
               <label className="text-xs font-semibold text-gray-400 mb-2 block uppercase tracking-wider">Données santé</label>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -352,6 +357,7 @@ export default function ProfilPage() {
               </div>
             </div>
 
+            <div className="h-px bg-gray-100 mb-5" />
             <button type="submit" disabled={savingFitness}
               className="self-start px-5 py-2.5 bg-violet-600 text-white text-sm font-bold rounded-xl hover:bg-violet-700 transition-colors disabled:opacity-50">
               {savingFitness ? "Enregistrement…" : "Enregistrer"}
