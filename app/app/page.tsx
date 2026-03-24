@@ -116,7 +116,7 @@ export default function HomePage() {
         {/* Greeting */}
         <div className="pt-2 flex items-start justify-between">
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Accueil</p>
+            <p className="text-xs font-medium text-gray-300 mb-1 capitalize">{new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
             <h1 className="text-2xl font-extrabold text-gray-900">
               {getGreeting()}{firstName ? `, ${firstName}` : ""} 👋
             </h1>

@@ -727,7 +727,7 @@ export default function ActivitiesPage() {
         <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Journal</p>
+              <p className="text-xs font-medium text-gray-300 mb-1 capitalize">{new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
               <h1 className="text-2xl font-extrabold text-gray-900">Activités</h1>
             </div>
             {!editMode && (
