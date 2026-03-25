@@ -298,6 +298,8 @@ export default function NutritionPage() {
         fiber:    data.fiber    ?? 0,
       })
       setMealDate(new Date().toISOString().slice(0, 10))
+      // Increment local counter — analysis is consumed regardless of whether meal is saved
+      setMealsThisMonth(prev => prev + 1)
     } catch {
       setAnalyzeError("Erreur réseau")
     }
@@ -863,31 +865,47 @@ export default function NutritionPage() {
 
               <div className="border-t border-gray-100 mx-5 mb-2" />
 
-              <div className="text-center mb-6 px-5 pt-2">
-                <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Calories</p>
-                <p className="text-6xl font-black text-gray-900 leading-none">
-                  {analysisResult.calories != null ? Math.round(analysisResult.calories) : "—"}
-                  <span className="text-2xl font-bold text-gray-400 ml-2">kcal</span>
-                </p>
-              </div>
-
-              <div className="grid grid-cols-4 px-5 mb-4">
-                {[
-                  { label: "Protéines", value: analysisResult.proteins, color: "#3b82f6", daily: 50 },
-                  { label: "Glucides",  value: analysisResult.carbs,    color: "#22c55e", daily: 260 },
-                  { label: "Lipides",   value: analysisResult.fats,     color: "#f59e0b", daily: 70 },
-                  { label: "Fibres",    value: analysisResult.fiber,    color: "#a78bfa", daily: 25 },
-                ].map((m, i) => (
-                  <div key={m.label} className={`flex flex-col items-center pt-3 ${i > 0 ? "border-l border-gray-100" : ""}`}>
-                    <div className="w-8 h-0.5 rounded-full mb-2" style={{ backgroundColor: m.color }} />
-                    <span className="text-[9px] font-black uppercase tracking-wider mb-1" style={{ color: m.color }}>{m.label}</span>
-                    <span className="text-xl font-black text-gray-900 leading-none">
-                      {m.value != null ? Math.round(m.value) : "—"}
-                    </span>
-                    <span className="text-[10px] font-bold mt-0.5" style={{ color: m.color + "99" }}>/{m.daily}g</span>
+              {plan === "free" ? (
+                <div className="mx-5 mb-4 bg-orange-50 border border-orange-200 rounded-2xl p-5 flex flex-col items-center gap-2 text-center">
+                  <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center mb-1">
+                    <svg className="w-4.5 h-4.5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
                   </div>
-                ))}
-              </div>
+                  <p className="text-sm font-bold text-gray-800">Données nutritionnelles masquées</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">Passez Pro pour voir les calories, protéines, glucides et lipides de chaque repas.</p>
+                  <a href="/pricing" className="mt-1 px-5 py-2 bg-orange-500 text-white text-xs font-bold rounded-xl hover:bg-orange-400 transition-colors">
+                    Passer Pro →
+                  </a>
+                </div>
+              ) : (
+                <>
+                  <div className="text-center mb-6 px-5 pt-2">
+                    <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-1">Calories</p>
+                    <p className="text-6xl font-black text-gray-900 leading-none">
+                      {analysisResult.calories != null ? Math.round(analysisResult.calories) : "—"}
+                      <span className="text-2xl font-bold text-gray-400 ml-2">kcal</span>
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-4 px-5 mb-4">
+                    {[
+                      { label: "Protéines", value: analysisResult.proteins, color: "#3b82f6", daily: 50 },
+                      { label: "Glucides",  value: analysisResult.carbs,    color: "#22c55e", daily: 260 },
+                      { label: "Lipides",   value: analysisResult.fats,     color: "#f59e0b", daily: 70 },
+                      { label: "Fibres",    value: analysisResult.fiber,    color: "#a78bfa", daily: 25 },
+                    ].map((m, i) => (
+                      <div key={m.label} className={`flex flex-col items-center pt-3 ${i > 0 ? "border-l border-gray-100" : ""}`}>
+                        <div className="w-8 h-0.5 rounded-full mb-2" style={{ backgroundColor: m.color }} />
+                        <span className="text-[9px] font-black uppercase tracking-wider mb-1" style={{ color: m.color }}>{m.label}</span>
+                        <span className="text-xl font-black text-gray-900 leading-none">
+                          {m.value != null ? Math.round(m.value) : "—"}
+                        </span>
+                        <span className="text-[10px] font-bold mt-0.5" style={{ color: m.color + "99" }}>/{m.daily}g</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
 
               <div className="h-4" />
               <div className="px-5">

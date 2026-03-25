@@ -31,14 +31,11 @@ export async function GET(request: Request) {
   startOfWeek.setDate(now.getDate() - dayOfWeek)
   startOfWeek.setHours(0, 0, 0, 0)
 
-  const [workoutsThisMonth, activitiesThisMonth, mealsThisMonth, coachQuestionsThisWeek] = await Promise.all([
-    prisma.workout.count({ where: { userId: user.id, createdAt: { gte: firstOfMonth } } }),
-    prisma.activity.count({ where: { userId: user.id, createdAt: { gte: firstOfMonth } } }),
-    prisma.meal.count({ where: { userId: user.id, createdAt: { gte: firstOfMonth } } }),
+  const [sessionsThisMonth, mealsThisMonth, coachQuestionsThisWeek] = await Promise.all([
+    prisma.usageEvent.count({ where: { userId: user.id, type: "session_created", createdAt: { gte: firstOfMonth } } }),
+    prisma.usageEvent.count({ where: { userId: user.id, type: "meal_analyzed", createdAt: { gte: firstOfMonth } } }),
     prisma.coachSession.count({ where: { userId: user.id, createdAt: { gte: startOfWeek } } }),
   ])
-
-  const sessionsThisMonth = workoutsThisMonth + activitiesThisMonth
   const plan = user.plan ?? "free"
   const pro = isPro(plan)
   const plus = isPremiumPlus(plan)

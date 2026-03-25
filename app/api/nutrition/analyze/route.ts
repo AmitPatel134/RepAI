@@ -1,6 +1,8 @@
 import Groq from "groq-sdk"
 import { getAuthUser } from "@/lib/authServer"
 import { createRateLimiter } from "@/lib/rate-limit"
+import { prisma } from "@/lib/prisma"
+import { isPro } from "@/lib/plans"
 import { NextRequest } from "next/server"
 
 export const dynamic = "force-dynamic"
@@ -15,6 +17,18 @@ export async function POST(request: NextRequest) {
 
     const authUser = await getAuthUser(request)
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
+
+    // Check free plan limit before running AI
+    const user = await prisma.user.findUnique({ where: { email: authUser.email } })
+    if (user && !isPro(user.plan ?? "free")) {
+      const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      const analyzed = await prisma.usageEvent.count({
+        where: { userId: user.id, type: "meal_analyzed", createdAt: { gte: firstOfMonth } },
+      })
+      if (analyzed >= 5) {
+        return Response.json({ error: "Limite de 5 analyses par mois atteinte. Passez Pro pour continuer." }, { status: 429 })
+      }
+    }
 
     const { composition, name } = await request.json()
     if (!composition || typeof composition !== "string" || !composition.trim()) {
@@ -85,6 +99,11 @@ IMPORTANT: You must compute and return numeric values for calories, proteins, ca
     // Log raw response to help debug if values are still missing
     if (!result.proteins && !result.carbs && !result.fats) {
       console.warn("Nutrition analyze: macros missing. Raw model output:", text.slice(0, 500))
+    }
+
+    // Record usage event (counts toward monthly limit regardless of whether meal is saved)
+    if (user) {
+      await prisma.usageEvent.create({ data: { userId: user.id, type: "meal_analyzed" } }).catch(() => {})
     }
 
     return Response.json(result)

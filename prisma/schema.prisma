@@ -121,6 +121,15 @@ model CoachSession {
   createdAt DateTime @default(now())
 }
 
+model UsageEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // "meal_analyzed" | "session_created"
+  createdAt DateTime @default(now())
+
+  @@index([userId, type, createdAt])
+}
+
 model WeightEntry {
   id          String   @id @default(cuid())
   userId      String

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
+import { isPro } from "@/lib/plans"
 import { NextRequest } from "next/server"
 
 export const dynamic = "force-dynamic"
@@ -42,6 +43,17 @@ export async function POST(request: NextRequest) {
       create: { email: authUser.email },
     })
 
+    // Check free plan limit
+    if (!isPro(user.plan ?? "free")) {
+      const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      const created = await prisma.usageEvent.count({
+        where: { userId: user.id, type: "session_created", createdAt: { gte: firstOfMonth } },
+      })
+      if (created >= 5) {
+        return Response.json({ error: "Limite de 5 séances par mois atteinte. Passez Pro pour continuer." }, { status: 429 })
+      }
+    }
+
     const body = await request.json()
     const { name, type, notes, date, exercises } = body
 
@@ -80,6 +92,9 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+
+    // Record usage event
+    await prisma.usageEvent.create({ data: { userId: user.id, type: "session_created" } }).catch(() => {})
 
     return Response.json(full, { status: 201 })
   } catch {
