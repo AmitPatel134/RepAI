@@ -135,7 +135,7 @@ export default function PricingPage() {
             <div>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Premium</p>
               <div className="flex items-end gap-1">
-                <p className="text-4xl font-extrabold text-gray-900">4,99€</p>
+                <p className="text-4xl font-extrabold text-gray-900">14,99€</p>
                 <p className="text-sm text-gray-400 font-medium mb-1">/mois</p>
               </div>
               <p className="text-sm text-gray-400 font-medium mt-0.5">Sans engagement</p>
@@ -168,7 +168,7 @@ export default function PricingPage() {
             <div className="relative z-10">
               <p className="text-xs font-bold text-violet-300 uppercase tracking-widest mb-2">Premium+</p>
               <div className="flex items-end gap-1">
-                <p className="text-4xl font-extrabold">9,99€</p>
+                <p className="text-4xl font-extrabold">24,99€</p>
                 <p className="text-sm text-violet-300 font-medium mb-1">/mois</p>
               </div>
               <p className="text-sm text-violet-300 font-medium mt-0.5">Sans engagement</p>
