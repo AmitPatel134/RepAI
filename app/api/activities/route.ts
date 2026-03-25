@@ -36,15 +36,17 @@ export async function POST(request: NextRequest) {
     })
 
     // Check free plan limit
-    if (!isPro(user.plan ?? "free")) {
-      const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-      const created = await prisma.usageEvent.count({
-        where: { userId: user.id, type: "session_created", createdAt: { gte: firstOfMonth } },
-      })
-      if (created >= 5) {
-        return Response.json({ error: "Limite de 5 séances par mois atteinte. Passez Pro pour continuer." }, { status: 429 })
+    try {
+      if (!isPro(user.plan ?? "free")) {
+        const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+        const created = await prisma.usageEvent.count({
+          where: { userId: user.id, type: "session_created", createdAt: { gte: firstOfMonth } },
+        })
+        if (created >= 5) {
+          return Response.json({ error: "Limite de 5 séances par mois atteinte. Passez Pro pour continuer." }, { status: 429 })
+        }
       }
-    }
+    } catch { /* usageEvent table may not exist yet — allow the request */ }
 
     const body = await request.json()
     const {
