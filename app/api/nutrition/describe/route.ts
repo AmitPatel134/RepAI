@@ -57,10 +57,19 @@ export async function POST(request: NextRequest) {
         },
       ] as any,
       temperature: 0.1,
-      max_tokens: 600,
+      max_tokens: 1200,
     })
 
-    const text = completion.choices[0].message.content ?? "{}"
+    let text = completion.choices[0].message.content ?? "{}"
+
+    // If response was truncated (no closing }), attempt to close the JSON manually
+    if (!text.includes("}")) {
+      // Close any open string then close the object
+      const openQuotes = (text.match(/"/g) ?? []).length
+      if (openQuotes % 2 !== 0) text += '"'
+      text += "}"
+    }
+
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) return Response.json({ error: `JSON introuvable dans la réponse du modèle. Réponse brute : "${text.slice(0, 200)}"` }, { status: 500 })
 
