@@ -223,6 +223,7 @@ export default function ActivitiesPage() {
   const [loading, setLoading] = useState(true)
   const [isDemo, setIsDemo] = useState(false)
   const [plan, setPlan] = useState("free")
+  const [sessionsThisMonth, setSessionsThisMonth] = useState(0)
   const [upgradeMsg, setUpgradeMsg] = useState<string | null>(null)
 
   const [selectedMonthIdx, setSelectedMonthIdx] = useState(0)
@@ -306,6 +307,7 @@ export default function ActivitiesPage() {
         setWorkouts(Array.isArray(w) ? w : [])
         setActivities(Array.isArray(a) ? a : [])
         setPlan(p?.plan ?? "free")
+        setSessionsThisMonth(p?.usage?.sessionsThisMonth ?? 0)
         const label = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
         // month nav
       }).finally(() => setLoading(false))
@@ -449,35 +451,33 @@ export default function ActivitiesPage() {
 
   // ─── Add / forms ──────────────────────────────────────────────────────────
 
+  const sessionLimit = 5
+  const sessionLimitReached = plan === "free" && sessionsThisMonth >= sessionLimit
+
   function handleAdd() {
     if (isDemo) { setUpgradeMsg("Crée un compte pour ajouter des activités."); return }
+    if (sessionLimitReached) { setUpgradeMsg("Limite atteinte : 5 séances par mois sur le plan Gratuit. Passez Pro pour des séances illimitées."); return }
     setShowTypeSelector(true)
   }
 
   async function handleCreateWorkout() {
     if (!wName.trim()) return
-    if (plan === "free") {
-      const now = new Date()
-      const monthCount = workouts.filter(w => {
-        const d = new Date(w.date)
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-      }).length
-      if (monthCount >= 5) {
-        setShowWorkoutForm(false)
-        setUpgradeMsg("Limite atteinte : 5 séances par mois sur le plan Gratuit.")
-        return
-      }
-    }
     setWSaving(true)
     const r = await authFetch("/api/workouts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: wName.trim(), type: "", notes: wNotes, date: wDate, exercises: wExercises }),
     })
+    if (r.status === 429) {
+      setShowWorkoutForm(false)
+      setUpgradeMsg("Limite atteinte : 5 séances par mois sur le plan Gratuit. Passez Pro pour des séances illimitées.")
+      setWSaving(false)
+      return
+    }
     if (r.ok) {
       const workout = await r.json()
       setWorkouts(prev => [workout, ...prev])
-      const label = new Date(workout.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+      setSessionsThisMonth(prev => prev + 1)
       setSelectedMonthIdx(0)
       setShowWorkoutForm(false)
       setWExercises([])
@@ -539,11 +539,17 @@ export default function ActivitiesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
+      if (r.status === 429) {
+        closeCardioForm()
+        setUpgradeMsg("Limite atteinte : 5 séances par mois sur le plan Gratuit. Passez Pro pour des séances illimitées.")
+        setCSaving(false)
+        return
+      }
       if (r.ok) {
         const act = await r.json()
         setActivities(prev => [act, ...prev])
+        setSessionsThisMonth(prev => prev + 1)
         closeCardioForm()
-        const label = new Date(act.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
         setSelectedMonthIdx(0)
       }
     }
@@ -652,6 +658,7 @@ export default function ActivitiesPage() {
   async function saveVoiceItems(items: VoiceItem[]) {
     setVoiceSaving(true)
     let savedCount = 0
+    let limitHit = false
     const localToday = new Date().toLocaleDateString("fr-CA")
 
     for (const item of items) {
@@ -668,10 +675,11 @@ export default function ActivitiesPage() {
             exercises: w.exercises || [],
           }),
         })
+        if (r.status === 429) { limitHit = true; break }
         if (r.ok) {
           const workout = await r.json()
           setWorkouts(prev => [workout, ...prev])
-          const label = new Date(workout.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+          setSessionsThisMonth(prev => prev + 1)
           setSelectedMonthIdx(0)
           savedCount++
         }
@@ -693,10 +701,11 @@ export default function ActivitiesPage() {
             notes: a.notes ?? null,
           }),
         })
+        if (r.status === 429) { limitHit = true; break }
         if (r.ok) {
           const act = await r.json()
           setActivities(prev => [act, ...prev])
-          const label = new Date(act.date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+          setSessionsThisMonth(prev => prev + 1)
           setSelectedMonthIdx(0)
           savedCount++
         }
@@ -704,7 +713,10 @@ export default function ActivitiesPage() {
     }
 
     setVoiceSaving(false)
-    if (savedCount > 0) {
+    if (limitHit) {
+      setVoicePreview(null)
+      setUpgradeMsg("Limite atteinte : 5 séances par mois sur le plan Gratuit. Passez Pro pour des séances illimitées.")
+    } else if (savedCount > 0) {
       setVoiceSuccess(savedCount)
       setTimeout(() => setVoiceSuccess(0), 4000)
     }
@@ -753,36 +765,30 @@ export default function ActivitiesPage() {
               {/* Add button */}
               <button
                 onClick={handleAdd}
-                className="flex items-center gap-2 bg-white text-blue-600 hover:bg-blue-50 font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors"
+                className={`flex items-center gap-2 font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors ${sessionLimitReached ? "bg-white/30 text-white/60 cursor-not-allowed" : "bg-white text-blue-600 hover:bg-blue-50"}`}
               >
                 <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                <span className="hidden sm:inline">Nouvelle activité</span>
+                <span className="hidden sm:inline">{sessionLimitReached ? "Limite atteinte" : "Nouvelle activité"}</span>
               </button>
             </div>
           </div>
 
           {/* Free plan usage */}
-          {!isDemo && plan === "free" && (() => {
-            const now = new Date()
-            const inCurrentMonth = (date: string) => { const d = new Date(date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() }
-            const used = workouts.filter(w => inCurrentMonth(w.date)).length + activities.filter(a => inCurrentMonth(a.date)).length
-            const limit = 5
-            return (
-              <div className="flex items-center justify-between mt-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1">
-                    {Array.from({ length: limit }).map((_, i) => (
-                      <div key={i} className={`w-7 h-3 rounded ${i < used ? "bg-white" : "bg-white/30"}`} />
-                    ))}
-                  </div>
-                  <span className="text-[11px] font-bold text-blue-100">{used}/{limit} séances ce mois</span>
+          {!isDemo && plan === "free" && (
+            <div className="flex items-center justify-between mt-3">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  {Array.from({ length: sessionLimit }).map((_, i) => (
+                    <div key={i} className={`w-7 h-3 rounded ${i < sessionsThisMonth ? "bg-white" : "bg-white/30"}`} />
+                  ))}
                 </div>
-                <a href="/pricing" className="text-[10px] font-bold text-white/70 hover:text-white">Passer Pro →</a>
+                <span className="text-[11px] font-bold text-blue-100">{sessionsThisMonth}/{sessionLimit} séances ce mois</span>
               </div>
-            )
-          })()}
+              <a href="/pricing" className="text-[10px] font-bold text-white/70 hover:text-white">Passer Pro →</a>
+            </div>
+          )}
         </div>
       </div>
 

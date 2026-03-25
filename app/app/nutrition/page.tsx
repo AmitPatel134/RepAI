@@ -287,6 +287,12 @@ export default function NutritionPage() {
         body: JSON.stringify({ composition: compositionText, name: editName }),
       })
       const data = await r.json()
+      if (r.status === 429) {
+        closeAnalysis()
+        setAnalyzeError(data.error ?? "Limite atteinte. Passez Pro pour continuer.")
+        setAnalyzingStep(null)
+        return
+      }
       if (!r.ok) { setAnalyzeError(data.error ?? "Erreur de calcul"); setAnalyzingStep(null); return }
       macrosDrag.reset()
       setAnalysisResult({
@@ -1011,11 +1017,28 @@ export default function NutritionPage() {
               <div className="w-10 h-1 rounded-full bg-gray-300" />
             </div>
             <div className="px-5 pb-8">
-              <p className="text-red-500 font-bold mb-2">Erreur d&apos;analyse</p>
-              <p className="text-gray-500 text-sm mb-5">{analyzeError}</p>
-              <button onClick={() => setAnalyzeError(null)} className="px-6 py-2.5 bg-gray-100 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-200 transition-colors">
-                OK
-              </button>
+              {mealLimitReached ? (
+                <>
+                  <p className="text-orange-500 font-bold mb-2">Limite atteinte</p>
+                  <p className="text-gray-500 text-sm mb-5">{analyzeError}</p>
+                  <div className="flex flex-col gap-2">
+                    <a href="/pricing" className="px-6 py-3 bg-orange-500 rounded-xl text-sm font-bold text-white hover:bg-orange-400 transition-colors">
+                      Passer Pro →
+                    </a>
+                    <button onClick={() => setAnalyzeError(null)} className="px-6 py-2.5 bg-gray-100 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-200 transition-colors">
+                      Fermer
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-red-500 font-bold mb-2">Erreur d&apos;analyse</p>
+                  <p className="text-gray-500 text-sm mb-5">{analyzeError}</p>
+                  <button onClick={() => setAnalyzeError(null)} className="px-6 py-2.5 bg-gray-100 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-200 transition-colors">
+                    OK
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
