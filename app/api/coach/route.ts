@@ -62,16 +62,19 @@ export async function POST(request: NextRequest) {
     const { question, workoutContext, activityContext, nutritionContext } = await request.json()
     if (!question?.trim()) return Response.json({ error: "Question required" }, { status: 400 })
 
-    // Fetch user profile for personalization
     const user = await prisma.user.upsert({
       where: { email: authUser.email },
       update: {},
       create: { email: authUser.email },
     })
 
+    const { isPro, isPremiumPlus } = await import("@/lib/plans")
+    const plan = user.plan ?? "free"
+    const pro = isPro(plan)
+    const plus = isPremiumPlus(plan)
+
     // Enforce weekly question limit for free plan
-    const { isPro } = await import("@/lib/plans")
-    if (!isPro(user.plan ?? "free")) {
+    if (!pro) {
       const dayOfWeek = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
       const startOfWeek = new Date()
       startOfWeek.setDate(new Date().getDate() - dayOfWeek)
@@ -96,31 +99,58 @@ export async function POST(request: NextRequest) {
         profileLines.push(`IMC : ${bmi}`)
       }
     }
-    if (user.goal) profileLines.push(`Objectif principal : ${GOAL_LABELS[user.goal] ?? user.goal}`)
-    if (user.activityLevel) profileLines.push(`Niveau d'activité : ${ACTIVITY_LABELS[user.activityLevel] ?? user.activityLevel}`)
-    if (user.restingHR) profileLines.push(`Fréquence cardiaque au repos : ${user.restingHR} bpm`)
-    if (user.dailySteps) profileLines.push(`Nombre de pas quotidiens moyen : ${user.dailySteps.toLocaleString("fr-FR")} pas/jour`)
+    if (user.goal) profileLines.push(`Objectif : ${GOAL_LABELS[user.goal] ?? user.goal}`)
+    if (user.activityLevel) profileLines.push(`Niveau : ${ACTIVITY_LABELS[user.activityLevel] ?? user.activityLevel}`)
+    if (user.restingHR) profileLines.push(`FC repos : ${user.restingHR} bpm`)
+    if (user.dailySteps) profileLines.push(`Pas/jour : ${user.dailySteps.toLocaleString("fr-FR")}`)
 
     const profileContext = profileLines.length > 0
-      ? `--- Profil de l'utilisateur ---\n${profileLines.join("\n")}`
+      ? `--- Profil ---\n${profileLines.join("\n")}`
       : ""
 
-    const systemPrompt = `Tu es un coach sportif et nutritionniste expert. Tu analyses les données réelles de l'utilisateur pour donner des conseils ultra-personnalisés.
+    // System prompt varies by plan tier
+    let systemPrompt: string
+    let maxTokens: number
+    let temperature: number
+
+    if (!pro) {
+      // FREE — generic, short, encouraging
+      systemPrompt = `Tu es un assistant sportif bienveillant. Donne une réponse simple, courte et encourageante en 2-3 phrases maximum. Reste positif et générique. Ne fais pas d'analyse approfondie. Réponds en français.`
+      maxTokens = 120
+      temperature = 0.7
+    } else if (!plus) {
+      // PREMIUM — useful tips, concrete advice
+      systemPrompt = `Tu es un coach sportif et nutritionnel. Analyse les données récentes de l'utilisateur et donne des conseils concrets et actionnables.
+Règles :
+- Réponds en français, max 200 mots.
+- Utilise le markdown (gras, listes courtes).
+- Personnalise selon le profil.
+- Donne des recommandations pratiques directes.
+- Si une donnée manque, indique-le brièvement.`
+      maxTokens = 350
+      temperature = 0.5
+    } else {
+      // PREMIUM+ — deep analysis, patterns, predictions
+      systemPrompt = `Tu es un coach sportif et nutritionniste expert d'élite. Tu analyses l'historique complet pour détecter des patterns, corréler sport/nutrition/récupération, anticiper la fatigue ou la stagnation, et fournir des recommandations ultra-personnalisées.
 
 RÈGLES STRICTES :
-- Réponds en français, de façon courte et directe (max 150-200 mots par réponse).
+- Réponds en français, de façon concise et directe (max 220 mots).
 - Utilise le markdown (gras, listes) pour structurer.
-- Personnalise TOUJOURS en fonction du profil fourni (âge, poids, objectif, niveau d'activité).
-- Base-toi sur les données concrètes fournies (séances, activités, repas). Si une donnée manque pour répondre précisément, dis-le explicitement : "Je n'ai pas tes données de [X] pour répondre précisément."
-- N'invente jamais de données. Ne donne pas de conseils génériques quand tu peux être précis.
-- Sois direct et honnête, même si la réponse n'est pas celle attendue.
-- Calcule des valeurs concrètes quand c'est possible (calories cibles, fréquences cardiaques cibles, charges recommandées, etc.).`
+- Détecte les patterns et corrélations entre les données (nutrition ↔ performance ↔ récupération).
+- Donne des prédictions ou anticipations quand les données le permettent.
+- Calcule des valeurs concrètes (calories cibles, fréquences, charges recommandées).
+- Personnalise TOUJOURS selon le profil (âge, poids, objectif, niveau).
+- N'invente jamais de données. Sois direct et honnête.`
+      maxTokens = 600
+      temperature = 0.5
+    }
 
+    // Context depth varies by plan
     const contextParts: string[] = []
-    if (profileContext) contextParts.push(profileContext)
-    if (workoutContext) contextParts.push(`--- Séances de musculation (récentes) ---\n${workoutContext}`)
-    if (activityContext) contextParts.push(`--- Activités cardio (récentes) ---\n${activityContext}`)
-    if (nutritionContext) contextParts.push(`--- Alimentation (récente) ---\n${nutritionContext}`)
+    if (pro && profileContext) contextParts.push(profileContext)
+    if (workoutContext) contextParts.push(`--- Séances musculation ---\n${workoutContext}`)
+    if (pro && activityContext) contextParts.push(`--- Activités cardio ---\n${activityContext}`)
+    if (pro && nutritionContext) contextParts.push(`--- Alimentation ---\n${nutritionContext}`)
     const fullContext = contextParts.join("\n\n")
 
     const userPrompt = fullContext
@@ -133,18 +163,14 @@ RÈGLES STRICTES :
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      temperature: 0.5,
-      max_tokens: 600,
+      temperature,
+      max_tokens: maxTokens,
     })
 
     const response = completion.choices[0].message.content ?? ""
 
     const session = await prisma.coachSession.create({
-      data: {
-        userId: user.id,
-        question: question.trim(),
-        response,
-      },
+      data: { userId: user.id, question: question.trim(), response },
     })
 
     return Response.json(session)

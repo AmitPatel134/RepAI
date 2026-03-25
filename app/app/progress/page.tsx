@@ -165,6 +165,7 @@ type WeightPoint = { id: string; weightKg: number; recordedAt: string }
 export default function ProgressPage() {
   const [ready, setReady] = useState(false)
   const [isDemo, setIsDemo] = useState(false)
+  const [plan, setPlan] = useState("free")
   const [exerciseOptions, setExerciseOptions] = useState<ExerciseOption[]>([])
   const [selectedExercise, setSelectedExercise] = useState<ExerciseOption | null>(null)
   const [prs, setPrs] = useState<PRData[]>([])
@@ -229,6 +230,7 @@ export default function ProgressPage() {
         setReady(true)
         return
       }
+      authFetch("/api/plan").then(r => r.json()).then(p => setPlan(p?.plan ?? "free")).catch(() => {})
       Promise.all([
         authFetch("/api/workouts").then(r => r.json()).catch(() => []),
         authFetch("/api/weight").then(r => r.json()).catch(() => []),
@@ -333,7 +335,14 @@ export default function ProgressPage() {
 
         {/* Activity chart */}
         {visible.activity && ((() => {
-          const allItems = [...rawWorkouts, ...rawActivities]
+          const historyLimitDate = plan === "free" ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) : null
+          const visibleWorkouts = historyLimitDate
+            ? rawWorkouts.filter(w => new Date(w.date) >= historyLimitDate)
+            : rawWorkouts
+          const visibleActivities = historyLimitDate
+            ? rawActivities.filter(a => new Date(a.date) >= historyLimitDate)
+            : rawActivities
+          const allItems = [...visibleWorkouts, ...visibleActivities]
           const weekData = computeWeekData(allItems)
           const monthData = computeMonthDays(allItems, monthOffset)
           const weekTotal = weekData.reduce((s, d) => s + d.count, 0)
@@ -425,6 +434,18 @@ export default function ProgressPage() {
             </div>
           )
         })())}
+
+        {plan === "free" && !isDemo && (
+          <div className="mx-3 md:mx-4 mb-4 rounded-2xl border-2 border-dashed border-gray-200 p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold text-gray-700 mb-1">Historique complet</p>
+              <p className="text-xs text-gray-400 font-medium">Accédez à tout votre historique au-delà de 7 jours avec Premium.</p>
+            </div>
+            <a href="/pricing" className="shrink-0 bg-gray-900 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-gray-700 transition-colors">
+              Premium →
+            </a>
+          </div>
+        )}
 
         {/* Progression chart */}
         {visible.progression && (

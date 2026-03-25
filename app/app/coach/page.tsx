@@ -292,6 +292,17 @@ En regardant tes séances récentes, voici mes observations :
         </div>
 
         {/* Ask input */}
+        {/* Plan tier indicator */}
+        {!isDemo && plan !== "free" && (
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${plan === "premium_plus" ? "bg-violet-100 text-violet-700" : "bg-gray-100 text-gray-600"}`}>
+              {plan === "premium_plus" ? "IA Premium+" : "IA Premium"}
+            </span>
+            <span className="text-[10px] text-gray-400 font-medium">
+              {plan === "premium_plus" ? "Analyse croisée · Détection de patterns" : "Conseils personnalisés · Données complètes"}
+            </span>
+          </div>
+        )}
         {weeklyLimitReached && (
           <div className="bg-violet-50 border border-violet-200 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">

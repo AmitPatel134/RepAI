@@ -1,24 +1,28 @@
-export const PLANS = {
-  free: {
-    label: "Free",
-    items: 5,
-    generationsPerMonth: 5,
-  },
-  pro: {
-    label: "Pro",
-    items: Infinity,
-    generationsPerMonth: Infinity,
-  },
-} as const
-
-export type PlanName = keyof typeof PLANS
+export type PlanName = "free" | "premium" | "premium_plus"
 
 export function isPro(plan: string): boolean {
-  return plan === "pro"
+  return plan === "pro" || plan === "premium" || plan === "premium_plus"
 }
 
-export function getLimit(plan: string, resource: "items" | "generationsPerMonth"): number {
-  const p = plan in PLANS ? (plan as PlanName) : "free"
-  const limit = PLANS[p][resource]
-  return limit === Infinity ? 999999 : limit
+export function isPremiumPlus(plan: string): boolean {
+  return plan === "premium_plus"
+}
+
+export function hasMacros(plan: string): boolean {
+  return isPro(plan)
+}
+
+export function hasFullHistory(plan: string): boolean {
+  return isPro(plan)
+}
+
+export function hasAdvancedAI(plan: string): boolean {
+  return isPremiumPlus(plan)
+}
+
+export const PLAN_LABELS: Record<string, string> = {
+  free: "Gratuit",
+  premium: "Premium",
+  premium_plus: "Premium+",
+  pro: "Pro",
 }

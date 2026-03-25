@@ -458,9 +458,18 @@ export default function NutritionPage() {
                 </svg>
                 <span className="text-xs font-black text-gray-900">{todayCal} kcal</span>
               </div>
-              <span className="text-[11px] text-gray-500 font-bold">P: {Math.round(todayProt)}g</span>
-              <span className="text-[11px] text-gray-500 font-bold">G: {Math.round(todayCarb)}g</span>
-              <span className="text-[11px] text-gray-500 font-bold">L: {Math.round(todayFat)}g</span>
+              {plan !== "free" ? (
+                <>
+                  <span className="text-[11px] text-gray-500 font-bold">P: {Math.round(todayProt)}g</span>
+                  <span className="text-[11px] text-gray-500 font-bold">G: {Math.round(todayCarb)}g</span>
+                  <span className="text-[11px] text-gray-500 font-bold">L: {Math.round(todayFat)}g</span>
+                </>
+              ) : (
+                <a href="/pricing" className="flex items-center gap-1 text-[11px] font-bold text-orange-400 hover:text-orange-500">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                  Macros Premium
+                </a>
+              )}
               <span className="text-[10px] text-gray-400 ml-auto">Aujourd&apos;hui</span>
             </div>
           )}
@@ -576,9 +585,15 @@ export default function NutritionPage() {
                             <p className="text-sm font-bold text-gray-900 truncate">{meal.name}</p>
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                               {meal.calories != null && <span className="text-[11px] font-bold text-orange-500">{meal.calories} kcal</span>}
-                              {meal.proteins != null && <span className="text-[11px] text-gray-400">P: {Math.round(meal.proteins)}g</span>}
-                              {meal.carbs != null && <span className="text-[11px] text-gray-400">G: {Math.round(meal.carbs)}g</span>}
-                              {meal.fats != null && <span className="text-[11px] text-gray-400">L: {Math.round(meal.fats)}g</span>}
+                              {plan !== "free" && meal.proteins != null && <span className="text-[11px] text-gray-400">P: {Math.round(meal.proteins)}g</span>}
+                              {plan !== "free" && meal.carbs != null && <span className="text-[11px] text-gray-400">G: {Math.round(meal.carbs)}g</span>}
+                              {plan !== "free" && meal.fats != null && <span className="text-[11px] text-gray-400">L: {Math.round(meal.fats)}g</span>}
+                              {plan === "free" && (meal.proteins != null || meal.carbs != null) && (
+                                <a href="/pricing" className="flex items-center gap-0.5 text-[10px] font-bold text-gray-300 hover:text-orange-400 transition-colors">
+                                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                  Macros
+                                </a>
+                              )}
                             </div>
                           </div>
                         </div>
