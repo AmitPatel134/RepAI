@@ -107,6 +107,7 @@ export default function CoachPage() {
   const [lastSession, setLastSession] = useState<Session | null>(null)
   const [question, setQuestion] = useState("")
   const [loading, setLoading] = useState(false)
+  const [quickOpen, setQuickOpen] = useState(false)
   const [workoutContext, setWorkoutContext] = useState("")
   const [activityContext, setActivityContext] = useState("")
   const [nutritionContext, setNutritionContext] = useState("")
@@ -249,45 +250,72 @@ En regardant tes séances récentes, voici mes observations :
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
       {isDemo && (
-        <div className="bg-violet-50 border-b border-violet-200 px-6 py-2 flex items-center justify-between shrink-0">
-          <p className="text-xs font-semibold text-violet-700">
-            Mode démo — <a href="/login" className="underline hover:text-violet-900">Connectez-vous</a> pour des conseils IA personnalisés.
+        <div className="bg-violet-700 px-6 py-2 flex items-center justify-between shrink-0">
+          <p className="text-xs font-semibold text-violet-100">
+            Mode démo — <a href="/login" className="underline text-white">Connectez-vous</a> pour des conseils IA personnalisés.
           </p>
-          <a href="/login" className="text-xs font-bold text-white bg-violet-600 px-3 py-1 rounded-full hover:bg-violet-500 transition-colors">
+          <a href="/login" className="text-xs font-bold text-violet-600 bg-white px-3 py-1 rounded-full hover:bg-violet-50 transition-colors">
             Se connecter
           </a>
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto w-full px-4 py-6 md:px-6 md:py-8 flex flex-col gap-6">
-        {/* Header */}
-        <div className="flex items-start gap-4">
-          <div className="w-11 h-11 rounded-2xl bg-violet-600 flex items-center justify-center shrink-0 mt-0.5">
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-2xl font-extrabold text-gray-900">Coach</h1>
-            <p className="text-sm text-gray-500 font-medium mt-0.5">
-              Posez vos questions — le coach analyse vos données sportives et nutritionnelles.
-            </p>
+      {/* Sticky header */}
+      <div className="sticky top-0 z-30 bg-violet-600">
+        <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 pb-4">
+          <p className="text-xs font-medium text-white/60 mb-1">Entraîneur IA personnalisé</p>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-3xl font-bold text-white tracking-tight font-[family-name:var(--font-barlow-condensed)]">Coach IA</h1>
+            {!isDemo && plan === "free" && (
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <div className={`w-7 h-2.5 rounded ${coachQuestionsThisWeek >= 1 ? "bg-white" : "bg-white/30"}`} />
+                </div>
+                <span className="text-[11px] font-bold text-white/70">{coachQuestionsThisWeek}/1</span>
+                {weeklyLimitReached && (
+                  <a href="/pricing" className="text-[11px] font-bold text-white bg-white/20 hover:bg-white/30 px-2 py-1 rounded-lg transition-colors shrink-0">Passer Pro →</a>
+                )}
+              </div>
+            )}
           </div>
         </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto w-full px-4 py-6 md:px-6 md:py-8 flex flex-col gap-6">
 
         {/* Quick questions */}
-        <div>
-          <p className="text-xs font-bold text-gray-400 mb-3">Questions rapides</p>
-          <div className="flex flex-wrap gap-2">
-            {QUICK_QUESTIONS.map(q => (
-              <button
-                key={q}
-                onClick={() => setQuestion(q)}
-                className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs font-semibold text-gray-500 hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50 transition-colors"
-              >
-                {q}
-              </button>
-            ))}
+        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+          <button
+            onClick={() => setQuickOpen(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-colors"
+          >
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Questions rapides</span>
+            <svg
+              className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${quickOpen ? "rotate-180" : ""}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div
+            style={{
+              maxHeight: quickOpen ? "500px" : "0px",
+              opacity: quickOpen ? 1 : 0,
+              transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease",
+              overflow: "hidden",
+            }}
+          >
+            <div className="px-4 pb-4 flex flex-wrap gap-2">
+              {QUICK_QUESTIONS.map(q => (
+                <button
+                  key={q}
+                  onClick={() => { setQuestion(q); setQuickOpen(false) }}
+                  className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs font-semibold text-gray-600 hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50 hover:shadow-sm transition-all"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -301,25 +329,6 @@ En regardant tes séances récentes, voici mes observations :
             <span className="text-[10px] text-gray-400 font-medium">
               {plan === "premium_plus" ? "Analyse croisée · Détection de patterns" : "Conseils personnalisés · Données complètes"}
             </span>
-          </div>
-        )}
-        {weeklyLimitReached && (
-          <div className="bg-violet-50 border border-violet-200 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <div className="flex gap-1">
-                <div className="w-7 h-3 rounded bg-violet-500" />
-              </div>
-              <span className="text-xs font-bold text-violet-600">1/1 question cette semaine — renouvellement lundi</span>
-            </div>
-            <a href="/pricing" className="text-[10px] font-bold text-violet-500 hover:text-violet-400 shrink-0">Passer Pro →</a>
-          </div>
-        )}
-        {!weeklyLimitReached && !isDemo && plan === "free" && (
-          <div className="flex items-center gap-2">
-            <div className="flex gap-1">
-              <div className={`w-7 h-3 rounded ${coachQuestionsThisWeek >= 1 ? "bg-violet-500" : "bg-gray-200"}`} />
-            </div>
-            <span className="text-[11px] font-bold text-gray-400">{coachQuestionsThisWeek}/1 question cette semaine</span>
           </div>
         )}
         <div className="flex flex-col sm:flex-row gap-2">

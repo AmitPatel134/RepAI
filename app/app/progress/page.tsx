@@ -266,27 +266,27 @@ export default function ProgressPage() {
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
       {isDemo && (
-        <div className="bg-red-50 border-b border-red-200 px-6 py-2 flex items-center justify-between">
-          <p className="text-xs font-semibold text-red-700">
-            Mode démo — <a href="/login" className="underline hover:text-red-900">Connectez-vous</a> pour vos vraies progressions.
+        <div className="bg-red-700 px-6 py-2 flex items-center justify-between">
+          <p className="text-xs font-semibold text-red-100">
+            Mode démo — <a href="/login" className="underline text-white">Connectez-vous</a> pour vos vraies progressions.
           </p>
-          <a href="/login" className="text-xs font-bold text-white bg-red-600 px-3 py-1 rounded-full hover:bg-red-500 transition-colors">
+          <a href="/login" className="text-xs font-bold text-red-600 bg-white px-3 py-1 rounded-full hover:bg-red-50 transition-colors">
             Se connecter
           </a>
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto px-4 py-6 md:px-6 md:py-8">
-        {/* Header */}
-        <div className="mb-6 md:mb-8 flex items-start justify-between">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-30 bg-red-600">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 pt-5 pb-4 flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-gray-400 mb-1 capitalize">{new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
-            <h1 className="text-2xl font-extrabold text-gray-900">Mes progrès</h1>
+            <p className="text-xs font-medium text-white/60 mb-1">Ton évolution physique</p>
+            <h1 className="text-3xl font-bold text-white tracking-tight font-[family-name:var(--font-barlow-condensed)]">Mes progrès</h1>
           </div>
           <div className="relative">
             <button
               onClick={() => setShowEditor(v => !v)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-100 border border-gray-200 text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors mt-1"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-xs font-bold text-white transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -330,7 +330,9 @@ export default function ProgressPage() {
             </div>
           </div>
         </div>
+      </div>
 
+      <div className="max-w-5xl mx-auto px-4 py-6 md:px-6 md:py-8">
         {showEditor && <div className="fixed inset-0 z-40" onClick={() => setShowEditor(false)} />}
 
         {/* Activity chart */}
@@ -355,7 +357,8 @@ export default function ProgressPage() {
           const containerH = panelH.week === 0 ? "auto" : expanded ? panelH.month : panelH.week
 
           return (
-            <div className="bg-white border border-gray-200 rounded-3xl mb-3 md:mb-4">
+            <div className="bg-white border border-gray-200 rounded-3xl mb-3 md:mb-4 overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-red-600 via-red-500 to-rose-400" />
               <div className="overflow-hidden" style={{ height: containerH, transition: "height 0.38s cubic-bezier(0.4,0,0.2,1)" }}>
                 <div style={{ transform: `translateY(${slideY}px)`, transition: "transform 0.38s cubic-bezier(0.4,0,0.2,1)" }}>
                   <div ref={weekPanelRef} className="p-4 md:p-6">
@@ -449,7 +452,9 @@ export default function ProgressPage() {
 
         {/* Progression chart */}
         {visible.progression && (
-          <div className="bg-white border border-gray-200 rounded-3xl p-4 md:p-6 mb-3 md:mb-4">
+          <div className="bg-white border border-gray-200 rounded-3xl mb-3 md:mb-4 overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-red-600 via-red-500 to-rose-400" />
+            <div className="p-4 md:p-6">
             <div className="flex items-start justify-between gap-3 mb-5">
               <div className="min-w-0">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Progression</p>
@@ -501,6 +506,7 @@ export default function ProgressPage() {
                 </LineChart>
               </ResponsiveContainer>
             )}
+            </div>
           </div>
         )}
 
@@ -549,7 +555,9 @@ export default function ProgressPage() {
           }))
           const latest = weightEntries[weightEntries.length - 1]
           return (
-            <div className="bg-white border border-gray-200 rounded-3xl p-4 md:p-6 mb-3 md:mb-4">
+            <div className="bg-white border border-gray-200 rounded-3xl mb-3 md:mb-4 overflow-hidden">
+              <div className="h-1 bg-gradient-to-r from-violet-600 via-violet-500 to-purple-400" />
+              <div className="p-4 md:p-6">
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div>
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Poids</p>
@@ -629,13 +637,16 @@ export default function ProgressPage() {
                   </LineChart>
                 </ResponsiveContainer>
               )}
+              </div>
             </div>
           )
         })()}
 
         {/* Personal Records */}
         {visible.prs && (
-          <div className="bg-white border border-gray-200 rounded-3xl p-4 md:p-6">
+          <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-400" />
+            <div className="p-4 md:p-6">
             <div className="mb-4 md:mb-5">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Records</p>
               <p className="text-sm font-extrabold text-gray-900">Personal Records (1RM estimé)</p>
@@ -643,7 +654,9 @@ export default function ProgressPage() {
             <div className="flex flex-col gap-2">
               {prs.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-40 text-center">
-                  <p className="text-3xl mb-3">🏆</p>
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mb-3 shadow-lg shadow-amber-200">
+                    <span className="text-2xl">🏆</span>
+                  </div>
                   <p className="text-gray-400 text-sm font-medium">Vos records apparaîtront ici</p>
                 </div>
               )}
@@ -667,6 +680,7 @@ export default function ProgressPage() {
                   </div>
                 </div>
               ))}
+            </div>
             </div>
           </div>
         )}

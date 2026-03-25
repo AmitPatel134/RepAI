@@ -172,6 +172,7 @@ export default function NutritionPage() {
   const [editMode, setEditMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set())
   const lpTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lpFired = useRef(false)
   const lpMoved = useRef(false)
@@ -382,11 +383,16 @@ export default function NutritionPage() {
 
   async function handleDeleteSelected() {
     setDeleting(true)
-    for (const id of selectedIds) {
+    const toDelete = new Set(selectedIds)
+    setDeletingIds(toDelete)
+    await new Promise(r => setTimeout(r, 320))
+    for (const id of toDelete) {
       await authFetch(`/api/nutrition/${id}`, { method: "DELETE" })
       setMeals(prev => prev.filter(m => m.id !== id))
     }
-    setDeleting(false); exitEditMode()
+    setDeletingIds(new Set())
+    setDeleting(false)
+    exitEditMode()
   }
 
   if (loading) return <LoadingScreen color="#f97316" />
@@ -399,78 +405,70 @@ export default function NutritionPage() {
 
       {/* Demo banner */}
       {isDemo && (
-        <div className="bg-orange-50 border-b border-orange-200 px-4 py-2 flex items-center justify-between">
-          <p className="text-xs font-semibold text-orange-700">
-            Mode démo — <a href="/login" className="underline">Connectez-vous</a> pour sauvegarder.
+        <div className="bg-orange-600 px-4 py-2 flex items-center justify-between">
+          <p className="text-xs font-semibold text-orange-100">
+            Mode démo — <a href="/login" className="underline text-white">Connectez-vous</a> pour sauvegarder.
           </p>
-          <a href="/login" className="text-xs font-bold text-white bg-orange-500 px-3 py-1 rounded-full">Se connecter</a>
+          <a href="/login" className="text-xs font-bold text-orange-600 bg-white px-3 py-1 rounded-full">Se connecter</a>
         </div>
       )}
 
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-gray-100/95 backdrop-blur-md border-b border-gray-200">
-        <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 pb-3">
+      <div className="sticky top-0 z-30 bg-orange-500">
+        <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 pb-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-gray-400 mb-1 capitalize">
-                {editMode ? `${selectedIds.size} sélectionné${selectedIds.size > 1 ? "s" : ""}` : new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
-              </p>
-              <h1 className="text-2xl font-extrabold text-gray-900">{editMode ? "Modifier" : "Nutrition"}</h1>
+              <p className="text-xs font-medium text-white/60 mb-1">Repas & suivi nutritionnel</p>
+              <h1 className="text-3xl font-bold text-white tracking-tight font-[family-name:var(--font-barlow-condensed)]">Nutrition</h1>
             </div>
-            {editMode ? (
-              <button onClick={exitEditMode} className="text-sm font-bold text-gray-400 hover:text-gray-900 transition-colors px-3 py-2">
-                Annuler
-              </button>
-            ) : (
-              <button
-                onClick={() => { if (isDemo || mealLimitReached) return; fileInputRef.current?.click() }}
-                disabled={mealLimitReached}
-                className={`flex items-center gap-2 text-white font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors ${mealLimitReached ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-400"}`}
-              >
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
-                </svg>
-                <span className="hidden sm:inline">{mealLimitReached ? "Limite atteinte" : "Analyser un repas"}</span>
-              </button>
-            )}
+            <button
+              onClick={() => { if (isDemo || mealLimitReached) return; fileInputRef.current?.click() }}
+              disabled={mealLimitReached}
+              className={`flex items-center gap-2 font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors ${mealLimitReached ? "bg-white/30 text-white/60 cursor-not-allowed" : "bg-white text-orange-600 hover:bg-orange-50"}`}
+            >
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+              </svg>
+              <span className="hidden sm:inline">{mealLimitReached ? "Limite atteinte" : "Analyser un repas"}</span>
+            </button>
           </div>
 
           {/* Free plan meal usage */}
-          {!isDemo && !editMode && plan === "free" && (
+          {!isDemo && plan === "free" && (
             <div className="flex items-center justify-between mt-3">
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
                   {Array.from({ length: mealLimit }).map((_, i) => (
-                    <div key={i} className={`w-7 h-3 rounded ${i < mealsThisMonth ? "bg-orange-500" : "bg-gray-200"}`} />
+                    <div key={i} className={`w-7 h-3 rounded ${i < mealsThisMonth ? "bg-white" : "bg-white/30"}`} />
                   ))}
                 </div>
-                <span className="text-[11px] font-bold text-gray-400">{mealsThisMonth}/{mealLimit} repas ce mois</span>
+                <span className="text-[11px] font-bold text-orange-100">{mealsThisMonth}/{mealLimit} repas ce mois</span>
               </div>
-              <a href="/pricing" className="text-[10px] font-bold text-orange-500 hover:text-orange-400">Passer Pro →</a>
+              <a href="/pricing" className="text-[10px] font-bold text-white/70 hover:text-white">Passer Pro →</a>
             </div>
           )}
 
-          {!editMode && todayCal > 0 && (
-            <div className="mt-3 flex items-center gap-4 py-2 px-3 bg-orange-50 border border-orange-200 rounded-xl">
+          {todayCal > 0 && (
+            <div className="mt-3 flex items-center gap-4 py-2 px-3 bg-white/20 rounded-xl">
               <div className="flex items-center gap-1.5">
-                <svg className="w-3.5 h-3.5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
                 </svg>
-                <span className="text-xs font-black text-gray-900">{todayCal} kcal</span>
+                <span className="text-xs font-black text-white">{todayCal} kcal</span>
               </div>
               {plan !== "free" ? (
                 <>
-                  <span className="text-[11px] text-gray-500 font-bold">P: {Math.round(todayProt)}g</span>
-                  <span className="text-[11px] text-gray-500 font-bold">G: {Math.round(todayCarb)}g</span>
-                  <span className="text-[11px] text-gray-500 font-bold">L: {Math.round(todayFat)}g</span>
+                  <span className="text-[11px] text-orange-100 font-bold">P: {Math.round(todayProt)}g</span>
+                  <span className="text-[11px] text-orange-100 font-bold">G: {Math.round(todayCarb)}g</span>
+                  <span className="text-[11px] text-orange-100 font-bold">L: {Math.round(todayFat)}g</span>
                 </>
               ) : (
-                <a href="/pricing" className="flex items-center gap-1 text-[11px] font-bold text-orange-400 hover:text-orange-500">
+                <a href="/pricing" className="flex items-center gap-1 text-[11px] font-bold text-white/70 hover:text-white">
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                   Macros Premium
                 </a>
               )}
-              <span className="text-[10px] text-gray-400 ml-auto">Aujourd&apos;hui</span>
+              <span className="text-[10px] text-orange-100 ml-auto">Aujourd&apos;hui</span>
             </div>
           )}
         </div>
@@ -485,13 +483,25 @@ export default function NutritionPage() {
       {/* List */}
       <div className="pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
         {meals.length === 0 ? (
-          <div className="text-center py-20 px-4">
-            <p className="text-4xl mb-4">🥗</p>
-            <p className="text-gray-700 font-semibold mb-2">Aucun repas enregistré</p>
-            <p className="text-gray-400 text-sm mb-6">Prenez en photo votre assiette pour analyser ses calories et macros</p>
+          <div className="flex flex-col items-center py-20 px-4">
+            <div className="relative mb-8">
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-xl shadow-orange-200">
+                <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                </svg>
+              </div>
+              <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-amber-400 flex items-center justify-center shadow-md">
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-xl font-extrabold text-gray-900 mb-2">Journal alimentaire</h2>
+            <p className="text-gray-400 text-sm mb-8 max-w-xs text-center leading-relaxed">Photographiez votre assiette pour analyser les calories et macronutriments en quelques secondes</p>
             <button
               onClick={() => !isDemo && fileInputRef.current?.click()}
-              className="bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm px-6 py-3 rounded-xl transition-colors"
+              className="bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm px-7 py-3.5 rounded-2xl transition-colors shadow-lg shadow-orange-200"
             >
               Analyser un repas
             </button>
@@ -499,7 +509,7 @@ export default function NutritionPage() {
         ) : (
           <div className="flex flex-col gap-0 pb-3">
             {/* Month navigator */}
-            <div className="flex items-center justify-between px-2 py-3 border-b border-gray-200 bg-white">
+            <div className="flex items-center justify-between px-2 py-3 border-b border-orange-100 bg-gradient-to-r from-orange-50 to-white">
               <button
                 onClick={() => setSelectedMonthIdx(i => Math.min(i + 1, allMonths.length - 1))}
                 disabled={safeMonthIdx >= allMonths.length - 1}
@@ -542,36 +552,54 @@ export default function NutritionPage() {
               const dayCal = dayGroup.items.reduce((s, i) => s + (i.calories ?? 0), 0)
               return (
                 <div key={dayGroup.dayKey} className="px-3 md:px-4 pt-3">
-                  <div className="flex items-center justify-between px-1 pb-1.5 mb-1 border-b border-gray-200">
-                    <p className="text-[11px] font-bold text-gray-500 capitalize">{dayGroup.dayLabel}</p>
+                  <div className="flex items-center justify-between px-1 pb-1.5 mb-1 border-b border-gray-100">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                      <p className="text-[11px] font-bold text-gray-500 capitalize">{dayGroup.dayLabel}</p>
+                    </div>
                     {dayCal > 0 && <span className="text-[11px] font-bold text-orange-500">{Math.round(dayCal)} kcal</span>}
                   </div>
-                  <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 divide-y divide-gray-100">
+                  <div className="flex flex-col gap-px">
                     {dayGroup.items.map(meal => {
                       const isSelected = selectedIds.has(meal.id)
                       return (
                         <div
                           key={meal.id}
-                          className={`flex items-center gap-3 py-3 px-4 md:px-6 cursor-pointer transition-colors select-none ${
-                            isSelected ? "bg-orange-50" : "hover:bg-gray-50"
+                          className={`rounded-2xl transition-all duration-150 ${isSelected ? "bg-orange-500 p-[1.5px]" : ""}`}
+                          style={{
+                            opacity: deletingIds.has(meal.id) ? 0 : undefined,
+                            transform: deletingIds.has(meal.id) ? "translateX(-16px)" : undefined,
+                            transition: "opacity 0.28s ease, transform 0.28s ease",
+                          }}
+                        >
+                        <div
+                          className={`flex items-center gap-3 py-3 px-4 md:px-6 rounded-2xl cursor-pointer select-none ${
+                            isSelected ? "bg-orange-50" : "bg-white hover:bg-gray-50"
                           } ${editMode && !isSelected ? "opacity-50" : ""}`}
                           onTouchStart={e => onItemTouchStart(e, meal.id)}
                           onTouchMove={onItemTouchMove}
                           onTouchEnd={onItemTouchEnd}
                           onClick={() => onItemClick(meal.id)}
                         >
-                          {editMode && (
-                            <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
-                              isSelected ? "bg-orange-500 border-orange-500" : "border-gray-300"
-                            }`}>
-                              {isSelected && (
-                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </div>
-                          )}
-                          <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 bg-orange-100 flex items-center justify-center text-orange-500">
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
+                              isSelected ? "bg-orange-500 border-orange-500" : "border-gray-400"
+                            }`}
+                            style={{
+                              transform: editMode ? "scale(1)" : "scale(0)",
+                              opacity: editMode ? 1 : 0,
+                              transition: "transform 0.2s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease",
+                              width: editMode ? undefined : 0,
+                              marginRight: editMode ? undefined : "-20px",
+                            }}
+                          >
+                            {isSelected && (
+                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 bg-orange-500 flex items-center justify-center text-white">
                             {meal.imageThumb ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img src={meal.imageThumb} alt="" className="w-full h-full object-cover" />
@@ -597,6 +625,7 @@ export default function NutritionPage() {
                             </div>
                           </div>
                         </div>
+                        </div>
                       )
                     })}
                   </div>
@@ -608,21 +637,28 @@ export default function NutritionPage() {
       </div>
 
       {/* ── Floating edit bar ── */}
-      {editMode && selectedIds.size > 0 && (
-        <div className="fixed left-0 right-0 z-40 flex justify-center px-4" style={{ bottom: "calc(env(safe-area-inset-bottom) + 72px)" }}>
-          <div className="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-xl p-3 flex items-center gap-2">
-            <button onClick={exitEditMode} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-bold text-gray-400 hover:text-gray-900 transition-colors">
-              Annuler
-            </button>
-            <button
-              onClick={handleDeleteSelected} disabled={deleting}
-              className="flex-[2] py-2.5 bg-red-50 border border-red-300 rounded-xl text-sm font-bold text-red-500 hover:bg-red-100 transition-colors disabled:opacity-50"
-            >
-              {deleting ? "..." : `Supprimer (${selectedIds.size})`}
-            </button>
-          </div>
+      <div
+        className="fixed left-0 right-0 z-40 flex justify-center px-4 pointer-events-none"
+        style={{
+          bottom: "calc(env(safe-area-inset-bottom) + 88px)",
+          transform: editMode ? "translateY(0)" : "translateY(24px)",
+          opacity: editMode ? 1 : 0,
+          transition: "transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease",
+        }}
+      >
+        <div className="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-xl p-3 flex items-center gap-2 pointer-events-auto">
+          <button onClick={exitEditMode} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-bold text-gray-400 hover:text-gray-900 transition-colors">
+            Annuler
+          </button>
+          <button
+            onClick={handleDeleteSelected}
+            disabled={selectedIds.size === 0 || deleting}
+            className="flex-[2] py-2.5 bg-red-50 border border-red-300 rounded-xl text-sm font-bold text-red-500 hover:bg-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {deleting ? "..." : selectedIds.size > 0 ? `Supprimer (${selectedIds.size})` : "Supprimer"}
+          </button>
         </div>
-      )}
+      </div>
 
       {/* ── Step 1: Analyzing image overlay ── */}
       {analyzingStep === "describe" && (

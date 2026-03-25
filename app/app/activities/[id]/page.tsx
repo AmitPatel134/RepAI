@@ -94,6 +94,9 @@ export default function ActivityDetailPage() {
   const [saving, setSaving] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
+  const [savingDate, setSavingDate] = useState(false)
+  const [pendingDate, setPendingDate] = useState("")
 
   // Edit form state
   const [cType, setCType] = useState("running")
@@ -168,6 +171,26 @@ export default function ActivityDetailPage() {
     setSaving(false)
   }
 
+  async function handleSaveDate() {
+    if (!pendingDate || pendingDate === activity?.date.slice(0, 10)) {
+      setDatePickerOpen(false)
+      return
+    }
+    setSavingDate(true)
+    const r = await authFetch(`/api/activities/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: pendingDate }),
+    })
+    if (r.ok) {
+      const updated = await r.json()
+      setActivity(updated)
+      loadFormFromActivity(updated)
+    }
+    setSavingDate(false)
+    setDatePickerOpen(false)
+  }
+
   async function handleDelete() {
     setDeleting(true)
     await authFetch(`/api/activities/${id}`, { method: "DELETE" })
@@ -223,6 +246,68 @@ export default function ActivityDetailPage() {
               </div>
               <p className="text-2xl font-extrabold" style={{ color: info.color }}>{info.label}</p>
               <p className="text-sm text-gray-500">{fmtDate(activity.date)}</p>
+            </div>
+
+            {/* Date — inline editable */}
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+              <button
+                className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  setPendingDate(activity.date.slice(0, 10))
+                  setDatePickerOpen(v => !v)
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: info.color + "18" }}>
+                    <svg className="w-4 h-4" style={{ color: info.color }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Date</p>
+                    <p className="text-sm font-bold text-gray-900 capitalize">{fmtDate(activity.date)}</p>
+                  </div>
+                </div>
+                <svg
+                  className="w-4 h-4 text-gray-400 transition-transform duration-300"
+                  style={{ transform: datePickerOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <div style={{
+                maxHeight: datePickerOpen ? "160px" : "0px",
+                opacity: datePickerOpen ? 1 : 0,
+                overflow: "hidden",
+                transition: "max-height 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease",
+              }}>
+                <div className="px-4 pb-4 flex flex-col gap-3">
+                  <input
+                    type="date"
+                    value={pendingDate}
+                    onChange={e => setPendingDate(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-400 transition-colors"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setDatePickerOpen(false)}
+                      className="flex-1 py-2 border border-gray-200 rounded-xl text-sm font-bold text-gray-400 hover:text-gray-700 transition-colors"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={handleSaveDate}
+                      disabled={savingDate}
+                      className="flex-[2] py-2 rounded-xl text-sm font-bold text-white transition-colors disabled:opacity-50"
+                      style={{ backgroundColor: info.color }}
+                    >
+                      {savingDate ? "..." : "Confirmer"}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Stats grid */}
