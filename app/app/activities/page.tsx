@@ -910,7 +910,7 @@ export default function ActivitiesPage() {
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-bold text-gray-900 truncate">{w.name}</p>
                               {w.exercises.length > 0 && (
-                                <p className="text-[11px] text-gray-400 mt-0.5 truncate">{w.exercises.map(e => e.name).join(" · ")}</p>
+                                <p className="text-[11px] text-gray-400 mt-0.5 truncate">{w.exercises.length} exo{w.exercises.length > 1 ? "s" : ""} · {w.exercises.map(e => e.name).join(" · ")}</p>
                               )}
                             </div>
                           </div>
