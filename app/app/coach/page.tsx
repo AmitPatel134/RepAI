@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
+import { getCached, setCached } from "@/lib/appCache"
 import LoadingScreen from "@/components/LoadingScreen"
 import { DEMO_WORKOUTS } from "@/lib/demoData"
 
@@ -129,6 +130,18 @@ export default function CoachPage() {
         return
       }
 
+      // Instant display: set plan from cache immediately
+      const cP = getCached<{ plan: string; usage?: { coachQuestionsThisWeek?: number } }>("/api/plan")
+      if (cP) { setPlan(cP.plan ?? "free"); setCoachQuestionsThisWeek(cP.usage?.coachQuestionsThisWeek ?? 0); setReady(true) }
+
+      // Build contexts from cached data too
+      const cW = getCached<typeof DEMO_WORKOUTS>("/api/workouts")
+      const cA = getCached<{ type: string; name: string; date: string; distanceM: number | null; durationSec: number | null; avgHeartRate: number | null; avgPaceSecKm: number | null }[]>("/api/activities")
+      const cN = getCached<{ name: string; date: string; calories: number | null; proteins: number | null; carbs: number | null; fats: number | null }[]>("/api/nutrition")
+      if (cW && cW.length > 0) setWorkoutContext(cW.slice(0, 5).map(w => `Séance: ${w.name} (${w.date.slice(0, 10)}) — ${w.exercises?.map(e => `${e.name}: ${e.sets.map(s => `${s.reps}×${s.weight}kg`).join(", ")}`).join(" | ") ?? ""}`).join("\n"))
+      if (cA && cA.length > 0) setActivityContext(cA.slice(0, 5).map(a => { const parts = [a.distanceM ? `${(a.distanceM/1000).toFixed(1)}km` : null, a.durationSec ? `${Math.floor(a.durationSec/60)}min` : null, a.avgHeartRate ? `FC ${a.avgHeartRate}bpm` : null].filter(Boolean).join(", "); return `${a.type} "${a.name}" (${a.date.slice(0,10)})${parts ? ` : ${parts}` : ""}` }).join("\n"))
+      if (cN && cN.length > 0) { const today = new Date().toISOString().slice(0,10); const todayCal = cN.filter(m => m.date.slice(0,10) === today).reduce((s,m) => s+(m.calories??0),0); setNutritionContext((todayCal>0?`Calories aujourd'hui : ${todayCal} kcal\n`:"")+cN.slice(0,10).map(m => `${m.name} (${m.date.slice(0,10)})${m.calories ? ` — ${m.calories} kcal` : ""}`).join("\n")) }
+
       Promise.all([
         authFetch("/api/workouts").then(r => r.json()).catch(() => []),
         authFetch("/api/activities").then(r => r.json()).catch(() => []),
@@ -138,6 +151,7 @@ export default function CoachPage() {
       ]).then(([workouts, activities, meals, coachSessions, planData]) => {
         setPlan(planData?.plan ?? "free")
         setCoachQuestionsThisWeek(planData?.usage?.coachQuestionsThisWeek ?? 0)
+        setCached("/api/plan", planData)
         if (Array.isArray(workouts) && workouts.length > 0) {
           const ctx = workouts.slice(0, 5).map((w: typeof DEMO_WORKOUTS[0]) =>
             `Séance: ${w.name} (${w.date.slice(0, 10)}) — ${w.exercises?.map(e =>
@@ -183,6 +197,9 @@ export default function CoachPage() {
             saveStored(s)
           }
         }
+        if (Array.isArray(workouts)) setCached("/api/workouts", workouts)
+        if (Array.isArray(activities)) setCached("/api/activities", activities)
+        if (Array.isArray(meals)) setCached("/api/nutrition", meals)
       }).catch(() => setIsDemo(true)).finally(() => setReady(true))
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps

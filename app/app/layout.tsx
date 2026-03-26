@@ -2,6 +2,7 @@
 import { usePathname, useRouter } from "next/navigation"
 import { useRef, useEffect, useState } from "react"
 import AppSidebar from "@/components/AppSidebar"
+import { prefetchAll } from "@/lib/appCache"
 
 const PAGE_ORDER = [
   "/app/progress",
@@ -26,6 +27,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const touchStartY = useRef<number | null>(null)
   const prevIndexRef = useRef(getPageIndex(pathname))
   const [animClass, setAnimClass] = useState("")
+
+  // Prefetch all pages' data in parallel on first mount
+  useEffect(() => { prefetchAll() }, [])
 
   useEffect(() => {
     const currentIndex = getPageIndex(pathname)
@@ -68,9 +72,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100">
       <AppSidebar />
-      <div className={`flex-1 md:ml-52 overflow-y-auto min-w-0 bg-gray-100 ${animClass}`}>
-        {children}
-        <div className="h-[calc(5rem+env(safe-area-inset-bottom))] md:hidden shrink-0" />
+      {/* Clip container — prevents slide animation from showing outside viewport */}
+      <div className="flex-1 md:ml-52 overflow-hidden min-w-0 relative">
+        <div className={`h-full overflow-y-auto bg-gray-100 ${animClass}`}>
+          {children}
+          <div className="h-[calc(5rem+env(safe-area-inset-bottom))] md:hidden shrink-0" />
+        </div>
       </div>
     </div>
   )

@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
+import { getCached, setCached } from "@/lib/appCache"
 import { DEMO_WORKOUTS } from "@/lib/demoData"
 import UpgradeModal from "@/components/UpgradeModal"
 import LoadingScreen from "@/components/LoadingScreen"
@@ -299,17 +300,30 @@ export default function ActivitiesPage() {
         return
       }
       const email = session.user.email ?? ""
+      void email
+
+      // Instant display from cache if available
+      const cW = getCached<Workout[]>("/api/workouts")
+      const cA = getCached<Activity[]>("/api/activities")
+      const cP = getCached<{ plan: string; usage?: { sessionsThisMonth?: number } }>("/api/plan")
+      if (cW) setWorkouts(cW)
+      if (cA) setActivities(cA)
+      if (cP) { setPlan(cP.plan ?? "free"); setSessionsThisMonth(cP.usage?.sessionsThisMonth ?? 0) }
+      if (cW && cA && cP) setLoading(false)
+
+      // Always refresh in background
       Promise.all([
         authFetch("/api/workouts").then(r => r.json()).catch(() => []),
         authFetch("/api/activities").then(r => r.json()).catch(() => []),
         authFetch("/api/plan").then(r => r.json()).catch(() => ({ plan: "free" })),
       ]).then(([w, a, p]) => {
-        setWorkouts(Array.isArray(w) ? w : [])
-        setActivities(Array.isArray(a) ? a : [])
+        if (Array.isArray(w)) { setWorkouts(w); setCached("/api/workouts", w) }
+        if (Array.isArray(a)) { setActivities(a); setCached("/api/activities", a) }
         setPlan(p?.plan ?? "free")
         setSessionsThisMonth(p?.usage?.sessionsThisMonth ?? 0)
+        setCached("/api/plan", p)
         const label = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-        // month nav
+        void label
       }).finally(() => setLoading(false))
     })
   }, [])

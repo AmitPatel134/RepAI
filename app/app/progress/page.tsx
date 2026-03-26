@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
+import { getCached, setCached } from "@/lib/appCache"
 import LoadingScreen from "@/components/LoadingScreen"
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -230,21 +231,41 @@ export default function ProgressPage() {
         setReady(true)
         return
       }
-      authFetch("/api/plan").then(r => r.json()).then(p => setPlan(p?.plan ?? "free")).catch(() => {})
+      // Instant display from cache
+      const cW = getCached<typeof DEMO_WORKOUTS>("/api/workouts")
+      const cA = getCached<{ date: string }[]>("/api/activities")
+      const cWt = getCached<WeightPoint[]>("/api/weight")
+      const cP = getCached<{ plan: string }>("/api/plan")
+      if (cP) setPlan(cP.plan ?? "free")
+      if (cW) {
+        const hasData = cW.length > 0
+        setRawWorkouts(cW)
+        const options = hasData ? computeProgressionByExercise(cW) : []
+        setExerciseOptions(options)
+        setSelectedExercise(options[0] ?? null)
+        setPrs(hasData ? computePRs(cW) : [])
+      }
+      if (cA) setRawActivities(cA)
+      if (cWt) setWeightEntries(cWt)
+      if (cW && cA && cWt && cP) setReady(true)
+
+      // Refresh in background
       Promise.all([
         authFetch("/api/workouts").then(r => r.json()).catch(() => []),
         authFetch("/api/weight").then(r => r.json()).catch(() => []),
         authFetch("/api/activities").then(r => r.json()).catch(() => []),
-      ]).then(([d, weights, acts]) => {
+        authFetch("/api/plan").then(r => r.json()).catch(() => ({ plan: "free" })),
+      ]).then(([d, weights, acts, p]) => {
           const hasData = Array.isArray(d) && d.length > 0
           const workouts: typeof DEMO_WORKOUTS = hasData ? d : []
-          setRawWorkouts(workouts)
-          if (Array.isArray(acts)) setRawActivities(acts)
+          setRawWorkouts(workouts); setCached("/api/workouts", workouts)
+          if (Array.isArray(acts)) { setRawActivities(acts); setCached("/api/activities", acts) }
           const options = hasData ? computeProgressionByExercise(workouts) : []
           setExerciseOptions(options)
           setSelectedExercise(options[0] ?? null)
           setPrs(hasData ? computePRs(workouts) : [])
-          if (Array.isArray(weights)) setWeightEntries(weights)
+          if (Array.isArray(weights)) { setWeightEntries(weights); setCached("/api/weight", weights) }
+          setPlan(p?.plan ?? "free"); setCached("/api/plan", p)
           setReady(true)
         })
         .catch(() => { setExerciseOptions([]); setSelectedExercise(null); setReady(true) })

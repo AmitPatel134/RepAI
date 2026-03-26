@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
+import { getCached, setCached } from "@/lib/appCache"
 import LoadingScreen from "@/components/LoadingScreen"
 
 const TYPE_LABELS: Record<string, string> = {
@@ -79,13 +80,21 @@ export default function HomePage() {
       const name = meta?.full_name?.split(" ")[0] ?? meta?.name?.split(" ")[0] ?? null
       setFirstName(name)
       setLoadingReco(true)
+
+      // Instant display from cache
+      const cD = getCached<unknown>("/api/dashboard")
+      const cPr = getCached<{ profileComplete?: boolean }>("/api/profile")
+      if (cD) setData(cD as Parameters<typeof setData>[0])
+      if (cPr) setProfile(cPr as Parameters<typeof setProfile>[0])
+      if (cD && cPr) setReady(true)
+
       Promise.all([
         authFetch("/api/dashboard").then(r => r.json()).catch(() => null),
         authFetch("/api/profile").then(r => r.json()).catch(() => null),
       ]).then(([dashboard, prof]) => {
-        if (dashboard) setData(dashboard)
+        if (dashboard) { setData(dashboard); setCached("/api/dashboard", dashboard) }
         if (prof) {
-          setProfile(prof)
+          setProfile(prof); setCached("/api/profile", prof)
           if (!prof.profileComplete) {
             router.push("/app/onboarding")
             return

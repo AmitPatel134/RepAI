@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
+import { getCached, setCached } from "@/lib/appCache"
 import LoadingScreen from "@/components/LoadingScreen"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -190,13 +191,23 @@ export default function NutritionPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { setIsDemo(true); setLoading(false); return }
+
+      // Instant display from cache
+      const cM = getCached<Meal[]>("/api/nutrition")
+      const cP = getCached<{ plan: string; usage?: { mealsThisMonth?: number } }>("/api/plan")
+      if (cM) setMeals(cM)
+      if (cP) { setPlan(cP.plan ?? "free"); setMealsThisMonth(cP.usage?.mealsThisMonth ?? 0) }
+      if (cM && cP) setLoading(false)
+
+      // Refresh in background
       Promise.all([
         authFetch("/api/nutrition").then(r => r.json()).catch(() => []),
         authFetch("/api/plan").then(r => r.json()).catch(() => ({ plan: "free", usage: { mealsThisMonth: 0 } })),
       ]).then(([data, p]) => {
-        setMeals(Array.isArray(data) ? data : [])
+        if (Array.isArray(data)) { setMeals(data); setCached("/api/nutrition", data) }
         setPlan(p?.plan ?? "free")
         setMealsThisMonth(p?.usage?.mealsThisMonth ?? 0)
+        setCached("/api/plan", p)
       }).catch(() => {}).finally(() => setLoading(false))
     })
   }, [])
