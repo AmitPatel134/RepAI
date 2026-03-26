@@ -298,8 +298,8 @@ export default function ProgressPage() {
       )}
 
       {/* Sticky header */}
-      <div className="sticky top-0 z-30 bg-red-600">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 pt-5 pb-4 flex items-center justify-between">
+      <div className="sticky top-3 z-30 px-3 md:px-4 pt-3">
+        <div className="max-w-5xl mx-auto bg-red-600/85 backdrop-blur-xl rounded-2xl shadow-lg shadow-red-900/20 px-4 md:px-5 pt-4 pb-4 flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-white/60 mb-1">Ton évolution physique</p>
             <h1 className="text-3xl font-bold text-white tracking-tight font-[family-name:var(--font-barlow-condensed)]">Mes progrès</h1>

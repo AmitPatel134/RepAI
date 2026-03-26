@@ -433,8 +433,8 @@ export default function NutritionPage() {
       )}
 
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-orange-500">
-        <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 pb-4">
+      <div className="sticky top-3 z-30 px-3 md:px-4 pt-3">
+        <div className="max-w-3xl mx-auto bg-orange-500/85 backdrop-blur-xl rounded-2xl shadow-lg shadow-orange-900/20 px-4 md:px-5 pt-4 pb-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-white/60 mb-1">Repas & suivi nutritionnel</p>
@@ -500,7 +500,7 @@ export default function NutritionPage() {
       />
 
       {/* List */}
-      <div className="pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
+      <div className="pt-4 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
         {meals.length === 0 ? (
           <div className="flex flex-col items-center py-20 px-4">
             <div className="relative mb-8">
@@ -526,7 +526,7 @@ export default function NutritionPage() {
             </button>
           </div>
         ) : (
-          <div className="flex flex-col gap-0 pb-3">
+          <div className="flex flex-col gap-0 pb-3 mt-2">
             {/* Month navigator */}
             <div className="flex items-center justify-between px-2 py-3 border-b border-orange-100 bg-gradient-to-r from-orange-50 to-white">
               <button

@@ -278,8 +278,8 @@ En regardant tes séances récentes, voici mes observations :
       )}
 
       {/* Sticky header */}
-      <div className="sticky top-0 z-30 bg-violet-600">
-        <div className="max-w-3xl mx-auto px-4 md:px-6 pt-5 pb-4">
+      <div className="sticky top-3 z-30 px-3 md:px-4 pt-3">
+        <div className="max-w-3xl mx-auto bg-violet-600/85 backdrop-blur-xl rounded-2xl shadow-lg shadow-violet-900/20 px-4 md:px-5 pt-4 pb-4">
           <p className="text-xs font-medium text-white/60 mb-1">Entraîneur IA personnalisé</p>
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-3xl font-bold text-white tracking-tight font-[family-name:var(--font-barlow-condensed)]">Coach IA</h1>

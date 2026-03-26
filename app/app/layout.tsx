@@ -3,6 +3,11 @@ import { usePathname, useRouter } from "next/navigation"
 import { useRef, useEffect, useState } from "react"
 import AppSidebar from "@/components/AppSidebar"
 import { prefetchAll } from "@/lib/appCache"
+import HomePage from "./page"
+import ActivitiesPage from "./activities/page"
+import NutritionPage from "./nutrition/page"
+import ProgressPage from "./progress/page"
+import CoachPage from "./coach/page"
 
 const PAGE_ORDER = [
   "/app/progress",
@@ -10,6 +15,14 @@ const PAGE_ORDER = [
   "/app",
   "/app/coach",
   "/app/nutrition",
+]
+
+const MAIN_PAGES = [
+  { path: "/app/progress",   Component: ProgressPage },
+  { path: "/app/activities", Component: ActivitiesPage },
+  { path: "/app",            Component: HomePage },
+  { path: "/app/coach",      Component: CoachPage },
+  { path: "/app/nutrition",  Component: NutritionPage },
 ]
 
 function getPageIndex(pathname: string) {
@@ -27,6 +40,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const touchStartY = useRef<number | null>(null)
   const prevIndexRef = useRef(getPageIndex(pathname))
   const [animClass, setAnimClass] = useState("")
+
+  const isMainPage = PAGE_ORDER.includes(pathname)
 
   // Prefetch all pages' data in parallel on first mount
   useEffect(() => { prefetchAll() }, [])
@@ -74,10 +89,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       {/* Clip container — prevents slide animation from showing outside viewport */}
       <div className="flex-1 md:ml-52 overflow-hidden min-w-0 relative">
-        <div className={`h-full overflow-y-auto bg-gray-100 ${animClass}`}>
-          {children}
-          <div className="h-[calc(5rem+env(safe-area-inset-bottom))] md:hidden shrink-0" />
-        </div>
+        {/* Always-mounted main pages — show/hide with display */}
+        {MAIN_PAGES.map(({ path, Component }) => {
+          const isActive = pathname === path
+          return (
+            <div
+              key={path}
+              className={`absolute inset-0 overflow-y-auto bg-gray-100 ${isActive ? animClass : ""}`}
+              style={{ display: isActive ? "block" : "none" }}
+            >
+              <Component />
+              <div className="h-[calc(5rem+env(safe-area-inset-bottom))] md:hidden shrink-0" />
+            </div>
+          )
+        })}
+        {/* Sub-pages (detail pages) rendered as overlay */}
+        {!isMainPage && (
+          <div className="absolute inset-0 overflow-y-auto bg-gray-100">
+            {children}
+            <div className="h-[calc(5rem+env(safe-area-inset-bottom))] md:hidden shrink-0" />
+          </div>
+        )}
       </div>
     </div>
   )
