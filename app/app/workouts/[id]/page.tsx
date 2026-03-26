@@ -204,10 +204,16 @@ const CATEGORIES = [
   { key: "custom", label: "Perso ✦" },
 ]
 
-const DIFFICULTY_COLORS = {
-  débutant: "text-emerald-600 bg-emerald-50",
-  intermédiaire: "text-amber-600 bg-amber-50",
-  avancé: "text-red-600 bg-red-50",
+function difficultyStars(d: "débutant" | "intermédiaire" | "avancé"): string {
+  if (d === "débutant") return "★"
+  if (d === "intermédiaire") return "★★"
+  return "★★★"
+}
+
+const DIFFICULTY_STAR_COLORS = {
+  débutant: "text-emerald-500",
+  intermédiaire: "text-amber-500",
+  avancé: "text-red-500",
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -298,7 +304,7 @@ function SubcategoryAccordion({
                 </div>
               </button>
               <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${DIFFICULTY_COLORS[ex.difficulty]}`}>{ex.difficulty}</span>
+                <span className={`text-xs font-bold tracking-tight ${DIFFICULTY_STAR_COLORS[ex.difficulty]}`}>{difficultyStars(ex.difficulty)}</span>
                 <StarButton name={ex.name} favorites={favorites} onToggle={onToggleFavorite} />
               </div>
             </div>
@@ -564,7 +570,7 @@ function ExercisePicker({ onSelect, onClose }: {
                       <p className="text-sm font-semibold text-gray-900 truncate">{ex.name}</p>
                     </button>
                     <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${DIFFICULTY_COLORS[ex.difficulty]}`}>{ex.difficulty}</span>
+                      <span className={`text-xs font-bold tracking-tight ${DIFFICULTY_STAR_COLORS[ex.difficulty]}`}>{difficultyStars(ex.difficulty)}</span>
                       <StarButton name={ex.name} favorites={favorites} onToggle={toggleFavorite} />
                     </div>
                   </div>
@@ -604,7 +610,7 @@ function ExercisePicker({ onSelect, onClose }: {
                 </div>
               </button>
               <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${DIFFICULTY_COLORS[ex.difficulty]}`}>{ex.difficulty}</span>
+                <span className={`text-xs font-bold tracking-tight ${DIFFICULTY_STAR_COLORS[ex.difficulty]}`}>{difficultyStars(ex.difficulty)}</span>
                 <StarButton name={ex.name} favorites={favorites} onToggle={toggleFavorite} />
               </div>
             </div>
@@ -631,7 +637,8 @@ export default function WorkoutDetailPage() {
   const [editDate, setEditDate] = useState("")
   const [showPicker, setShowPicker] = useState(false)
   const [renamingExIdx, setRenamingExIdx] = useState<number | null>(null)
-  const [editMode, setEditMode] = useState(false)
+  const [editingExIdx, setEditingExIdx] = useState<number | null>(null)
+  const [showMetaEdit, setShowMetaEdit] = useState(false)
   const [plan, setPlan] = useState("free")
   const [upgradeMsg, setUpgradeMsg] = useState<string | null>(null)
   const originalExercises = useRef<ExerciseData[]>([])
@@ -671,22 +678,57 @@ export default function WorkoutDetailPage() {
       .catch(() => router.push("/app/activities"))
   }, [id, router])
 
-  function enterEditMode() {
+  function enterEditMode(exIdx: number) {
     originalExercises.current = JSON.parse(JSON.stringify(exercises))
     originalNotes.current = notes
     originalName.current = workout?.name ?? ""
     originalDate.current = workout?.date?.slice(0, 10) ?? ""
-    setEditName(workout?.name ?? "")
-    setEditDate(workout?.date?.slice(0, 10) ?? "")
-    setEditMode(true)
+    setEditingExIdx(exIdx)
   }
 
   function cancelEdit() {
     setExercises(originalExercises.current)
     setNotes(originalNotes.current)
-    setEditName(originalName.current)
-    setEditDate(originalDate.current)
-    setEditMode(false)
+    setEditingExIdx(null)
+  }
+
+  function openMetaEdit() {
+    setEditName(workout?.name ?? "")
+    setEditDate(workout?.date?.slice(0, 10) ?? "")
+    setShowMetaEdit(true)
+  }
+
+  async function handleSaveMeta() {
+    if (!workout) return
+    setSaving(true)
+    try {
+      await authFetch(`/api/workouts/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editName.trim() || workout.name,
+          date: editDate || workout.date,
+          notes,
+          exercises: exercises.filter(ex => ex.name.trim()).map(ex => ({
+            name: ex.name.trim(),
+            category: "strength",
+            sets: ex.sets.map(s => ({
+              reps: s.reps === "" ? null : Number(s.reps),
+              weight: s.weight === "" ? null : Number(s.weight),
+              rpe: s.rpe === "" ? null : Number(s.rpe),
+            })),
+          })),
+        }),
+      })
+      setWorkout({
+        ...workout,
+        name: editName.trim() || workout.name,
+        date: editDate ? new Date(editDate).toISOString() : workout.date,
+      })
+      setShowMetaEdit(false)
+    } finally {
+      setSaving(false)
+    }
   }
 
   function handleSelectExercise(name: string) {
@@ -701,7 +743,11 @@ export default function WorkoutDetailPage() {
       setUpgradeMsg("Vous avez atteint la limite de 3 exercices par séance avec le plan Gratuit. Passez Pro pour des exercices illimités.")
       return
     }
-    setExercises(prev => [...prev, { name, sets: [{ reps: "", weight: "", rpe: "" }] }])
+    setExercises(prev => {
+      const next: ExerciseData[] = [...prev, { name, sets: [{ reps: "" as const, weight: "" as const, rpe: "" as const }] }]
+      setEditingExIdx(next.length - 1)
+      return next
+    })
     setShowPicker(false)
   }
 
@@ -766,7 +812,7 @@ export default function WorkoutDetailPage() {
           date: editDate ? new Date(editDate).toISOString() : workout.date,
         })
       }
-      setEditMode(false)
+      setEditingExIdx(null)
     } finally {
       setSaving(false)
     }
@@ -787,273 +833,254 @@ export default function WorkoutDetailPage() {
         />
       )}
 
-      {/* Sticky header — blue, always static */}
-      <div className="sticky top-0 z-40 bg-blue-600 px-4 pt-4 pb-4">
-        <div className="flex items-start gap-3">
-          <button
-            onClick={() => router.push("/app/activities")}
-            className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 mt-0.5 hover:bg-white/30 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-semibold text-white/60 mb-0.5">{formatDate(workout.date)}</p>
-            <h1 className="font-[family-name:var(--font-barlow-condensed)] text-2xl font-bold text-white tracking-wide leading-tight truncate">{workout.name}</h1>
+      {/* Meta edit bottom sheet */}
+      {showMetaEdit && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setShowMetaEdit(false)}>
+          <div className="bg-white rounded-t-3xl w-full px-5 pt-5 pb-8" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
+            <p className="text-sm font-extrabold text-gray-900 mb-4">Modifier la séance</p>
+            <div className="flex flex-col gap-3 mb-5">
+              <div>
+                <label className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block mb-1.5">Titre</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  placeholder="Ex: Push — Pectoraux"
+                  autoFocus
+                  className="w-full bg-blue-50/50 border border-blue-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 placeholder-gray-300 outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block mb-1.5">Date</label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={e => setEditDate(e.target.value)}
+                  className="w-full bg-blue-50/50 border border-blue-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowMetaEdit(false)}
+                className="flex-1 py-3 border border-gray-200 rounded-2xl text-sm font-bold text-gray-600"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleSaveMeta}
+                disabled={saving}
+                className="flex-1 py-3 bg-blue-600 rounded-2xl text-sm font-bold text-white disabled:opacity-50"
+              >
+                {saving ? "..." : "Sauvegarder"}
+              </button>
+            </div>
           </div>
-          {!editMode && (
+        </div>
+      )}
+
+      {/* Floating header */}
+      <div className="sticky top-3 z-40 px-3 md:px-4 pt-3">
+        <div className="bg-blue-600/85 backdrop-blur-xl rounded-2xl shadow-lg shadow-blue-900/20 px-4 pt-3.5 pb-3.5">
+          <div className="flex items-center gap-3">
             <button
-              onClick={enterEditMode}
-              className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 mt-0.5 hover:bg-white/30 transition-colors"
+              onClick={() => editingExIdx !== null ? cancelEdit() : router.push("/app/activities")}
+              className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 hover:bg-white/30 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-          )}
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-semibold text-white/60 leading-none mb-0.5">{formatDate(workout.date)}</p>
+              <h1 className="font-[family-name:var(--font-barlow-condensed)] text-2xl font-bold text-white tracking-wide leading-tight truncate">{workout.name}</h1>
+            </div>
+            {editingExIdx === null && (
+              <button
+                onClick={openMetaEdit}
+                className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 hover:bg-white/30 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8">
 
-        {/* ── READ MODE ── */}
-        {!editMode && (
-          <div className="flex flex-col gap-3 py-4 px-4">
-            {exercises.length === 0 ? (
-              <div className="text-center py-16">
-                <p className="text-4xl mb-3">🏋️</p>
-                <p className="text-gray-500 font-semibold mb-1">Aucun exercice</p>
-                <p className="text-gray-400 text-sm">Appuyez sur le crayon pour modifier</p>
-              </div>
-            ) : exercises.map((ex, exIdx) => {
-              const info = EXERCISE_DB.find(e => e.name === ex.name)
-              const totalVolume = ex.sets.reduce((sum, s) => {
-                const r = s.reps !== "" ? Number(s.reps) : 0
-                const w = s.weight !== "" ? Number(s.weight) : 0
-                return sum + r * w
-              }, 0)
+        <div className="flex flex-col gap-2.5 pt-5 px-3">
+          {exercises.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-4xl mb-3">🏋️</p>
+              <p className="text-gray-500 font-semibold mb-1">Aucun exercice</p>
+              <p className="text-gray-400 text-sm">Appuyez sur + pour ajouter</p>
+            </div>
+          )}
+
+          {exercises.map((ex, exIdx) => {
+            const isEditing = editingExIdx === exIdx
+            const info = EXERCISE_DB.find(e => e.name === ex.name)
+
+            if (isEditing) {
+              /* ── EDIT CARD ── */
               return (
-                <div key={exIdx} className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-                  {/* Exercise header */}
-                  <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-2">
+                <div key={exIdx} className="bg-white rounded-2xl overflow-hidden border border-blue-100 border-l-4 border-l-blue-500">
+                  <div className="flex items-center gap-2 px-3 pt-3 pb-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-extrabold text-gray-900">{ex.name}</p>
+                      <p className="text-sm font-extrabold text-gray-900 truncate">{ex.name}</p>
                       {info && (
-                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <div className="flex items-center gap-1.5 mt-0.5">
                           <span className="text-[10px] text-violet-600 font-semibold">{info.primary_muscle}</span>
                           <span className="text-gray-300">·</span>
                           <span className="text-[10px] text-gray-400">{info.equipment}</span>
                           <span className="text-gray-300">·</span>
-                          <span className={`text-[10px] font-bold ${DIFFICULTY_COLORS[info.difficulty].split(" ")[0]}`}>{info.difficulty}</span>
+                          <span className={`text-[10px] font-bold tracking-tight ${DIFFICULTY_STAR_COLORS[info.difficulty]}`}>{difficultyStars(info.difficulty)}</span>
                         </div>
                       )}
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-extrabold text-blue-600">{ex.sets.length}<span className="text-xs font-medium text-gray-400 ml-0.5">séries</span></p>
-                      {totalVolume > 0 && <p className="text-[11px] text-gray-400 font-medium">{totalVolume.toLocaleString("fr")} kg vol.</p>}
-                    </div>
+                    <button onClick={() => startRenameExercise(exIdx)}
+                      className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-400 hover:text-blue-600 hover:bg-blue-100 transition-colors shrink-0">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button onClick={() => removeExercise(exIdx)}
+                      className="w-7 h-7 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center text-red-400 hover:bg-red-100 transition-colors shrink-0">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
-
-                  {/* Sets — visual rows, aligned columns */}
-                  <div className="px-4 pb-4">
-                    {ex.sets.map((s, si) => (
-                      <div key={si} className="flex items-center gap-3 py-2 border-t border-gray-100 first:border-t-0">
-                        <span className="w-5 h-5 rounded-full bg-gray-100 text-[10px] font-bold text-gray-400 flex items-center justify-center shrink-0">{si + 1}</span>
-                        <div className="flex items-center gap-0 flex-1">
-                          <span className="inline-block w-[5rem] text-sm font-bold text-gray-900 tabular-nums shrink-0">
-                            {s.reps !== "" ? `${s.reps} reps` : "—"}
-                          </span>
-                          <span className="inline-block w-[4.5rem] text-sm font-bold text-gray-900 tabular-nums shrink-0">
-                            {s.weight !== "" ? `${s.weight} kg` : ""}
-                          </span>
-                          {s.rpe !== "" && (
-                            <span className="text-[11px] font-semibold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">RPE {s.rpe}</span>
-                          )}
-                        </div>
+                  <div className="grid grid-cols-12 gap-1 px-3 pb-1">
+                    <p className="col-span-1 text-[10px] text-gray-400 font-bold text-center">#</p>
+                    <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Reps</p>
+                    <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Kg</p>
+                    <p className="col-span-2 text-[10px] text-gray-400 font-bold text-center">RPE</p>
+                    <p className="col-span-1" />
+                  </div>
+                  <div className="px-3 flex flex-col gap-1 pb-2">
+                    {ex.sets.map((s, setIdx) => (
+                      <div key={setIdx} className="grid grid-cols-12 gap-1 items-center">
+                        <p className="col-span-1 text-xs text-gray-400 font-bold text-center">{setIdx + 1}</p>
+                        <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0}
+                          className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
+                        <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5}
+                          className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
+                        <input type="number" inputMode="decimal" value={s.rpe} onChange={e => updateSet(exIdx, setIdx, "rpe", e.target.value)} placeholder="8" min={1} max={10} step={0.5}
+                          className="col-span-2 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
+                        <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1}
+                          className="col-span-1 flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors disabled:opacity-20">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                          </svg>
+                        </button>
                       </div>
                     ))}
                   </div>
+                  <button onClick={() => addSet(exIdx)}
+                    className="w-full py-2 border-t border-blue-100 text-xs font-bold text-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-colors">
+                    + Série
+                  </button>
                 </div>
               )
-            })}
+            }
 
-            {notes ? (
-              <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                <p className="text-xs font-bold text-gray-400 block mb-2">Notes de séance</p>
-                <p className="text-sm text-gray-600 leading-relaxed">{notes}</p>
-              </div>
-            ) : null}
-
-            {plan === "free" && exercises.length >= 3 ? (
-              <div className="py-3 border border-dashed border-gray-300 rounded-2xl flex items-center justify-between px-4">
-                <span className="text-xs font-bold text-gray-400">Limite 3 exos — plan Gratuit</span>
-                <a href="/pricing" className="text-xs font-bold text-violet-600 hover:text-violet-500">Passer Pro →</a>
-              </div>
-            ) : (
-              <button
-                onClick={() => { enterEditMode(); setShowPicker(true) }}
-                className="py-4 border-2 border-dashed border-gray-300 rounded-2xl text-sm font-bold text-gray-400 hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Ajouter un exercice {plan === "free" ? `(${exercises.length}/3)` : ""}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* ── EDIT MODE ── */}
-        {editMode && (
-          <div className="flex flex-col gap-3 py-4 px-4">
-
-            {/* Titre + Date */}
-            <div className="bg-white border border-blue-100 rounded-2xl overflow-hidden animate-fade-slide-up">
-              <div className="px-4 pt-4 pb-3 flex flex-col gap-3">
-                <div>
-                  <label className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block mb-1.5">
-                    Titre de la séance
-                  </label>
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={e => setEditName(e.target.value)}
-                    placeholder="Ex: Push — Pectoraux"
-                    className="w-full bg-blue-50/50 border border-blue-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 placeholder-gray-300 outline-none focus:border-blue-500 focus:bg-white transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block mb-1.5">
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    value={editDate}
-                    onChange={e => setEditDate(e.target.value)}
-                    className="w-full bg-blue-50/50 border border-blue-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:bg-white transition-colors"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {exercises.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-4xl mb-3">🏋️</p>
-                <p className="text-gray-500 font-semibold mb-1">Aucun exercice</p>
-                <p className="text-gray-400 text-sm">Appuyez sur le bouton ci-dessous pour commencer</p>
-              </div>
-            )}
-
-            {exercises.map((ex, exIdx) => (
-              <div key={exIdx} className="bg-white rounded-2xl overflow-hidden border border-blue-100 border-l-4 border-l-blue-500 transition-all duration-200">
-                {/* Exercise header */}
-                <div className="flex items-center gap-2 px-4 pt-4 pb-3">
+            /* ── READ CARD ── */
+            const totalVolume = ex.sets.reduce((sum, s) => {
+              const r = s.reps !== "" ? Number(s.reps) : 0
+              const w = s.weight !== "" ? Number(s.weight) : 0
+              return sum + r * w
+            }, 0)
+            return (
+              <div key={exIdx} className={`bg-white border rounded-2xl overflow-hidden transition-opacity ${editingExIdx !== null ? "opacity-40" : "border-gray-200"}`}>
+                <div className="px-3 pt-3 pb-2 flex items-center gap-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-extrabold text-gray-900 truncate">{ex.name}</p>
-                    {(() => {
-                      const info = EXERCISE_DB.find(e => e.name === ex.name)
-                      return info ? (
-                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                          <span className="text-[10px] text-violet-600 font-semibold">{info.primary_muscle}</span>
-                          <span className="text-gray-300">·</span>
-                          <span className="text-[10px] text-gray-400">{info.equipment}</span>
-                        </div>
-                      ) : null
-                    })()}
+                    {info && (
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] text-violet-600 font-semibold">{info.primary_muscle}</span>
+                        <span className="text-gray-300">·</span>
+                        <span className="text-[10px] text-gray-400">{info.equipment}</span>
+                        <span className="text-gray-300">·</span>
+                        <span className={`text-[10px] font-bold tracking-tight ${DIFFICULTY_STAR_COLORS[info.difficulty]}`}>{difficultyStars(info.difficulty)}</span>
+                      </div>
+                    )}
                   </div>
-                  <button
-                    onClick={() => startRenameExercise(exIdx)}
-                    className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-400 hover:text-blue-600 hover:bg-blue-100 transition-colors shrink-0"
-                    title="Renommer l'exercice"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => removeExercise(exIdx)}
-                    className="w-8 h-8 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-400 hover:bg-red-100 transition-colors shrink-0"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Sets header */}
-                <div className="grid grid-cols-12 gap-1 px-4 pb-1">
-                  <p className="col-span-1 text-[10px] text-gray-400 font-bold text-center">#</p>
-                  <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Reps</p>
-                  <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Kg</p>
-                  <p className="col-span-2 text-[10px] text-gray-400 font-bold text-center">RPE</p>
-                  <p className="col-span-1" />
-                </div>
-
-                {/* Sets inputs */}
-                <div className="px-4 flex flex-col gap-1.5 pb-3">
-                  {ex.sets.map((s, setIdx) => (
-                    <div key={setIdx} className="grid grid-cols-12 gap-1 items-center">
-                      <p className="col-span-1 text-xs text-gray-400 font-bold text-center">{setIdx + 1}</p>
-                      <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0}
-                        className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-2 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
-                      <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5}
-                        className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-2 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
-                      <input type="number" inputMode="decimal" value={s.rpe} onChange={e => updateSet(exIdx, setIdx, "rpe", e.target.value)} placeholder="8" min={1} max={10} step={0.5}
-                        className="col-span-2 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-2 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
-                      <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1}
-                        className="col-span-1 flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors disabled:opacity-20">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="text-right">
+                      <p className="text-sm font-extrabold text-blue-600 leading-none">{ex.sets.length}<span className="text-[10px] font-medium text-gray-400 ml-0.5">sér.</span></p>
+                      {totalVolume > 0 && <p className="text-[10px] text-gray-400 font-medium mt-0.5">{totalVolume.toLocaleString("fr")} kg</p>}
+                    </div>
+                    {editingExIdx === null && (
+                      <button onClick={() => enterEditMode(exIdx)}
+                        className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                       </button>
+                    )}
+                  </div>
+                </div>
+                <div className="px-3 pb-3">
+                  {ex.sets.map((s, si) => (
+                    <div key={si} className="flex items-center gap-2.5 py-1.5 border-t border-gray-100 first:border-t-0">
+                      <span className="w-4 h-4 rounded-full bg-gray-100 text-[9px] font-bold text-gray-400 flex items-center justify-center shrink-0">{si + 1}</span>
+                      <div className="flex items-center gap-0 flex-1">
+                        <span className="inline-block w-[4.5rem] text-xs font-bold text-gray-900 tabular-nums shrink-0">
+                          {s.reps !== "" ? `${s.reps} reps` : "—"}
+                        </span>
+                        <span className="inline-block w-[4rem] text-xs font-bold text-gray-900 tabular-nums shrink-0">
+                          {s.weight !== "" ? `${s.weight} kg` : ""}
+                        </span>
+                        {s.rpe !== "" && (
+                          <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">RPE {s.rpe}</span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
-
-                <button onClick={() => addSet(exIdx)}
-                  className="w-full py-2.5 border-t border-blue-100 text-xs font-bold text-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-colors">
-                  + Ajouter une série
-                </button>
               </div>
-            ))}
+            )
+          })}
 
-            {/* Add exercise */}
-            {plan === "free" && exercises.length >= 3 ? (
+          {/* Notes (read only) */}
+          {editingExIdx === null && notes ? (
+            <div className="bg-white border border-gray-200 rounded-2xl p-3">
+              <p className="text-[10px] font-bold text-gray-400 block mb-1.5">Notes</p>
+              <p className="text-sm text-gray-600 leading-relaxed">{notes}</p>
+            </div>
+          ) : null}
+
+          {/* Add exercise */}
+          {editingExIdx === null ? (
+            plan === "free" && exercises.length >= 3 ? (
               <div className="py-3 border border-dashed border-gray-300 rounded-2xl flex items-center justify-between px-4">
                 <span className="text-xs font-bold text-gray-400">Limite 3 exos — plan Gratuit</span>
                 <a href="/pricing" className="text-xs font-bold text-violet-600 hover:text-violet-500">Passer Pro →</a>
               </div>
             ) : (
               <button
-                onClick={() => setShowPicker(true)}
-                className="py-4 border-2 border-dashed border-blue-200 rounded-2xl text-sm font-bold text-blue-400 hover:border-blue-500 hover:text-blue-600 transition-colors flex items-center justify-center gap-2"
+                onClick={() => { originalExercises.current = JSON.parse(JSON.stringify(exercises)); setShowPicker(true) }}
+                className="py-3.5 border-2 border-dashed border-gray-300 rounded-2xl text-sm font-bold text-gray-400 hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
                 Ajouter un exercice {plan === "free" ? `(${exercises.length}/3)` : ""}
               </button>
-            )}
+            )
+          ) : null}
 
-            {/* Notes */}
-            <div className="bg-white border border-blue-100 rounded-2xl p-4">
-              <label className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block mb-2">Notes de séance</label>
-              <textarea
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                placeholder="Ressenti général, observations, objectifs pour la prochaine fois..."
-                rows={3}
-                className="w-full bg-transparent text-sm text-gray-700 placeholder-gray-300 font-medium outline-none resize-none leading-relaxed"
-              />
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Floating bar in edit mode */}
-      {editMode && (
+      {editingExIdx !== null && (
         <div
           className="fixed left-0 right-0 flex justify-center gap-3 z-40 pointer-events-none"
           style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
