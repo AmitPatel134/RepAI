@@ -82,7 +82,8 @@ export async function PUT(request: NextRequest) {
     })
 
     return Response.json({ ok: true, profileComplete: user.profileComplete })
-  } catch {
-    return Response.json({ error: "Database error" }, { status: 500 })
+  } catch (e) {
+    console.error("[profile PUT]", e)
+    return Response.json({ error: "Database error", detail: String(e) }, { status: 500 })
   }
 }

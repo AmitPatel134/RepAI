@@ -1,10 +1,11 @@
 "use client"
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { authFetch } from "@/lib/authFetch"
-import { supabase } from "@/lib/supabase"
 import LoadingScreen from "@/components/LoadingScreen"
+import { invalidateCache } from "@/lib/appCache"
 import UpgradeModal from "@/components/UpgradeModal"
+import { supabase } from "@/lib/supabase"
 
 // ─── Exercise Database ────────────────────────────────────────────────────────
 
@@ -631,31 +632,27 @@ export default function WorkoutDetailPage() {
   const [ready, setReady] = useState(false)
   const [workout, setWorkout] = useState<WorkoutDetail | null>(null)
   const [exercises, setExercises] = useState<ExerciseData[]>([])
-  const [saving, setSaving] = useState(false)
   const [notes, setNotes] = useState("")
+  const [editMode, setEditMode] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [editName, setEditName] = useState("")
   const [editDate, setEditDate] = useState("")
   const [showPicker, setShowPicker] = useState(false)
   const [renamingExIdx, setRenamingExIdx] = useState<number | null>(null)
-  const [editingExIdx, setEditingExIdx] = useState<number | null>(null)
-  const [showMetaEdit, setShowMetaEdit] = useState(false)
-  const [infoTip, setInfoTip] = useState<number | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [plan, setPlan] = useState("free")
   const [upgradeMsg, setUpgradeMsg] = useState<string | null>(null)
   const originalExercises = useRef<ExerciseData[]>([])
   const originalNotes = useRef("")
-  const originalName = useRef("")
-  const originalDate = useRef("")
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user.email) {
-        authFetch(`/api/plan`)
-          .then(r => r.json())
-          .then(d => setPlan(d.plan ?? "free"))
-          .catch(() => {})
+        authFetch("/api/plan").then(r => r.json()).then(d => setPlan(d.plan ?? "free")).catch(() => {})
       }
     })
+
     authFetch(`/api/workouts/${id}`)
       .then(r => r.json())
       .then(d => {
@@ -683,27 +680,68 @@ export default function WorkoutDetailPage() {
       .catch(() => router.push("/app/activities"))
   }, [id, router])
 
-  function enterEditMode(exIdx: number) {
+  function enterEditMode() {
     originalExercises.current = JSON.parse(JSON.stringify(exercises))
     originalNotes.current = notes
-    originalName.current = workout?.name ?? ""
-    originalDate.current = workout?.date?.slice(0, 10) ?? ""
-    setEditingExIdx(exIdx)
+    setEditName(workout?.name ?? "")
+    setEditDate(workout?.date?.slice(0, 10) ?? "")
+    setEditMode(true)
   }
 
   function cancelEdit() {
     setExercises(originalExercises.current)
     setNotes(originalNotes.current)
-    setEditingExIdx(null)
+    setEditMode(false)
   }
 
-  function openMetaEdit() {
-    setEditName(workout?.name ?? "")
-    setEditDate(workout?.date?.slice(0, 10) ?? "")
-    setShowMetaEdit(true)
+  function handleSelectExercise(name: string) {
+    if (renamingExIdx !== null) {
+      setExercises(prev => prev.map((ex, i) => i === renamingExIdx ? { ...ex, name } : ex))
+      setRenamingExIdx(null)
+      setShowPicker(false)
+      return
+    }
+    if (plan === "free" && exercises.length >= 3) {
+      setShowPicker(false)
+      setUpgradeMsg("Limite de 3 exercices avec le plan Gratuit. Passez Pro pour des exercices illimités.")
+      return
+    }
+    setExercises(prev => [...prev, { name, isUnilateral: false, exNotes: "", sets: [{ reps: "", weight: "", rpe: "", repsRight: "", weightRight: "" }] }])
+    setShowPicker(false)
+    if (!editMode) setEditMode(true)
   }
 
-  async function handleSaveMeta() {
+  function removeExercise(i: number) {
+    setExercises(prev => prev.filter((_, idx) => idx !== i))
+  }
+
+  function addSet(exIdx: number) {
+    setExercises(prev => prev.map((ex, i) =>
+      i === exIdx ? { ...ex, sets: [...ex.sets, { reps: "", weight: "", rpe: "", repsRight: "", weightRight: "" }] } : ex
+    ))
+  }
+
+  function removeSet(exIdx: number, setIdx: number) {
+    setExercises(prev => prev.map((ex, i) =>
+      i === exIdx ? { ...ex, sets: ex.sets.filter((_, j) => j !== setIdx) } : ex
+    ))
+  }
+
+  function updateSet(exIdx: number, setIdx: number, field: "reps" | "weight" | "rpe" | "repsRight" | "weightRight", value: string) {
+    setExercises(prev => prev.map((ex, i) =>
+      i === exIdx ? { ...ex, sets: ex.sets.map((s, j) => j === setIdx ? { ...s, [field]: value === "" ? "" : Number(value) } : s) } : ex
+    ))
+  }
+
+  function toggleUnilateral(exIdx: number) {
+    setExercises(prev => prev.map((ex, i) => i === exIdx ? { ...ex, isUnilateral: !ex.isUnilateral } : ex))
+  }
+
+  function updateExNotes(exIdx: number, value: string) {
+    setExercises(prev => prev.map((ex, i) => i === exIdx ? { ...ex, exNotes: value } : ex))
+  }
+
+  const handleSave = useCallback(async () => {
     if (!workout) return
     setSaving(true)
     try {
@@ -729,119 +767,24 @@ export default function WorkoutDetailPage() {
           })),
         }),
       })
-      setWorkout({
-        ...workout,
-        name: editName.trim() || workout.name,
-        date: editDate ? new Date(editDate).toISOString() : workout.date,
-      })
-      setShowMetaEdit(false)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  function handleSelectExercise(name: string) {
-    if (renamingExIdx !== null) {
-      setExercises(prev => prev.map((ex, i) => i === renamingExIdx ? { ...ex, name } : ex))
-      setRenamingExIdx(null)
-      setShowPicker(false)
-      return
-    }
-    if (plan === "free" && exercises.length >= 3) {
-      setShowPicker(false)
-      setUpgradeMsg("Vous avez atteint la limite de 3 exercices par séance avec le plan Gratuit. Passez Pro pour des exercices illimités.")
-      return
-    }
-    setExercises(prev => {
-      const next: ExerciseData[] = [...prev, { name, isUnilateral: false, exNotes: "", sets: [{ reps: "" as const, weight: "" as const, rpe: "" as const, repsRight: "" as const, weightRight: "" as const }] }]
-      setEditingExIdx(next.length - 1)
-      return next
-    })
-    setShowPicker(false)
-  }
-
-  function startRenameExercise(idx: number) {
-    setRenamingExIdx(idx)
-    setShowPicker(true)
-  }
-
-  function removeExercise(i: number) {
-    setExercises(prev => prev.filter((_, idx) => idx !== i))
-  }
-
-  function addSet(exIdx: number) {
-    setExercises(prev => prev.map((ex, i) =>
-      i === exIdx ? { ...ex, sets: [...ex.sets, { reps: "", weight: "", rpe: "", repsRight: "", weightRight: "" }] } : ex
-    ))
-  }
-
-  function toggleUnilateral(exIdx: number) {
-    setExercises(prev => prev.map((ex, i) =>
-      i === exIdx ? { ...ex, isUnilateral: !ex.isUnilateral } : ex
-    ))
-  }
-
-  function updateExNotes(exIdx: number, value: string) {
-    setExercises(prev => prev.map((ex, i) =>
-      i === exIdx ? { ...ex, exNotes: value } : ex
-    ))
-  }
-
-  function removeSet(exIdx: number, setIdx: number) {
-    setExercises(prev => prev.map((ex, i) =>
-      i === exIdx ? { ...ex, sets: ex.sets.filter((_, j) => j !== setIdx) } : ex
-    ))
-  }
-
-  function updateSet(exIdx: number, setIdx: number, field: "reps" | "weight" | "rpe" | "repsRight" | "weightRight", value: string) {
-    setExercises(prev => prev.map((ex, i) =>
-      i === exIdx ? {
-        ...ex,
-        sets: ex.sets.map((s, j) =>
-          j === setIdx ? { ...s, [field]: value === "" ? "" : Number(value) } : s
-        ),
-      } : ex
-    ))
-  }
-
-  const handleSave = useCallback(async () => {
-    if (!workout) return
-    setSaving(true)
-    try {
-      await authFetch(`/api/workouts/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: editName.trim() || workout?.name,
-          date: editDate || workout?.date,
-          notes,
-          exercises: exercises.filter(ex => ex.name.trim()).map(ex => ({
-            name: ex.name.trim(),
-            category: "strength",
-            isUnilateral: ex.isUnilateral,
-            notes: ex.exNotes || null,
-            sets: ex.sets.map(s => ({
-              reps: s.reps === "" ? null : Number(s.reps),
-              weight: s.weight === "" ? null : Number(s.weight),
-              rpe: s.rpe === "" ? null : Number(s.rpe),
-              repsRight: s.repsRight === "" ? null : Number(s.repsRight),
-              weightRight: s.weightRight === "" ? null : Number(s.weightRight),
-            })),
-          })),
-        }),
-      })
-      if (workout) {
-        setWorkout({
-          ...workout,
-          name: editName.trim() || workout.name,
-          date: editDate ? new Date(editDate).toISOString() : workout.date,
-        })
-      }
-      setEditingExIdx(null)
+      setWorkout(prev => prev ? { ...prev, name: editName.trim() || prev.name, date: editDate ? new Date(editDate).toISOString() : prev.date } : prev)
+      invalidateCache("/api/workouts")
+      setEditMode(false)
     } finally {
       setSaving(false)
     }
   }, [workout, id, notes, exercises, editName, editDate])
+
+  async function handleDelete() {
+    setDeleting(true)
+    try {
+      await authFetch(`/api/workouts/${id}`, { method: "DELETE" })
+      invalidateCache("/api/workouts")
+      router.push("/app/activities")
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   if (!ready) return <LoadingScreen color="#2563eb" />
   if (!workout) return null
@@ -852,53 +795,19 @@ export default function WorkoutDetailPage() {
       {upgradeMsg && <UpgradeModal message={upgradeMsg} onClose={() => setUpgradeMsg(null)} />}
 
       {showPicker && (
-        <ExercisePicker
-          onSelect={handleSelectExercise}
-          onClose={() => setShowPicker(false)}
-        />
+        <ExercisePicker onSelect={handleSelectExercise} onClose={() => setShowPicker(false)} />
       )}
 
-      {/* Meta edit bottom sheet */}
-      {showMetaEdit && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setShowMetaEdit(false)}>
-          <div className="bg-white rounded-t-3xl w-full px-5 pt-5 pb-8" onClick={e => e.stopPropagation()}>
-            <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-5" />
-            <p className="text-sm font-extrabold text-gray-900 mb-4">Modifier la séance</p>
-            <div className="flex flex-col gap-3 mb-5">
-              <div>
-                <label className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block mb-1.5">Titre</label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  placeholder="Ex: Push — Pectoraux"
-                  autoFocus
-                  className="w-full bg-blue-50/50 border border-blue-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 placeholder-gray-300 outline-none focus:border-blue-500 focus:bg-white transition-colors"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-blue-400 uppercase tracking-wider block mb-1.5">Date</label>
-                <input
-                  type="date"
-                  value={editDate}
-                  onChange={e => setEditDate(e.target.value)}
-                  className="w-full bg-blue-50/50 border border-blue-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-500 focus:bg-white transition-colors"
-                />
-              </div>
-            </div>
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm && (
+        <div data-modal="" className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="modal-enter bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <p className="text-base font-extrabold text-gray-900 mb-2 text-center">Supprimer la séance ?</p>
+            <p className="text-sm text-gray-400 text-center mb-6">Cette action est irréversible.</p>
             <div className="flex gap-3">
-              <button
-                onClick={() => setShowMetaEdit(false)}
-                className="flex-1 py-3 border border-gray-200 rounded-2xl text-sm font-bold text-gray-600"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleSaveMeta}
-                disabled={saving}
-                className="flex-1 py-3 bg-blue-600 rounded-2xl text-sm font-bold text-white disabled:opacity-50"
-              >
-                {saving ? "..." : "Sauvegarder"}
+              <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-3 border border-gray-200 rounded-2xl text-sm font-bold text-gray-600">Annuler</button>
+              <button onClick={handleDelete} disabled={deleting} className="flex-1 py-3 bg-red-500 rounded-2xl text-sm font-bold text-white disabled:opacity-50">
+                {deleting ? "..." : "Confirmer"}
               </button>
             </div>
           </div>
@@ -908,35 +817,61 @@ export default function WorkoutDetailPage() {
       {/* Floating header */}
       <div className="sticky top-3 z-40 px-3 md:px-4 pt-3">
         <div className="bg-blue-600/85 backdrop-blur-xl rounded-2xl shadow-lg shadow-blue-900/20 px-4 pt-3.5 pb-3.5">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => editingExIdx !== null ? cancelEdit() : router.push("/app/activities")}
-              className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 hover:bg-white/30 transition-colors"
-            >
+          <div className="flex items-center gap-2">
+            <button onClick={() => router.push("/app/activities")} className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 hover:bg-white/30 transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-semibold text-white/60 leading-none mb-0.5">{formatDate(workout.date)}</p>
-              <h1 className="font-[family-name:var(--font-barlow-condensed)] text-2xl font-bold text-white tracking-wide leading-tight truncate">{workout.name}</h1>
+              {editMode ? (
+                <div className="flex flex-col gap-1">
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    className="w-full bg-white/20 text-white font-bold text-base rounded-xl px-2 py-1 outline-none placeholder-white/50 border border-white/20"
+                    placeholder="Titre de la séance"
+                  />
+                  <input
+                    type="date"
+                    value={editDate}
+                    onChange={e => setEditDate(e.target.value)}
+                    className="w-full bg-white/20 text-white/80 text-xs rounded-xl px-2 py-1 outline-none border border-white/20"
+                  />
+                </div>
+              ) : (
+                <>
+                  <p className="text-[11px] font-semibold text-white/60 leading-none mb-0.5">{formatDate(workout.date)}</p>
+                  <h1 className="font-[family-name:var(--font-barlow-condensed)] text-2xl font-bold text-white tracking-wide leading-tight truncate">{workout.name}</h1>
+                </>
+              )}
             </div>
-            {editingExIdx === null && (
-              <button
-                onClick={openMetaEdit}
-                className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 hover:bg-white/30 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
+            {!editMode && (
+              <>
+                <button onClick={() => setShowDeleteConfirm(true)} className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 hover:bg-red-500/60 transition-colors">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+                <button onClick={() => { originalExercises.current = JSON.parse(JSON.stringify(exercises)); setShowPicker(true) }} className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 hover:bg-white/30 transition-colors">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+                <button onClick={enterEditMode} className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 hover:bg-white/30 transition-colors">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+              </>
             )}
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8">
+      <div className={`transition-[padding] duration-300 md:pb-8 ${editMode ? "pb-[calc(12rem+env(safe-area-inset-bottom))]" : "pb-[calc(6rem+env(safe-area-inset-bottom))]"}`}>
 
         <div className="flex flex-col gap-2.5 pt-5 px-3">
           {exercises.length === 0 && (
@@ -948,147 +883,100 @@ export default function WorkoutDetailPage() {
           )}
 
           {exercises.map((ex, exIdx) => {
-            const isEditing = editingExIdx === exIdx
             const info = EXERCISE_DB.find(e => e.name === ex.name)
-
-            if (isEditing) {
-              /* ── EDIT CARD ── */
-              return (
-                <div key={exIdx} className="bg-white rounded-2xl overflow-hidden border border-blue-100 border-l-4 border-l-blue-500">
-                  {/* Header */}
-                  <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-extrabold text-gray-900 truncate">{ex.name}</p>
-                      {info && (
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[10px] text-violet-600 font-semibold">{info.primary_muscle}</span>
-                          <span className="text-gray-300">·</span>
-                          <span className="text-[10px] text-gray-400">{info.equipment}</span>
-                          <span className="text-gray-300">·</span>
-                          <span className={`text-[10px] font-bold tracking-tight ${DIFFICULTY_STAR_COLORS[info.difficulty]}`}>{difficultyStars(info.difficulty)}</span>
-                        </div>
-                      )}
-                    </div>
-                    <button onClick={() => startRenameExercise(exIdx)}
-                      className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-400 hover:text-blue-600 hover:bg-blue-100 transition-colors shrink-0">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button onClick={() => removeExercise(exIdx)}
-                      className="w-7 h-7 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center text-red-400 hover:bg-red-100 transition-colors shrink-0">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  {/* Unilatéral toggle + note */}
-                  <div className="px-3 pb-2 flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => toggleUnilateral(exIdx)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors ${ex.isUnilateral ? "bg-violet-50 border-violet-300 text-violet-600" : "bg-gray-50 border-gray-200 text-gray-400 hover:border-gray-300"}`}>
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
-                        </svg>
-                        Unilatéral
-                        {ex.isUnilateral && <span className="ml-0.5 text-violet-400">✓</span>}
-                      </button>
-                      {ex.isUnilateral && (
-                        <span className="text-[9px] text-violet-500 font-semibold">Poids par bras</span>
-                      )}
-                    </div>
-                    <textarea
-                      value={ex.exNotes}
-                      onChange={e => updateExNotes(exIdx, e.target.value)}
-                      placeholder="Note sur l'exercice (optionnel)..."
-                      rows={1}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 placeholder-gray-300 outline-none resize-none focus:border-blue-300 transition-colors"
-                    />
-                  </div>
-
-                  {/* Sets table */}
-                  {ex.isUnilateral ? (
-                    <>
-                      <div className="px-3 pb-1 flex items-center gap-1">
-                        <span className="w-5 shrink-0" />
-                        <span className="flex-1 text-[9px] text-violet-500 font-bold text-center uppercase tracking-wide">G Reps</span>
-                        <span className="flex-1 text-[9px] text-violet-500 font-bold text-center uppercase tracking-wide">G Kg</span>
-                        <span className="w-3 shrink-0 text-center text-gray-200 text-[10px]">|</span>
-                        <span className="flex-1 text-[9px] text-blue-500 font-bold text-center uppercase tracking-wide">D Reps</span>
-                        <span className="flex-1 text-[9px] text-blue-500 font-bold text-center uppercase tracking-wide">D Kg</span>
-                        <span className="w-5 shrink-0" />
-                      </div>
-                      <div className="px-3 flex flex-col gap-1 pb-2">
-                        {ex.sets.map((s, setIdx) => (
-                          <div key={setIdx} className="flex items-center gap-1">
-                            <span className="w-5 text-xs text-gray-400 font-bold text-center shrink-0">{setIdx + 1}</span>
-                            <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0}
-                              className="flex-1 bg-violet-50/50 border border-violet-200 rounded-xl px-1 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-violet-400 focus:bg-white text-center transition-colors" />
-                            <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5}
-                              className="flex-1 bg-violet-50/50 border border-violet-200 rounded-xl px-1 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-violet-400 focus:bg-white text-center transition-colors" />
-                            <span className="w-3 shrink-0 text-center text-gray-200 text-sm font-bold">|</span>
-                            <input type="number" inputMode="numeric" value={s.repsRight} onChange={e => updateSet(exIdx, setIdx, "repsRight", e.target.value)} placeholder="8" min={0}
-                              className="flex-1 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-400 focus:bg-white text-center transition-colors" />
-                            <input type="number" inputMode="decimal" value={s.weightRight} onChange={e => updateSet(exIdx, setIdx, "weightRight", e.target.value)} placeholder="0" min={0} step={0.5}
-                              className="flex-1 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-400 focus:bg-white text-center transition-colors" />
-                            <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1}
-                              className="w-5 shrink-0 flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors disabled:opacity-20">
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-12 gap-1 px-3 pb-1">
-                        <p className="col-span-1 text-[10px] text-gray-400 font-bold text-center">#</p>
-                        <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Reps</p>
-                        <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Kg</p>
-                        <p className="col-span-2 text-[10px] text-gray-400 font-bold text-center">RPE</p>
-                        <p className="col-span-1" />
-                      </div>
-                      <div className="px-3 flex flex-col gap-1 pb-2">
-                        {ex.sets.map((s, setIdx) => (
-                          <div key={setIdx} className="grid grid-cols-12 gap-1 items-center">
-                            <p className="col-span-1 text-xs text-gray-400 font-bold text-center">{setIdx + 1}</p>
-                            <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0}
-                              className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
-                            <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5}
-                              className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
-                            <input type="number" inputMode="decimal" value={s.rpe} onChange={e => updateSet(exIdx, setIdx, "rpe", e.target.value)} placeholder="8" min={1} max={10} step={0.5}
-                              className="col-span-2 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
-                            <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1}
-                              className="col-span-1 flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors disabled:opacity-20">
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                  <button onClick={() => addSet(exIdx)}
-                    className="w-full py-2 border-t border-blue-100 text-xs font-bold text-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-colors">
-                    + Série
-                  </button>
-                </div>
-              )
-            }
-
-            /* ── READ CARD ── */
             const totalVolume = ex.sets.reduce((sum, s) => {
               const r = s.reps !== "" ? Number(s.reps) : 0
               const w = s.weight !== "" ? Number(s.weight) : 0
               return sum + r * w
             }, 0)
-            return (
-              <div key={exIdx} className={`bg-white border rounded-2xl overflow-hidden transition-opacity ${editingExIdx !== null ? "opacity-40" : "border-gray-200"}`}>
+            return editMode ? (
+              // EDIT CARD
+              <div key={exIdx} className="bg-white rounded-2xl overflow-hidden border border-blue-100 border-l-[3px] border-l-blue-500">
+                <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-extrabold text-gray-900 truncate">{ex.name}</p>
+                    {info && <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] text-violet-600 font-semibold">{info.primary_muscle}</span>
+                      <span className="text-gray-300">·</span>
+                      <span className="text-[10px] text-gray-400">{info.equipment}</span>
+                    </div>}
+                  </div>
+                  <button onClick={() => { setRenamingExIdx(exIdx); setShowPicker(true) }} className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-400 hover:bg-blue-100 shrink-0">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                  </button>
+                  <button onClick={() => removeExercise(exIdx)} className="w-7 h-7 rounded-lg bg-red-50 border border-red-100 flex items-center justify-center text-red-400 hover:bg-red-100 shrink-0">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+
+                {/* Unilatéral + notes */}
+                <div className="px-3 pb-2 flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => toggleUnilateral(exIdx)} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors ${ex.isUnilateral ? "bg-violet-50 border-violet-300 text-violet-600" : "bg-gray-50 border-gray-200 text-gray-400"}`}>
+                      Unilatéral {ex.isUnilateral && "✓"}
+                    </button>
+                    {ex.isUnilateral && <span className="text-[9px] text-violet-500 font-semibold">Poids par bras</span>}
+                  </div>
+                  <textarea value={ex.exNotes} onChange={e => updateExNotes(exIdx, e.target.value)} placeholder="Note sur l'exercice (optionnel)..." rows={1} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 placeholder-gray-300 outline-none resize-none focus:border-blue-300 transition-colors" />
+                </div>
+
+                {/* Sets */}
+                {ex.isUnilateral ? (
+                  <>
+                    <div className="px-3 pb-1 flex items-center gap-1">
+                      <span className="w-5 shrink-0" />
+                      <span className="flex-1 text-[9px] text-violet-500 font-bold text-center uppercase tracking-wide">G Reps</span>
+                      <span className="flex-1 text-[9px] text-violet-500 font-bold text-center uppercase tracking-wide">G Kg</span>
+                      <span className="w-3 shrink-0 text-center text-gray-200 text-[10px]">|</span>
+                      <span className="flex-1 text-[9px] text-blue-500 font-bold text-center uppercase tracking-wide">D Reps</span>
+                      <span className="flex-1 text-[9px] text-blue-500 font-bold text-center uppercase tracking-wide">D Kg</span>
+                      <span className="w-5 shrink-0" />
+                    </div>
+                    <div className="px-3 flex flex-col gap-1 pb-2">
+                      {ex.sets.map((s, setIdx) => (
+                        <div key={setIdx} className="flex items-center gap-1">
+                          <span className="w-5 text-xs text-gray-400 font-bold text-center shrink-0">{setIdx + 1}</span>
+                          <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0} className="flex-1 bg-violet-50/50 border border-violet-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none text-center" />
+                          <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5} className="flex-1 bg-violet-50/50 border border-violet-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none text-center" />
+                          <span className="w-3 shrink-0 text-center text-gray-200 text-sm font-bold">|</span>
+                          <input type="number" inputMode="numeric" value={s.repsRight} onChange={e => updateSet(exIdx, setIdx, "repsRight", e.target.value)} placeholder="8" min={0} className="flex-1 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none text-center" />
+                          <input type="number" inputMode="decimal" value={s.weightRight} onChange={e => updateSet(exIdx, setIdx, "weightRight", e.target.value)} placeholder="0" min={0} step={0.5} className="flex-1 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none text-center" />
+                          <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1} className="w-5 shrink-0 flex items-center justify-center text-gray-300 hover:text-red-400 disabled:opacity-20">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-12 gap-1 px-3 pb-1">
+                      <p className="col-span-1 text-[10px] text-gray-400 font-bold text-center">#</p>
+                      <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Reps</p>
+                      <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Kg</p>
+                      <p className="col-span-2 text-[10px] text-gray-400 font-bold text-center">RPE</p>
+                      <p className="col-span-1" />
+                    </div>
+                    <div className="px-3 flex flex-col gap-1 pb-2">
+                      {ex.sets.map((s, setIdx) => (
+                        <div key={setIdx} className="grid grid-cols-12 gap-1 items-center">
+                          <p className="col-span-1 text-xs text-gray-400 font-bold text-center">{setIdx + 1}</p>
+                          <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0} className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                          <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5} className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                          <input type="number" inputMode="decimal" value={s.rpe} onChange={e => updateSet(exIdx, setIdx, "rpe", e.target.value)} placeholder="8" min={1} max={10} step={0.5} className="col-span-2 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                          <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1} className="col-span-1 flex items-center justify-center text-gray-300 hover:text-red-400 disabled:opacity-20">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+                <button onClick={() => addSet(exIdx)} className="w-full py-2 border-t border-blue-100 text-xs font-bold text-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-colors">+ Série</button>
+              </div>
+            ) : (
+              // READ CARD
+              <div key={exIdx} className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                 <div className="px-3 pt-3 pb-2 flex items-center gap-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-extrabold text-gray-900 truncate">{ex.name}</p>
@@ -1102,19 +990,9 @@ export default function WorkoutDetailPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <div className="text-right">
-                      <p className="text-sm font-extrabold text-blue-600 leading-none">{ex.sets.length}<span className="text-[10px] font-medium text-gray-400 ml-0.5">sér.</span></p>
-                      {totalVolume > 0 && <p className="text-[10px] text-gray-400 font-medium mt-0.5">{totalVolume.toLocaleString("fr")} kg</p>}
-                    </div>
-                    {editingExIdx === null && (
-                      <button onClick={() => enterEditMode(exIdx)}
-                        className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                    )}
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-extrabold text-blue-600 leading-none">{ex.sets.length}<span className="text-[10px] font-medium text-gray-400 ml-0.5">sér.</span></p>
+                    {totalVolume > 0 && <p className="text-[10px] text-gray-400 font-medium mt-0.5">{totalVolume.toLocaleString("fr")} kg</p>}
                   </div>
                 </div>
                 <div className="px-3 pb-3">
@@ -1139,71 +1017,31 @@ export default function WorkoutDetailPage() {
             )
           })}
 
-          {/* Notes (read only) */}
-          {editingExIdx === null && notes ? (
+          {/* Floating bar in edit mode */}
+          {editMode && (
+            <div className="fixed left-0 right-0 z-40 flex justify-center gap-3 px-4 pointer-events-none" style={{ bottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}>
+              <button onClick={cancelEdit} className="pointer-events-auto flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 shadow-lg hover:bg-gray-50 transition-colors">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                Annuler
+              </button>
+              <button onClick={handleSave} disabled={saving} className="pointer-events-auto flex items-center gap-2 px-6 py-3 bg-blue-600 rounded-2xl text-sm font-bold text-white shadow-lg hover:bg-blue-500 transition-colors disabled:opacity-50">
+                {saving ? <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> : <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                {saving ? "Sauvegarde..." : "Sauvegarder"}
+              </button>
+            </div>
+          )}
+
+          {/* Notes */}
+          {notes ? (
             <div className="bg-white border border-gray-200 rounded-2xl p-3">
               <p className="text-[10px] font-bold text-gray-400 block mb-1.5">Notes</p>
               <p className="text-sm text-gray-600 leading-relaxed">{notes}</p>
             </div>
           ) : null}
 
-          {/* Add exercise */}
-          {editingExIdx === null ? (
-            plan === "free" && exercises.length >= 3 ? (
-              <div className="py-3 border border-dashed border-gray-300 rounded-2xl flex items-center justify-between px-4">
-                <span className="text-xs font-bold text-gray-400">Limite 3 exos — plan Gratuit</span>
-                <a href="/pricing" className="text-xs font-bold text-violet-600 hover:text-violet-500">Passer Pro →</a>
-              </div>
-            ) : (
-              <button
-                onClick={() => { originalExercises.current = JSON.parse(JSON.stringify(exercises)); setShowPicker(true) }}
-                className="py-3.5 border-2 border-dashed border-gray-300 rounded-2xl text-sm font-bold text-gray-400 hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Ajouter un exercice {plan === "free" ? `(${exercises.length}/3)` : ""}
-              </button>
-            )
-          ) : null}
-
         </div>
       </div>
 
-      {/* Floating bar in edit mode */}
-      {editingExIdx !== null && (
-        <div
-          className="fixed left-0 right-0 flex justify-center gap-3 z-40 pointer-events-none"
-          style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
-        >
-          <button
-            onClick={cancelEdit}
-            className="pointer-events-auto flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 shadow-lg hover:bg-gray-50 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Annuler
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="pointer-events-auto flex items-center gap-2 px-6 py-3 bg-blue-600 border border-blue-500/40 rounded-2xl text-sm font-bold text-white shadow-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
-          >
-            {saving ? (
-              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-            {saving ? "Sauvegarde..." : "Sauvegarder"}
-          </button>
-        </div>
-      )}
     </div>
   )
 }

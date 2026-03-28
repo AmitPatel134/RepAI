@@ -121,18 +121,10 @@ export default function NutritionPage() {
   const [isManualEntry, setIsManualEntry] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [editMode, setEditMode] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [deleting, setDeleting] = useState(false)
-  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set())
-  const lpTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const lpFired = useRef(false)
-  const lpMoved = useRef(false)
-  const lpStartX = useRef(0)
-  const lpStartY = useRef(0)
-
   const [saving, setSaving] = useState(false)
   const [mealDate, setMealDate] = useState(new Date().toISOString().slice(0, 10))
+  const [showMealDeleteConfirm, setShowMealDeleteConfirm] = useState(false)
+  const [deletingMeal, setDeletingMeal] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -314,38 +306,7 @@ export default function NutritionPage() {
     setSaving(false)
   }
 
-  // ─── Edit mode ─────────────────────────────────────────────────────────────
-
-  function enterEditMode(id: string) { setEditMode(true); setSelectedIds(new Set([id])) }
-  function exitEditMode() { setEditMode(false); setSelectedIds(new Set()) }
-  function toggleSelect(id: string) {
-    setSelectedIds(prev => {
-      const n = new Set(prev)
-      if (n.has(id)) n.delete(id); else n.add(id)
-      if (n.size === 0) setEditMode(false)
-      return n
-    })
-  }
-
-  function onItemTouchStart(e: React.TouchEvent, id: string) {
-    if (editMode) return
-    lpFired.current = false; lpMoved.current = false
-    lpStartX.current = e.touches[0].clientX; lpStartY.current = e.touches[0].clientY
-    lpTimer.current = setTimeout(() => { lpFired.current = true; enterEditMode(id) }, 500)
-  }
-  function onItemTouchMove(e: React.TouchEvent) {
-    if (editMode) return
-    if (Math.abs(e.touches[0].clientX - lpStartX.current) > 8 || Math.abs(e.touches[0].clientY - lpStartY.current) > 8) {
-      lpMoved.current = true
-      if (lpTimer.current) { clearTimeout(lpTimer.current); lpTimer.current = null }
-    }
-  }
-  function onItemTouchEnd() {
-    if (lpTimer.current) { clearTimeout(lpTimer.current); lpTimer.current = null }
-  }
-  function onItemClick(id: string) {
-    if (lpFired.current) { lpFired.current = false; return }
-    if (editMode) { toggleSelect(id); return }
+  function openMealDetail(id: string) {
     const meal = meals.find(m => m.id === id)
     if (meal) {
       setSelectedMeal(meal); setDetailImageUrl(null)
@@ -355,18 +316,17 @@ export default function NutritionPage() {
     }
   }
 
-  async function handleDeleteSelected() {
-    setDeleting(true)
-    const toDelete = new Set(selectedIds)
-    setDeletingIds(toDelete)
-    await new Promise(r => setTimeout(r, 320))
-    for (const id of toDelete) {
-      await authFetch(`/api/nutrition/${id}`, { method: "DELETE" })
-      setMeals(prev => prev.filter(m => m.id !== id))
+  async function handleDeleteMeal() {
+    if (!selectedMeal) return
+    setDeletingMeal(true)
+    try {
+      await authFetch(`/api/nutrition/${selectedMeal.id}`, { method: "DELETE" })
+      setMeals(prev => prev.filter(m => m.id !== selectedMeal.id))
+      setSelectedMeal(null)
+      setShowMealDeleteConfirm(false)
+    } finally {
+      setDeletingMeal(false)
     }
-    setDeletingIds(new Set())
-    setDeleting(false)
-    exitEditMode()
   }
 
   if (loading) return <LoadingScreen color="#f97316" />
@@ -470,7 +430,7 @@ export default function NutritionPage() {
       />
 
       {/* List */}
-      <div className="pt-4 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
+      <div className="pt-4 md:pb-8 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         {meals.length === 0 ? (
           <div className="flex flex-col items-center py-20 px-4">
             <div className="relative mb-8">
@@ -549,104 +509,45 @@ export default function NutritionPage() {
                     {dayCal > 0 && <span className="text-[11px] font-bold text-orange-500">{Math.round(dayCal)} kcal</span>}
                   </div>
                   <div className="flex flex-col gap-px">
-                    {dayGroup.items.map(meal => {
-                      const isSelected = selectedIds.has(meal.id)
-                      return (
-                        <div
-                          key={meal.id}
-                          className={`rounded-2xl transition-all duration-150 ${isSelected ? "bg-orange-500 p-[1.5px]" : ""}`}
-                          style={{
-                            opacity: deletingIds.has(meal.id) ? 0 : undefined,
-                            transform: deletingIds.has(meal.id) ? "translateX(-16px)" : undefined,
-                            transition: "opacity 0.28s ease, transform 0.28s ease",
-                          }}
-                        >
-                        <div
-                          className={`flex items-center gap-3 py-3 px-4 md:px-6 rounded-2xl cursor-pointer select-none ${
-                            isSelected ? "bg-orange-50" : "bg-white hover:bg-gray-50"
-                          } ${editMode && !isSelected ? "opacity-50" : ""}`}
-                          onTouchStart={e => onItemTouchStart(e, meal.id)}
-                          onTouchMove={onItemTouchMove}
-                          onTouchEnd={onItemTouchEnd}
-                          onClick={() => onItemClick(meal.id)}
-                        >
-                          <div
-                            className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
-                              isSelected ? "bg-orange-500 border-orange-500" : "border-gray-400"
-                            }`}
-                            style={{
-                              transform: editMode ? "scale(1)" : "scale(0)",
-                              opacity: editMode ? 1 : 0,
-                              transition: "transform 0.2s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease",
-                              width: editMode ? undefined : 0,
-                              marginRight: editMode ? undefined : "-20px",
-                            }}
-                          >
-                            {isSelected && (
-                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
+                    {dayGroup.items.map(meal => (
+                      <div
+                        key={meal.id}
+                        className="flex items-center gap-3 py-3 px-4 md:px-6 rounded-2xl cursor-pointer select-none bg-white hover:bg-gray-50"
+                        onClick={() => openMealDetail(meal.id)}
+                      >
+                        <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 bg-orange-500 flex items-center justify-center text-white">
+                          {meal.imageThumb ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={meal.imageThumb} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-gray-900 truncate">{meal.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            {meal.calories != null && <span className="text-[11px] font-bold text-orange-500">{meal.calories} kcal</span>}
+                            {plan !== "free" && meal.proteins != null && <span className="text-[11px] text-gray-400">P: {Math.round(meal.proteins)}g</span>}
+                            {plan !== "free" && meal.carbs != null && <span className="text-[11px] text-gray-400">G: {Math.round(meal.carbs)}g</span>}
+                            {plan !== "free" && meal.fats != null && <span className="text-[11px] text-gray-400">L: {Math.round(meal.fats)}g</span>}
+                            {plan === "free" && (meal.proteins != null || meal.carbs != null) && (
+                              <a href="/pricing" className="flex items-center gap-0.5 text-[10px] font-bold text-gray-300 hover:text-orange-400 transition-colors">
+                                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                Macros
+                              </a>
                             )}
                           </div>
-                          <div className="w-9 h-9 rounded-xl overflow-hidden shrink-0 bg-orange-500 flex items-center justify-center text-white">
-                            {meal.imageThumb ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={meal.imageThumb} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                              </svg>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-gray-900 truncate">{meal.name}</p>
-                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                              {meal.calories != null && <span className="text-[11px] font-bold text-orange-500">{meal.calories} kcal</span>}
-                              {plan !== "free" && meal.proteins != null && <span className="text-[11px] text-gray-400">P: {Math.round(meal.proteins)}g</span>}
-                              {plan !== "free" && meal.carbs != null && <span className="text-[11px] text-gray-400">G: {Math.round(meal.carbs)}g</span>}
-                              {plan !== "free" && meal.fats != null && <span className="text-[11px] text-gray-400">L: {Math.round(meal.fats)}g</span>}
-                              {plan === "free" && (meal.proteins != null || meal.carbs != null) && (
-                                <a href="/pricing" className="flex items-center gap-0.5 text-[10px] font-bold text-gray-300 hover:text-orange-400 transition-colors">
-                                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                  Macros
-                                </a>
-                              )}
-                            </div>
-                          </div>
                         </div>
-                        </div>
-                      )
-                    })}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )
             })}
           </div>
         )}
-      </div>
-
-      {/* ── Floating edit bar ── */}
-      <div
-        className="fixed left-0 right-0 z-40 flex justify-center px-4 pointer-events-none"
-        style={{
-          bottom: "calc(env(safe-area-inset-bottom) + 88px)",
-          transform: editMode ? "translateY(0)" : "translateY(24px)",
-          opacity: editMode ? 1 : 0,
-          transition: "transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease",
-        }}
-      >
-        <div className="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-xl p-3 flex items-center gap-2 pointer-events-auto">
-          <button onClick={exitEditMode} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-bold text-gray-400 hover:text-gray-900 transition-colors">
-            Annuler
-          </button>
-          <button
-            onClick={handleDeleteSelected}
-            disabled={selectedIds.size === 0 || deleting}
-            className="flex-[2] py-2.5 bg-red-50 border border-red-300 rounded-xl text-sm font-bold text-red-500 hover:bg-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {deleting ? "..." : selectedIds.size > 0 ? `Supprimer (${selectedIds.size})` : "Supprimer"}
-          </button>
-        </div>
       </div>
 
       {/* ── Step 1: Analyzing image overlay ── */}
@@ -898,7 +799,7 @@ export default function NutritionPage() {
 
       {/* ── Meal detail modal ── */}
       {selectedMeal && (
-        <div data-modal="" className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => { setSelectedMeal(null); setDetailImageUrl(null) }}>
+        <div data-modal="" className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => { setSelectedMeal(null); setDetailImageUrl(null); setShowMealDeleteConfirm(false) }}>
           <div
             className="modal-enter bg-white rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl"
             onClick={e => e.stopPropagation()}
@@ -948,6 +849,24 @@ export default function NutritionPage() {
                     <span className="text-[10px] font-bold mt-0.5" style={{ color: m.color + "99" }}>/{m.daily}g</span>
                   </div>
                 ))}
+              </div>
+              <div className="px-5 pt-2 pb-2 border-t border-gray-100 mt-2 mx-0">
+                {showMealDeleteConfirm ? (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm font-bold text-gray-700 text-center">Supprimer ce repas ?</p>
+                    <div className="flex gap-2">
+                      <button onClick={() => setShowMealDeleteConfirm(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-bold text-gray-500">Annuler</button>
+                      <button onClick={handleDeleteMeal} disabled={deletingMeal} className="flex-1 py-2.5 bg-red-500 rounded-xl text-sm font-bold text-white disabled:opacity-50">
+                        {deletingMeal ? "..." : "Confirmer"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => setShowMealDeleteConfirm(true)} className="w-full py-2.5 flex items-center justify-center gap-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    Supprimer ce repas
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -129,9 +129,6 @@ function getCardioInfo(type: string) {
   if (type === "custom") return { key: "custom", label: "Autre", color: CUSTOM_COLOR }
   return CARDIO_TYPES.find(t => t.key === type) ?? CARDIO_TYPES[CARDIO_TYPES.length - 1]
 }
-function getItemKey(item: UnifiedItem) {
-  return item.kind === "workout" ? `w:${item.data.id}` : `a:${item.data.id}`
-}
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -188,20 +185,6 @@ export default function ActivitiesPage() {
   const [upgradeMsg, setUpgradeMsg] = useState<string | null>(null)
 
   const [selectedMonthIdx, setSelectedMonthIdx] = useState(0)
-
-  // Edit mode
-  const [editMode, setEditMode] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [deletingSelected, setDeletingSelected] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set())
-
-  // Long press detection
-  const lpTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const lpFired = useRef(false)
-  const lpMoved = useRef(false)
-  const lpStartX = useRef(0)
-  const lpStartY = useRef(0)
 
   // Modals
   const [showTypeSelector, setShowTypeSelector] = useState(false)
@@ -334,84 +317,6 @@ export default function ActivitiesPage() {
 
   const safeMonthIdx = Math.min(selectedMonthIdx, Math.max(0, allMonths.length - 1))
   const currentMonth = allMonths[safeMonthIdx] ?? null
-
-  // ─── Edit mode ────────────────────────────────────────────────────────────
-
-  function enterEditMode(key: string) {
-    setEditMode(true)
-    setSelectedIds(new Set([key]))
-  }
-
-  function exitEditMode() {
-    setEditMode(false)
-    setSelectedIds(new Set())
-  }
-
-  function toggleSelect(key: string) {
-    setSelectedIds(prev => {
-      const n = new Set(prev)
-      if (n.has(key)) n.delete(key)
-      else n.add(key)
-      if (n.size === 0) setEditMode(false)
-      return n
-    })
-  }
-
-  // Long press handlers
-  function onItemTouchStart(e: React.TouchEvent, key: string) {
-    if (editMode) return
-    lpFired.current = false
-    lpMoved.current = false
-    lpStartX.current = e.touches[0].clientX
-    lpStartY.current = e.touches[0].clientY
-    lpTimer.current = setTimeout(() => {
-      lpFired.current = true
-      enterEditMode(key)
-    }, 500)
-  }
-
-  function onItemTouchMove(e: React.TouchEvent) {
-    if (editMode) return
-    const dx = Math.abs(e.touches[0].clientX - lpStartX.current)
-    const dy = Math.abs(e.touches[0].clientY - lpStartY.current)
-    if (dx > 8 || dy > 8) {
-      lpMoved.current = true
-      if (lpTimer.current) { clearTimeout(lpTimer.current); lpTimer.current = null }
-    }
-  }
-
-  function onItemTouchEnd() {
-    if (lpTimer.current) { clearTimeout(lpTimer.current); lpTimer.current = null }
-  }
-
-  function onItemClick(key: string, defaultAction: () => void) {
-    if (lpFired.current) { lpFired.current = false; return }
-    if (editMode) { toggleSelect(key); return }
-    defaultAction()
-  }
-
-  // ─── Edit actions ─────────────────────────────────────────────────────────
-
-  async function handleDeleteSelected() {
-    setDeletingSelected(true)
-    const toDelete = new Set(selectedIds)
-    setDeletingIds(toDelete)
-    await new Promise(r => setTimeout(r, 320))
-    for (const key of toDelete) {
-      if (key.startsWith("w:")) {
-        const id = key.slice(2)
-        await authFetch(`/api/workouts/${id}`, { method: "DELETE" })
-        setWorkouts(prev => prev.filter(w => w.id !== id))
-      } else {
-        const id = key.slice(2)
-        await authFetch(`/api/activities/${id}`, { method: "DELETE" })
-        setActivities(prev => prev.filter(a => a.id !== id))
-      }
-    }
-    setDeletingIds(new Set())
-    setDeletingSelected(false)
-    exitEditMode()
-  }
 
   // ─── Add / forms ──────────────────────────────────────────────────────────
 
@@ -783,7 +688,7 @@ export default function ActivitiesPage() {
       </div>
 
       {/* List */}
-      <div className="pt-4 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
+      <div className="pt-4 md:pb-8 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         {unified.length === 0 ? (
           <div className="flex flex-col items-center py-20 px-4">
             <div className="relative mb-8">
@@ -858,48 +763,14 @@ export default function ActivitiesPage() {
                   </div>
                   <div className="flex flex-col gap-px">
                     {dayGroup.items.map(item => {
-                      const key = getItemKey(item)
-                      const isSelected = selectedIds.has(key)
                       if (item.kind === "workout") {
                         const w = item.data
-                        const totalSets = w.exercises.reduce((s, e) => s + e.sets.length, 0)
                         return (
                           <div
                             key={`w-${w.id}`}
-                            className={`rounded-2xl transition-all duration-150 ${isSelected ? "bg-blue-500 p-[1.5px]" : ""}`}
-                            style={{
-                              opacity: deletingIds.has(key) ? 0 : undefined,
-                              transform: deletingIds.has(key) ? "translateX(-16px)" : undefined,
-                              transition: "opacity 0.28s ease, transform 0.28s ease",
-                            }}
+                            className="flex items-center gap-3 py-3 px-4 rounded-2xl cursor-pointer select-none bg-white hover:bg-gray-50"
+                            onClick={() => router.push(`/app/workouts/${w.id}`)}
                           >
-                          <div
-                            className={`flex items-center gap-3 py-3 px-4 rounded-2xl cursor-pointer select-none ${
-                              isSelected ? "bg-blue-50" : "bg-white hover:bg-gray-50"
-                            } ${editMode && !isSelected ? "opacity-50" : ""}`}
-                            onTouchStart={e => onItemTouchStart(e, key)}
-                            onTouchMove={onItemTouchMove}
-                            onTouchEnd={onItemTouchEnd}
-                            onClick={() => onItemClick(key, () => router.push(`/app/workouts/${w.id}`))}
-                          >
-                            <div
-                              className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
-                                isSelected ? "bg-blue-600 border-blue-600" : "border-gray-400"
-                              }`}
-                              style={{
-                                transform: editMode ? "scale(1)" : "scale(0)",
-                                opacity: editMode ? 1 : 0,
-                                transition: "transform 0.2s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease",
-                                width: editMode ? undefined : 0,
-                                marginRight: editMode ? undefined : "-20px",
-                              }}
-                            >
-                              {isSelected && (
-                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </div>
                             <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shrink-0 text-white">
                               <DumbbellIcon />
                             </div>
@@ -910,7 +781,6 @@ export default function ActivitiesPage() {
                               )}
                             </div>
                           </div>
-                          </div>
                         )
                       } else {
                         const a = item.data
@@ -918,40 +788,9 @@ export default function ActivitiesPage() {
                         return (
                           <div
                             key={`a-${a.id}`}
-                            className={`rounded-2xl transition-all duration-150 ${isSelected ? "bg-sky-500 p-[1.5px]" : ""}`}
-                            style={{
-                              opacity: deletingIds.has(key) ? 0 : undefined,
-                              transform: deletingIds.has(key) ? "translateX(-16px)" : undefined,
-                              transition: "opacity 0.28s ease, transform 0.28s ease",
-                            }}
+                            className="flex items-center gap-3 py-3 px-4 rounded-2xl cursor-pointer select-none bg-white hover:bg-gray-50"
+                            onClick={() => router.push(`/app/activities/${a.id}`)}
                           >
-                          <div
-                            className={`flex items-center gap-3 py-3 px-4 rounded-2xl cursor-pointer select-none ${
-                              isSelected ? "bg-sky-50" : "bg-white hover:bg-gray-50"
-                            } ${editMode && !isSelected ? "opacity-50" : ""}`}
-                            onTouchStart={e => onItemTouchStart(e, key)}
-                            onTouchMove={onItemTouchMove}
-                            onTouchEnd={onItemTouchEnd}
-                            onClick={() => onItemClick(key, () => router.push(`/app/activities/${a.id}`))}
-                          >
-                            <div
-                              className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all ${
-                                isSelected ? "bg-sky-500 border-sky-500" : "border-gray-400"
-                              }`}
-                              style={{
-                                transform: editMode ? "scale(1)" : "scale(0)",
-                                opacity: editMode ? 1 : 0,
-                                transition: "transform 0.2s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease",
-                                width: editMode ? undefined : 0,
-                                marginRight: editMode ? undefined : "-20px",
-                              }}
-                            >
-                              {isSelected && (
-                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </div>
                             <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-white" style={{ backgroundColor: getCardioInfo(a.type).color }}>
                               <CardioIcon type={a.type} />
                             </div>
@@ -966,7 +805,6 @@ export default function ActivitiesPage() {
                               </div>
                             </div>
                           </div>
-                          </div>
                         )
                       }
                     })}
@@ -976,33 +814,6 @@ export default function ActivitiesPage() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* ── Floating edit action bar ── */}
-      <div
-        className="fixed left-0 right-0 z-40 flex justify-center px-4 pointer-events-none"
-        style={{
-          bottom: "calc(env(safe-area-inset-bottom) + 88px)",
-          transform: editMode ? "translateY(0)" : "translateY(24px)",
-          opacity: editMode ? 1 : 0,
-          transition: "transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease",
-        }}
-      >
-        <div className={`w-full max-w-sm bg-white border border-gray-200 shadow-xl rounded-2xl p-3 flex items-center gap-2 pointer-events-auto`}>
-          <button
-            onClick={exitEditMode}
-            className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            disabled={selectedIds.size === 0 || deletingSelected}
-            className="flex-[2] py-2.5 bg-red-500/20 border border-red-500/40 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {deletingSelected ? "..." : selectedIds.size > 0 ? (selectedIds.size > 1 ? `Supprimer (${selectedIds.size})` : "Supprimer") : "Supprimer"}
-          </button>
-        </div>
       </div>
 
       {/* ── Type Selector modal ── */}
@@ -1387,44 +1198,6 @@ export default function ActivitiesPage() {
               >
                 OK
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Delete confirmation modal ── */}
-      {showDeleteConfirm && (
-        <div data-modal="" className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="modal-enter bg-white rounded-3xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="px-5 pb-6 pt-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-11 h-11 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm font-extrabold text-gray-900">
-                    Supprimer {selectedIds.size} activité{selectedIds.size > 1 ? "s" : ""} ?
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">Cette action est irréversible.</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 py-3 border border-gray-200 rounded-xl text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={() => { setShowDeleteConfirm(false); handleDeleteSelected() }}
-                  disabled={deletingSelected}
-                  className="flex-[2] py-3 bg-red-500/20 border border-red-500/40 rounded-xl text-sm font-bold text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-50"
-                >
-                  {deletingSelected ? "..." : "Supprimer"}
-                </button>
-              </div>
             </div>
           </div>
         </div>

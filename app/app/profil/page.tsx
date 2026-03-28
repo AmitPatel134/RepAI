@@ -102,6 +102,8 @@ export default function ProfilPage() {
   const [plan, setPlan] = useState("free")
   const [toast, setToast] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const importInputRef = useRef<HTMLInputElement>(null)
 
   // Accordion open state — only "session" open by default
   const [openSection, setOpenSection] = useState<string | null>(null)
@@ -249,6 +251,28 @@ export default function ProfilPage() {
   async function handleLogout() {
     await supabase.auth.signOut()
     window.location.href = "/"
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImporting(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const r = await authFetch("/api/import", { method: "POST", body: formData })
+      const data = await r.json()
+      if (!r.ok) {
+        showToast("Erreur : " + (data.detail || data.error))
+      } else {
+        showToast(`Import terminé — ${data.workoutsCreated} séances, ${data.activitiesCreated} activités, ${data.mealsCreated} repas, ${data.weightEntriesCreated} poids`)
+      }
+    } catch {
+      showToast("Erreur réseau")
+    } finally {
+      setImporting(false)
+      if (importInputRef.current) importInputRef.current.value = ""
+    }
   }
 
   async function handleExport() {
@@ -485,7 +509,7 @@ export default function ProfilPage() {
           </form>
         </AccordionSection>
 
-        {/* Export + Session */}
+        {/* Export + Import + Session */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 flex flex-col gap-5">
           <div>
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Exporter mes données</p>
@@ -503,6 +527,28 @@ export default function ProfilPage() {
                 </svg>
               )}
               {exporting ? "Préparation…" : "Télécharger CSV"}
+            </button>
+          </div>
+
+          <div className="h-px bg-gray-100" />
+
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Importer des données</p>
+            <p className="text-xs text-gray-400 mb-3">Importe un fichier CSV exporté depuis RepAI pour restaurer ton historique.</p>
+            <input ref={importInputRef} type="file" accept=".csv" className="hidden" onChange={handleImport} />
+            <button onClick={() => importInputRef.current?.click()} disabled={importing}
+              className="flex items-center gap-2 px-5 py-2.5 bg-orange-50 border border-orange-200 text-sm font-bold text-orange-600 rounded-xl hover:bg-orange-100 transition-colors disabled:opacity-50">
+              {importing ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4 0l4-4m0 0l4 4m-4-4v12"/>
+                </svg>
+              )}
+              {importing ? "Import en cours…" : "Importer CSV"}
             </button>
           </div>
 

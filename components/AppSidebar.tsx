@@ -89,6 +89,8 @@ export default function AppSidebar() {
     })
   }, [])
 
+  const hideNav = pathname.startsWith("/app/workouts/") || pathname.startsWith("/app/activities/")
+
   function isActive(item: { href: string; exact?: boolean }) {
     return item.exact ? pathname === item.href : pathname.startsWith(item.href)
   }
@@ -150,7 +152,11 @@ export default function AppSidebar() {
       {/* MOBILE BOTTOM NAV */}
       <div
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 10px)" }}
+        style={{
+          paddingBottom: "calc(env(safe-area-inset-bottom) + 10px)",
+          transform: hideNav ? "translateY(120%)" : "translateY(0)",
+          transition: "transform 0.3s ease",
+        }}
       >
         <nav className="relative w-full max-w-sm flex items-end">
           {/* Pill */}
