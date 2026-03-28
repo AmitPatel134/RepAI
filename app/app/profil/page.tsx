@@ -101,6 +101,7 @@ export default function ProfilPage() {
   const [telephone, setTelephone] = useState("")
   const [plan, setPlan] = useState("free")
   const [toast, setToast] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
 
   // Accordion open state — only "session" open by default
   const [openSection, setOpenSection] = useState<string | null>(null)
@@ -248,6 +249,28 @@ export default function ProfilPage() {
   async function handleLogout() {
     await supabase.auth.signOut()
     window.location.href = "/"
+  }
+
+  async function handleExport() {
+    setExporting(true)
+    try {
+      const r = await authFetch("/api/export")
+      if (!r.ok) { setToast("Erreur lors de l'export"); return }
+      const blob = await r.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `repai-export-${new Date().toISOString().slice(0, 10)}.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      setToast("Export téléchargé !")
+    } catch {
+      setToast("Erreur réseau")
+    } finally {
+      setExporting(false)
+    }
   }
 
   if (!ready) return <LoadingScreen />
@@ -462,13 +485,36 @@ export default function ProfilPage() {
           </form>
         </AccordionSection>
 
-        {/* Session */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Session</p>
-          <button onClick={handleLogout}
-            className="px-5 py-2.5 border-2 border-gray-200 text-sm font-bold text-gray-600 rounded-xl hover:border-red-300 hover:text-red-600 transition-colors">
-            Se déconnecter
-          </button>
+        {/* Export + Session */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 flex flex-col gap-5">
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Exporter mes données</p>
+            <p className="text-xs text-gray-400 mb-3">Télécharge un fichier CSV avec tout ton historique (séances, activités, nutrition, poids).</p>
+            <button onClick={handleExport} disabled={exporting}
+              className="flex items-center gap-2 px-5 py-2.5 bg-violet-50 border border-violet-200 text-sm font-bold text-violet-600 rounded-xl hover:bg-violet-100 transition-colors disabled:opacity-50">
+              {exporting ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+              )}
+              {exporting ? "Préparation…" : "Télécharger CSV"}
+            </button>
+          </div>
+
+          <div className="h-px bg-gray-100" />
+
+          <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Session</p>
+            <button onClick={handleLogout}
+              className="px-5 py-2.5 border-2 border-gray-200 text-sm font-bold text-gray-600 rounded-xl hover:border-red-300 hover:text-red-600 transition-colors">
+              Se déconnecter
+            </button>
+          </div>
         </div>
 
       </div>
