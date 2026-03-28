@@ -5,6 +5,19 @@ import { authFetch } from "@/lib/authFetch"
 import LoadingScreen from "@/components/LoadingScreen"
 import Toast from "@/components/Toast"
 
+const PREMIUM_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PRICE_ID ?? "price_1TCiSUIRxjgeiG9AzGDGeyDG"
+const PREMIUM_PLUS_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PLUS_PRICE_ID ?? "price_1TCiSUIRxjgeiG9AzGDGeyDG"
+
+function planLabel(plan: string) {
+  if (plan === "premium_plus") return "Premium+"
+  if (plan === "premium" || plan === "pro") return "Premium"
+  return "Gratuit"
+}
+
+function isPaid(plan: string) {
+  return plan === "pro" || plan === "premium" || plan === "premium_plus"
+}
+
 const GOALS = [
   { value: "prise_de_masse", label: "Prise de masse", icon: "💪" },
   { value: "perte_de_poids", label: "Perte de poids", icon: "🔥" },
@@ -101,6 +114,7 @@ export default function ProfilPage() {
   const [savingName, setSavingName] = useState(false)
   const [savingPassword, setSavingPassword] = useState(false)
   const [billingLoading, setBillingLoading] = useState(false)
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
 
   // Password
   const [currentPassword, setCurrentPassword] = useState("")
@@ -109,7 +123,7 @@ export default function ProfilPage() {
 
   // Fitness profile
   const [sex, setSex] = useState("")
-  const [age, setAge] = useState("")
+  const [birthDate, setBirthDate] = useState("")
   const [heightCm, setHeightCm] = useState("")
   const [weightKg, setWeightKg] = useState("")
   const [goal, setGoal] = useState("")
@@ -135,7 +149,7 @@ export default function ProfilPage() {
       if (user?.plan) setPlan(user.plan)
       if (prof) {
         if (prof.sex) setSex(prof.sex)
-        if (prof.age) setAge(String(prof.age))
+        if (prof.birthDate) setBirthDate(prof.birthDate)
         if (prof.heightCm) setHeightCm(String(prof.heightCm))
         if (prof.weightKg) setWeightKg(String(prof.weightKg))
         if (prof.goal) setGoal(prof.goal)
@@ -155,7 +169,7 @@ export default function ProfilPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         sex: sex || null,
-        age: age ? Number(age) : null,
+        birthDate: birthDate || null,
         heightCm: heightCm ? Number(heightCm) : null,
         weightKg: weightKg ? Number(weightKg) : null,
         goal: goal || null,
@@ -218,6 +232,19 @@ export default function ProfilPage() {
     window.location.href = url
   }
 
+  async function handleCheckout(priceId: string, tier: string) {
+    setCheckoutLoading(tier)
+    const res = await authFetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ priceId }),
+    })
+    const { url, error } = await res.json()
+    setCheckoutLoading(null)
+    if (error) { showToast(error); return }
+    window.location.href = url
+  }
+
   async function handleLogout() {
     await supabase.auth.signOut()
     window.location.href = "/"
@@ -235,32 +262,49 @@ export default function ProfilPage() {
       <div className="max-w-xl mx-auto px-4 py-5 flex flex-col gap-3">
 
         {/* Plan */}
-        <AccordionSection title="Plan actuel" open={openSection === "plan"} onToggle={() => toggleSection("plan")}>
-          <div className={`relative overflow-hidden p-5 rounded-xl border ${plan === "pro" ? "bg-violet-700 text-white border-violet-700" : "bg-gray-50 border-gray-200"}`}>
-            {plan === "pro" && (
+        <AccordionSection title={`Plan actuel — ${planLabel(plan)}`} open={openSection === "plan"} onToggle={() => toggleSection("plan")}>
+          {/* Current plan badge */}
+          <div className={`relative overflow-hidden p-5 rounded-xl border mb-4 ${isPaid(plan) ? "bg-violet-700 text-white border-violet-700" : "bg-gray-50 border-gray-200"}`}>
+            {isPaid(plan) && (
               <>
                 <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-violet-600/50" />
                 <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-violet-800/50" />
               </>
             )}
-            <div className="relative z-10 flex items-center justify-between mb-4">
+            <div className="relative z-10 flex items-center justify-between">
               <div>
-                <p className={`text-xs font-bold uppercase tracking-widest mb-1 ${plan === "pro" ? "text-violet-200" : "text-gray-400"}`}>Plan</p>
-                <p className={`text-xl font-extrabold ${plan === "pro" ? "text-white" : "text-gray-900"}`}>{plan === "pro" ? "Pro" : "Gratuit"}</p>
+                <p className={`text-xs font-bold uppercase tracking-widest mb-1 ${isPaid(plan) ? "text-violet-200" : "text-gray-400"}`}>Plan actuel</p>
+                <p className={`text-xl font-extrabold ${isPaid(plan) ? "text-white" : "text-gray-900"}`}>{planLabel(plan)}</p>
               </div>
-              <span className={`text-2xl font-extrabold ${plan === "pro" ? "text-violet-200" : "text-gray-200"}`}>{plan === "pro" ? "$29" : "$0"}</span>
+              <span className={`text-2xl font-extrabold ${isPaid(plan) ? "text-violet-200" : "text-gray-200"}`}>
+                {plan === "premium_plus" ? "24,99€" : isPaid(plan) ? "14,99€" : "0€"}
+              </span>
             </div>
-            {plan === "free" ? (
-              <a href="/pricing" className="inline-block px-4 py-2 bg-violet-600 text-white text-sm font-bold rounded-xl hover:bg-violet-700 transition-colors">
-                Passer Pro — $29/mois →
-              </a>
-            ) : (
-              <button onClick={handleBillingPortal} disabled={billingLoading}
-                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white font-bold rounded-xl text-sm transition-colors disabled:opacity-50">
-                {billingLoading ? "Chargement..." : "Gérer l'abonnement"}
-              </button>
+            {isPaid(plan) && (
+              <div className="relative z-10 mt-4">
+                <button onClick={handleBillingPortal} disabled={billingLoading}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white font-bold rounded-xl text-sm transition-colors disabled:opacity-50">
+                  {billingLoading ? "Chargement…" : "Gérer l'abonnement →"}
+                </button>
+              </div>
             )}
           </div>
+
+          {/* Upgrade CTA — only shown on free plan */}
+          {!isPaid(plan) && (
+            <a
+              href="/pricing"
+              className="flex items-center justify-between px-4 py-3.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition-colors"
+            >
+              <div>
+                <p className="text-sm font-bold">Passer à Premium</p>
+                <p className="text-xs text-violet-200 font-medium">À partir de 14,99€/mois</p>
+              </div>
+              <svg className="w-5 h-5 text-violet-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          )}
         </AccordionSection>
 
         {/* Fitness */}
@@ -281,22 +325,30 @@ export default function ProfilPage() {
 
             <div className="h-px bg-gray-100 mb-5" />
             {/* Métriques */}
-            <div className="grid grid-cols-3 gap-3 pb-5">
-              {[
-                { label: "Âge", value: age, set: setAge, unit: "ans", min: 10, max: 100 },
-                { label: "Taille", value: heightCm, set: setHeightCm, unit: "cm", min: 100, max: 250 },
-                { label: "Poids", value: weightKg, set: setWeightKg, unit: "kg", min: 30, max: 300, step: 0.5 },
-              ].map(f => (
-                <div key={f.label}>
-                  <label className="text-xs font-semibold text-gray-400 mb-1 block">{f.label}</label>
-                  <div className="relative">
-                    <input type="number" value={f.value} onChange={e => f.set(e.target.value)} placeholder="—"
-                      min={f.min} max={f.max} step={(f as { step?: number }).step ?? 1}
-                      className="w-full px-3 py-2.5 pr-7 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 placeholder:text-gray-300 focus:outline-none focus:border-violet-400 transition-colors" />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">{f.unit}</span>
+            <div className="flex flex-col gap-3 pb-5">
+              <div>
+                <label className="text-xs font-semibold text-gray-400 mb-1 block">Date de naissance</label>
+                <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)}
+                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 10)).toISOString().slice(0, 10)}
+                  min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().slice(0, 10)}
+                  className="w-full px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 focus:outline-none focus:border-violet-400 transition-colors" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: "Taille", value: heightCm, set: setHeightCm, unit: "cm", min: 100, max: 250 },
+                  { label: "Poids", value: weightKg, set: setWeightKg, unit: "kg", min: 30, max: 300, step: 0.5 },
+                ].map(f => (
+                  <div key={f.label}>
+                    <label className="text-xs font-semibold text-gray-400 mb-1 block">{f.label}</label>
+                    <div className="relative">
+                      <input type="number" value={f.value} onChange={e => f.set(e.target.value)} placeholder="—"
+                        min={f.min} max={f.max} step={(f as { step?: number }).step ?? 1}
+                        className="w-full px-3 py-2.5 pr-7 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 placeholder:text-gray-300 focus:outline-none focus:border-violet-400 transition-colors" />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">{f.unit}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             <div className="h-px bg-gray-100 mb-5" />

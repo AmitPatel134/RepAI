@@ -218,8 +218,8 @@ const DIFFICULTY_STAR_COLORS = {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type SetData = { id?: string; reps: number | ""; weight: number | ""; rpe: number | "" }
-type ExerciseData = { id?: string; name: string; sets: SetData[] }
+type SetData = { id?: string; reps: number | ""; weight: number | ""; rpe: number | ""; repsRight: number | ""; weightRight: number | "" }
+type ExerciseData = { id?: string; name: string; isUnilateral: boolean; exNotes: string; sets: SetData[] }
 type WorkoutDetail = {
   id: string
   name: string
@@ -639,6 +639,7 @@ export default function WorkoutDetailPage() {
   const [renamingExIdx, setRenamingExIdx] = useState<number | null>(null)
   const [editingExIdx, setEditingExIdx] = useState<number | null>(null)
   const [showMetaEdit, setShowMetaEdit] = useState(false)
+  const [infoTip, setInfoTip] = useState<number | null>(null)
   const [plan, setPlan] = useState("free")
   const [upgradeMsg, setUpgradeMsg] = useState<string | null>(null)
   const originalExercises = useRef<ExerciseData[]>([])
@@ -662,14 +663,18 @@ export default function WorkoutDetailPage() {
         setWorkout(d)
         setNotes(d.notes ?? "")
         setExercises(
-          (d.exercises ?? []).map((ex: WorkoutDetail["exercises"][0]) => ({
+          (d.exercises ?? []).map((ex: WorkoutDetail["exercises"][0] & { isUnilateral?: boolean; notes?: string }) => ({
             id: ex.id,
             name: ex.name,
-            sets: (ex.sets as unknown as { id?: string; reps: number | null; weight: number | null; rpe: number | null }[]).map(s => ({
+            isUnilateral: ex.isUnilateral ?? false,
+            exNotes: ex.notes ?? "",
+            sets: (ex.sets as unknown as { id?: string; reps: number | null; weight: number | null; rpe: number | null; repsRight?: number | null; weightRight?: number | null }[]).map(s => ({
               id: s.id,
               reps: s.reps ?? "",
               weight: s.weight ?? "",
               rpe: s.rpe ?? "",
+              repsRight: s.repsRight ?? "",
+              weightRight: s.weightRight ?? "",
             })),
           }))
         )
@@ -712,10 +717,14 @@ export default function WorkoutDetailPage() {
           exercises: exercises.filter(ex => ex.name.trim()).map(ex => ({
             name: ex.name.trim(),
             category: "strength",
+            isUnilateral: ex.isUnilateral,
+            notes: ex.exNotes || null,
             sets: ex.sets.map(s => ({
               reps: s.reps === "" ? null : Number(s.reps),
               weight: s.weight === "" ? null : Number(s.weight),
               rpe: s.rpe === "" ? null : Number(s.rpe),
+              repsRight: s.repsRight === "" ? null : Number(s.repsRight),
+              weightRight: s.weightRight === "" ? null : Number(s.weightRight),
             })),
           })),
         }),
@@ -744,7 +753,7 @@ export default function WorkoutDetailPage() {
       return
     }
     setExercises(prev => {
-      const next: ExerciseData[] = [...prev, { name, sets: [{ reps: "" as const, weight: "" as const, rpe: "" as const }] }]
+      const next: ExerciseData[] = [...prev, { name, isUnilateral: false, exNotes: "", sets: [{ reps: "" as const, weight: "" as const, rpe: "" as const, repsRight: "" as const, weightRight: "" as const }] }]
       setEditingExIdx(next.length - 1)
       return next
     })
@@ -762,7 +771,19 @@ export default function WorkoutDetailPage() {
 
   function addSet(exIdx: number) {
     setExercises(prev => prev.map((ex, i) =>
-      i === exIdx ? { ...ex, sets: [...ex.sets, { reps: "", weight: "", rpe: "" }] } : ex
+      i === exIdx ? { ...ex, sets: [...ex.sets, { reps: "", weight: "", rpe: "", repsRight: "", weightRight: "" }] } : ex
+    ))
+  }
+
+  function toggleUnilateral(exIdx: number) {
+    setExercises(prev => prev.map((ex, i) =>
+      i === exIdx ? { ...ex, isUnilateral: !ex.isUnilateral } : ex
+    ))
+  }
+
+  function updateExNotes(exIdx: number, value: string) {
+    setExercises(prev => prev.map((ex, i) =>
+      i === exIdx ? { ...ex, exNotes: value } : ex
     ))
   }
 
@@ -772,7 +793,7 @@ export default function WorkoutDetailPage() {
     ))
   }
 
-  function updateSet(exIdx: number, setIdx: number, field: "reps" | "weight" | "rpe", value: string) {
+  function updateSet(exIdx: number, setIdx: number, field: "reps" | "weight" | "rpe" | "repsRight" | "weightRight", value: string) {
     setExercises(prev => prev.map((ex, i) =>
       i === exIdx ? {
         ...ex,
@@ -797,10 +818,14 @@ export default function WorkoutDetailPage() {
           exercises: exercises.filter(ex => ex.name.trim()).map(ex => ({
             name: ex.name.trim(),
             category: "strength",
+            isUnilateral: ex.isUnilateral,
+            notes: ex.exNotes || null,
             sets: ex.sets.map(s => ({
               reps: s.reps === "" ? null : Number(s.reps),
               weight: s.weight === "" ? null : Number(s.weight),
               rpe: s.rpe === "" ? null : Number(s.rpe),
+              repsRight: s.repsRight === "" ? null : Number(s.repsRight),
+              weightRight: s.weightRight === "" ? null : Number(s.weightRight),
             })),
           })),
         }),
@@ -930,6 +955,7 @@ export default function WorkoutDetailPage() {
               /* ── EDIT CARD ── */
               return (
                 <div key={exIdx} className="bg-white rounded-2xl overflow-hidden border border-blue-100 border-l-4 border-l-blue-500">
+                  {/* Header */}
                   <div className="flex items-center gap-2 px-3 pt-3 pb-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-extrabold text-gray-900 truncate">{ex.name}</p>
@@ -956,32 +982,97 @@ export default function WorkoutDetailPage() {
                       </svg>
                     </button>
                   </div>
-                  <div className="grid grid-cols-12 gap-1 px-3 pb-1">
-                    <p className="col-span-1 text-[10px] text-gray-400 font-bold text-center">#</p>
-                    <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Reps</p>
-                    <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Kg</p>
-                    <p className="col-span-2 text-[10px] text-gray-400 font-bold text-center">RPE</p>
-                    <p className="col-span-1" />
+
+                  {/* Unilatéral toggle + note */}
+                  <div className="px-3 pb-2 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => toggleUnilateral(exIdx)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors ${ex.isUnilateral ? "bg-violet-50 border-violet-300 text-violet-600" : "bg-gray-50 border-gray-200 text-gray-400 hover:border-gray-300"}`}>
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
+                        </svg>
+                        Unilatéral
+                        {ex.isUnilateral && <span className="ml-0.5 text-violet-400">✓</span>}
+                      </button>
+                      {ex.isUnilateral && (
+                        <span className="text-[9px] text-violet-500 font-semibold">Poids par bras</span>
+                      )}
+                    </div>
+                    <textarea
+                      value={ex.exNotes}
+                      onChange={e => updateExNotes(exIdx, e.target.value)}
+                      placeholder="Note sur l'exercice (optionnel)..."
+                      rows={1}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 placeholder-gray-300 outline-none resize-none focus:border-blue-300 transition-colors"
+                    />
                   </div>
-                  <div className="px-3 flex flex-col gap-1 pb-2">
-                    {ex.sets.map((s, setIdx) => (
-                      <div key={setIdx} className="grid grid-cols-12 gap-1 items-center">
-                        <p className="col-span-1 text-xs text-gray-400 font-bold text-center">{setIdx + 1}</p>
-                        <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0}
-                          className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
-                        <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5}
-                          className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
-                        <input type="number" inputMode="decimal" value={s.rpe} onChange={e => updateSet(exIdx, setIdx, "rpe", e.target.value)} placeholder="8" min={1} max={10} step={0.5}
-                          className="col-span-2 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
-                        <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1}
-                          className="col-span-1 flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors disabled:opacity-20">
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                          </svg>
-                        </button>
+
+                  {/* Sets table */}
+                  {ex.isUnilateral ? (
+                    <>
+                      <div className="px-3 pb-1 flex items-center gap-1">
+                        <span className="w-5 shrink-0" />
+                        <span className="flex-1 text-[9px] text-violet-500 font-bold text-center uppercase tracking-wide">G Reps</span>
+                        <span className="flex-1 text-[9px] text-violet-500 font-bold text-center uppercase tracking-wide">G Kg</span>
+                        <span className="w-3 shrink-0 text-center text-gray-200 text-[10px]">|</span>
+                        <span className="flex-1 text-[9px] text-blue-500 font-bold text-center uppercase tracking-wide">D Reps</span>
+                        <span className="flex-1 text-[9px] text-blue-500 font-bold text-center uppercase tracking-wide">D Kg</span>
+                        <span className="w-5 shrink-0" />
                       </div>
-                    ))}
-                  </div>
+                      <div className="px-3 flex flex-col gap-1 pb-2">
+                        {ex.sets.map((s, setIdx) => (
+                          <div key={setIdx} className="flex items-center gap-1">
+                            <span className="w-5 text-xs text-gray-400 font-bold text-center shrink-0">{setIdx + 1}</span>
+                            <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0}
+                              className="flex-1 bg-violet-50/50 border border-violet-200 rounded-xl px-1 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-violet-400 focus:bg-white text-center transition-colors" />
+                            <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5}
+                              className="flex-1 bg-violet-50/50 border border-violet-200 rounded-xl px-1 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-violet-400 focus:bg-white text-center transition-colors" />
+                            <span className="w-3 shrink-0 text-center text-gray-200 text-sm font-bold">|</span>
+                            <input type="number" inputMode="numeric" value={s.repsRight} onChange={e => updateSet(exIdx, setIdx, "repsRight", e.target.value)} placeholder="8" min={0}
+                              className="flex-1 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-400 focus:bg-white text-center transition-colors" />
+                            <input type="number" inputMode="decimal" value={s.weightRight} onChange={e => updateSet(exIdx, setIdx, "weightRight", e.target.value)} placeholder="0" min={0} step={0.5}
+                              className="flex-1 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-400 focus:bg-white text-center transition-colors" />
+                            <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1}
+                              className="w-5 shrink-0 flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors disabled:opacity-20">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-12 gap-1 px-3 pb-1">
+                        <p className="col-span-1 text-[10px] text-gray-400 font-bold text-center">#</p>
+                        <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Reps</p>
+                        <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Kg</p>
+                        <p className="col-span-2 text-[10px] text-gray-400 font-bold text-center">RPE</p>
+                        <p className="col-span-1" />
+                      </div>
+                      <div className="px-3 flex flex-col gap-1 pb-2">
+                        {ex.sets.map((s, setIdx) => (
+                          <div key={setIdx} className="grid grid-cols-12 gap-1 items-center">
+                            <p className="col-span-1 text-xs text-gray-400 font-bold text-center">{setIdx + 1}</p>
+                            <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0}
+                              className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
+                            <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5}
+                              className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
+                            <input type="number" inputMode="decimal" value={s.rpe} onChange={e => updateSet(exIdx, setIdx, "rpe", e.target.value)} placeholder="8" min={1} max={10} step={0.5}
+                              className="col-span-2 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm text-gray-900 font-semibold outline-none focus:border-blue-500 focus:bg-white text-center transition-colors" />
+                            <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1}
+                              className="col-span-1 flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors disabled:opacity-20">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                   <button onClick={() => addSet(exIdx)}
                     className="w-full py-2 border-t border-blue-100 text-xs font-bold text-blue-400 hover:text-blue-600 hover:bg-blue-50/50 transition-colors">
                     + Série

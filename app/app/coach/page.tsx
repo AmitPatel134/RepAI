@@ -40,8 +40,12 @@ function parseResponseSections(text: string): ResponseSection[] {
   return sections.filter(s => s.title || s.body.trim())
 }
 
+function escapeHtml(s: string) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+}
+
 function renderBody(text: string) {
-  return text
+  return escapeHtml(text)
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/^- (.*$)/gm, "<li class='ml-4 list-disc text-gray-600 mb-0.5'>$1</li>")
     .replace(/^\d+\. (.*$)/gm, "<li class='ml-4 list-decimal text-gray-600 mb-0.5'>$1</li>")

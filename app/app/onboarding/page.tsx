@@ -32,7 +32,7 @@ export default function OnboardingPage() {
   const [authReady, setAuthReady] = useState(false)
   const [step, setStep] = useState(1)
   const [sex, setSex] = useState("")
-  const [age, setAge] = useState("")
+  const [birthDate, setBirthDate] = useState("")
   const [heightCm, setHeightCm] = useState("")
   const [weightKg, setWeightKg] = useState("")
   const [goal, setGoal] = useState("")
@@ -48,7 +48,7 @@ export default function OnboardingPage() {
       authFetch("/api/profile").then(r => r.json()).then(prof => {
         if (prof?.profileComplete) router.push("/app")
         else {
-          if (prof?.age) setAge(String(prof.age))
+          if (prof?.birthDate) setBirthDate(prof.birthDate)
           if (prof?.heightCm) setHeightCm(String(prof.heightCm))
           if (prof?.weightKg) setWeightKg(String(prof.weightKg))
           if (prof?.sex) setSex(prof.sex)
@@ -65,7 +65,7 @@ export default function OnboardingPage() {
   const totalSteps = 3
 
   async function handleFinish() {
-    if (!age || !heightCm || !weightKg || !goal) {
+    if (!birthDate || !heightCm || !weightKg || !goal) {
       setError("Merci de remplir les champs obligatoires.")
       return
     }
@@ -77,7 +77,7 @@ export default function OnboardingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sex: sex || null,
-          age: Number(age),
+          birthDate,
           heightCm: Number(heightCm),
           weightKg: Number(weightKg),
           goal,
@@ -137,14 +137,13 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                {/* Âge */}
+                {/* Date de naissance */}
                 <div className="mb-4">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Âge <span className="text-red-400">*</span></label>
-                  <div className="relative">
-                    <input type="number" value={age} onChange={e => setAge(e.target.value)} placeholder="Ex : 28" min={10} max={100}
-                      className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-violet-400 transition-colors" />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">ans</span>
-                  </div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Date de naissance <span className="text-red-400">*</span></label>
+                  <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)}
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 10)).toISOString().slice(0, 10)}
+                    min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().slice(0, 10)}
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 focus:outline-none focus:border-violet-400 transition-colors" />
                 </div>
 
                 {/* Taille */}
@@ -168,7 +167,7 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              <button onClick={() => { if (age && heightCm && weightKg) setStep(2); else setError("Remplis les champs obligatoires.") }}
+              <button onClick={() => { if (birthDate && heightCm && weightKg) setStep(2); else setError("Remplis les champs obligatoires.") }}
                 className="w-full py-3 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-500 transition-colors">
                 Continuer →
               </button>

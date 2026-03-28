@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) return Response.json({ error: `JSON introuvable dans la réponse du modèle. Réponse brute : "${text.slice(0, 200)}"` }, { status: 500 })
+    if (!jsonMatch) { console.error("Nutrition describe: no JSON in model response:", text.slice(0, 200)); return Response.json({ error: "Analyse impossible, réessaie." }, { status: 500 }) }
 
     // Escape literal newlines/tabs inside JSON string values (model sometimes outputs raw \n inside strings)
     const sanitized = jsonMatch[0].replace(/"(?:[^"\\]|\\.)*"/g, m =>
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     try {
       result = JSON.parse(sanitized)
     } catch (parseErr) {
-      return Response.json({ error: `Échec du parsing JSON : ${(parseErr as Error).message}. Extrait : "${sanitized.slice(0, 200)}"` }, { status: 500 })
+      console.error("Nutrition describe: JSON parse error:", (parseErr as Error).message, sanitized.slice(0, 200)); return Response.json({ error: "Analyse impossible, réessaie." }, { status: 500 })
     }
     return Response.json(result)
   } catch (e) {

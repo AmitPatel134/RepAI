@@ -92,15 +92,18 @@ function postProcessVoiceItems(items: VoiceItem[]): VoiceItem[] {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 
+const CARDIO_COLOR = "#f97316"
+const CUSTOM_COLOR  = "#16a34a"
+
 const CARDIO_TYPES = [
-  { key: "running",    label: "Course",     color: "#f97316" },
-  { key: "cycling",    label: "Vélo",       color: "#0ea5e9" },
-  { key: "swimming",   label: "Natation",   color: "#06b6d4" },
-  { key: "walking",    label: "Marche",     color: "#22c55e" },
-  { key: "hiking",     label: "Randonnée",  color: "#a3a3a3" },
-  { key: "rowing",     label: "Aviron",     color: "#8b5cf6" },
-  { key: "elliptical", label: "Elliptique", color: "#ec4899" },
-  { key: "other",      label: "Autre",      color: "#6b7280" },
+  { key: "running",    label: "Course",     color: CARDIO_COLOR },
+  { key: "cycling",    label: "Vélo",       color: CARDIO_COLOR },
+  { key: "swimming",   label: "Natation",   color: CARDIO_COLOR },
+  { key: "walking",    label: "Marche",     color: CARDIO_COLOR },
+  { key: "hiking",     label: "Randonnée",  color: CARDIO_COLOR },
+  { key: "rowing",     label: "Aviron",     color: CARDIO_COLOR },
+  { key: "elliptical", label: "Elliptique", color: CARDIO_COLOR },
+  { key: "other",      label: "Autre",      color: CARDIO_COLOR },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -123,6 +126,7 @@ function fmtPace(s: number | null) {
   return `${Math.floor(s / 60)}'${(s % 60).toString().padStart(2, "0")}"/km`
 }
 function getCardioInfo(type: string) {
+  if (type === "custom") return { key: "custom", label: "Autre", color: CUSTOM_COLOR }
   return CARDIO_TYPES.find(t => t.key === type) ?? CARDIO_TYPES[CARDIO_TYPES.length - 1]
 }
 function getItemKey(item: UnifiedItem) {
@@ -158,6 +162,11 @@ function CardioIcon({ type, size = 18 }: { type: string; size?: number }) {
       <circle cx="12" cy="6" r="2"/><path strokeLinecap="round" d="M12 8v4"/>
     </svg>
   )
+  if (type === "custom") return (
+    <svg width={s} height={s} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+    </svg>
+  )
   return (
     <svg width={s} height={s} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -165,55 +174,6 @@ function CardioIcon({ type, size = 18 }: { type: string; size?: number }) {
   )
 }
 
-// ─── useSheetDrag ─────────────────────────────────────────────────────────────
-
-function useSheetDrag(onClose: () => void) {
-  const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
-  const [translateY, setTranslateY] = useState(0)
-  const [transitioning, setTransitioning] = useState(false)
-  const yRef = useRef(0)
-  const startY = useRef(0)
-  const lastY = useRef(0)
-  const lastT = useRef(0)
-  const vel = useRef(0)
-  const onDragStart = (e: React.TouchEvent) => {
-    startY.current = e.touches[0].clientY
-    lastY.current = e.touches[0].clientY
-    lastT.current = Date.now()
-    vel.current = 0
-    setTransitioning(false)
-  }
-  const onDragMove = (e: React.TouchEvent) => {
-    const y = e.touches[0].clientY
-    const now = Date.now()
-    const dt = now - lastT.current
-    if (dt > 0) vel.current = (y - lastY.current) / dt
-    lastY.current = y
-    lastT.current = now
-    const newY = Math.max(0, y - startY.current)
-    yRef.current = newY
-    setTranslateY(newY)
-  }
-  const onDragEnd = () => {
-    setTransitioning(true)
-    if (yRef.current > 120 || vel.current > 0.6) {
-      setTranslateY(window.innerHeight)
-      setTimeout(() => { onCloseRef.current(); yRef.current = 0; setTranslateY(0); setTransitioning(false) }, 300)
-    } else {
-      yRef.current = 0; setTranslateY(0)
-      setTimeout(() => setTransitioning(false), 300)
-    }
-  }
-  const reset = () => { yRef.current = 0; setTranslateY(0); setTransitioning(false) }
-  const style: React.CSSProperties = (yRef.current > 0 || transitioning)
-    ? {
-        transform: `translateY(${translateY}px)`,
-        transition: transitioning ? "transform 0.3s cubic-bezier(0.4,0,0.2,1)" : "none",
-      }
-    : {}
-  return { style, onDragStart, onDragMove, onDragEnd, reset }
-}
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
@@ -243,18 +203,21 @@ export default function ActivitiesPage() {
   const lpStartX = useRef(0)
   const lpStartY = useRef(0)
 
-  // Bottom sheet drag-to-dismiss
-  const sheetDragY = useRef<number | null>(null)
-  const typeSelectorDrag = useSheetDrag(() => setShowTypeSelector(false))
-  const workoutFormDrag = useSheetDrag(() => setShowWorkoutForm(false))
-  const cardioFormDrag = useSheetDrag(() => closeCardioForm())
-  const voicePreviewDrag = useSheetDrag(() => setVoicePreview(null))
-
   // Modals
   const [showTypeSelector, setShowTypeSelector] = useState(false)
   const [showWorkoutForm, setShowWorkoutForm] = useState(false)
   const [showCardioForm, setShowCardioForm] = useState(false)
+  const [showCustomForm, setShowCustomForm] = useState(false)
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
+
+  // Custom activity form
+  const [custName, setCustName] = useState("")
+  const [custDate, setCustDate] = useState(new Date().toISOString().slice(0, 10))
+  const [custDurH, setCustDurH] = useState("")
+  const [custDurM, setCustDurM] = useState("")
+  const [custDurS, setCustDurS] = useState("")
+  const [custNotes, setCustNotes] = useState("")
+  const [custSaving, setCustSaving] = useState(false)
 
   // Voice
   const [voiceRecording, setVoiceRecording] = useState(false)
@@ -450,19 +413,6 @@ export default function ActivitiesPage() {
     exitEditMode()
   }
 
-  // ─── Sheet drag-to-dismiss ────────────────────────────────────────────────
-
-  function onSheetHandleTouchStart(e: React.TouchEvent) {
-    sheetDragY.current = e.touches[0].clientY
-  }
-
-  function onSheetHandleTouchEnd(e: React.TouchEvent, close: () => void) {
-    if (sheetDragY.current !== null) {
-      if (e.changedTouches[0].clientY - sheetDragY.current > 60) close()
-      sheetDragY.current = null
-    }
-  }
-
   // ─── Add / forms ──────────────────────────────────────────────────────────
 
   const sessionLimit = 5
@@ -521,6 +471,32 @@ export default function ActivitiesPage() {
     setShowCardioForm(false)
     setEditingActivity(null)
     resetCardioForm()
+  }
+
+  async function handleSaveCustomActivity() {
+    if (!custName.trim()) return
+    setCustSaving(true)
+    const durationSec = custDurH || custDurM || custDurS
+      ? parseInt(custDurH || "0") * 3600 + parseInt(custDurM || "0") * 60 + parseInt(custDurS || "0")
+      : null
+    const r = await authFetch("/api/activities", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "custom", name: custName.trim(), date: custDate,
+        durationSec, notes: custNotes || null,
+      }),
+    })
+    if (r.ok) {
+      const act = await r.json()
+      setActivities(prev => [act, ...prev])
+      setSessionsThisMonth(prev => prev + 1)
+      setSelectedMonthIdx(0)
+      setShowCustomForm(false)
+      setCustName(""); setCustDate(new Date().toISOString().slice(0, 10))
+      setCustDurH(""); setCustDurM(""); setCustDurS(""); setCustNotes("")
+    }
+    setCustSaving(false)
   }
 
   async function handleSaveActivity() {
@@ -980,7 +956,7 @@ export default function ActivitiesPage() {
                               <CardioIcon type={a.type} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold truncate text-gray-900">{info.label}</p>
+                              <p className="text-sm font-bold truncate text-gray-900">{a.name || info.label}</p>
                               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                 {a.distanceM && <span className="text-[11px] text-gray-500">{fmtDist(a.distanceM)}</span>}
                                 {a.durationSec && <span className="text-[11px] text-gray-500">{fmtDuration(a.durationSec)}</span>}
@@ -1029,26 +1005,17 @@ export default function ActivitiesPage() {
         </div>
       </div>
 
-      {/* ── Type Selector (bottom sheet, swipe-to-dismiss) ── */}
+      {/* ── Type Selector modal ── */}
       {showTypeSelector && (
         <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
+          data-modal="" className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => setShowTypeSelector(false)}
         >
           <div
-            className="sheet-enter bg-white border border-gray-200 shadow-2xl rounded-t-3xl w-full max-w-lg"
-            style={typeSelectorDrag.style}
+            className="modal-enter bg-white rounded-3xl w-full max-w-sm shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
-            <div
-              className="flex justify-center pt-3 pb-1 cursor-grab"
-              onTouchStart={typeSelectorDrag.onDragStart}
-              onTouchMove={typeSelectorDrag.onDragMove}
-              onTouchEnd={typeSelectorDrag.onDragEnd}
-            >
-              <div className="w-10 h-1 rounded-full bg-gray-300" />
-            </div>
-            <div className="px-5 pb-8 pt-2">
+            <div className="px-5 pb-6 pt-5">
               <h3 className="text-base font-black text-gray-900 mb-5">Quel type d&apos;activité ?</h3>
               <div className="flex flex-col gap-3">
                 <button
@@ -1065,14 +1032,26 @@ export default function ActivitiesPage() {
                 </button>
                 <button
                   onClick={() => { setShowTypeSelector(false); resetCardioForm(); setShowCardioForm(true) }}
-                  className="flex items-center gap-4 p-4 bg-sky-50 border border-sky-200 rounded-2xl text-left hover:border-sky-400 transition-colors"
+                  className="flex items-center gap-4 p-4 bg-orange-50 border border-orange-200 rounded-2xl text-left hover:border-orange-400 transition-colors"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-sky-100 flex items-center justify-center text-sky-500 shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-500 shrink-0">
                     <CardioIcon type="running" size={22} />
                   </div>
                   <div>
                     <p className="text-sm font-extrabold text-gray-900">Activité cardio</p>
                     <p className="text-xs text-gray-500 mt-0.5">Course, vélo, natation, randonnée…</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => { setShowTypeSelector(false); setCustName(""); setCustDate(new Date().toISOString().slice(0, 10)); setCustDurH(""); setCustDurM(""); setCustDurS(""); setCustNotes(""); setShowCustomForm(true) }}
+                  className="flex items-center gap-4 p-4 bg-green-50 border border-green-200 rounded-2xl text-left hover:border-green-400 transition-colors"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-600 shrink-0">
+                    <CardioIcon type="custom" size={22} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-extrabold text-gray-900">Autres</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Foot, boxe, tennis, yoga…</p>
                   </div>
                 </button>
               </div>
@@ -1081,26 +1060,17 @@ export default function ActivitiesPage() {
         </div>
       )}
 
-      {/* ── Workout Form (bottom sheet, swipe-to-dismiss) ── */}
+      {/* ── Workout Form modal ── */}
       {showWorkoutForm && (
         <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
+          data-modal="" className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => setShowWorkoutForm(false)}
         >
           <div
-            className="sheet-enter bg-white border border-gray-200 shadow-2xl rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            style={workoutFormDrag.style}
+            className="modal-enter bg-white rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
-            <div
-              className="flex justify-center pt-3 pb-1 cursor-grab"
-              onTouchStart={workoutFormDrag.onDragStart}
-              onTouchMove={workoutFormDrag.onDragMove}
-              onTouchEnd={workoutFormDrag.onDragEnd}
-            >
-              <div className="w-10 h-1 rounded-full bg-gray-300" />
-            </div>
-            <div className="px-5 pb-6 pt-2">
+            <div className="px-5 pb-6 pt-5">
               <h3 className="text-base font-black text-gray-900 mb-4">Nouvelle séance</h3>
               <div className="flex flex-col gap-4">
                 <div>
@@ -1160,26 +1130,17 @@ export default function ActivitiesPage() {
         </div>
       )}
 
-      {/* ── Cardio Form (bottom sheet, swipe-to-dismiss) ── */}
+      {/* ── Cardio Form modal ── */}
       {showCardioForm && (
         <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
+          data-modal="" className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={closeCardioForm}
         >
           <div
-            className="sheet-enter bg-white border border-gray-200 shadow-2xl rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            style={cardioFormDrag.style}
+            className="modal-enter bg-white rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
-            <div
-              className="flex justify-center pt-3 pb-1 cursor-grab"
-              onTouchStart={cardioFormDrag.onDragStart}
-              onTouchMove={cardioFormDrag.onDragMove}
-              onTouchEnd={cardioFormDrag.onDragEnd}
-            >
-              <div className="w-10 h-1 rounded-full bg-gray-300" />
-            </div>
-            <div className="px-5 pb-6 pt-2">
+            <div className="px-5 pb-6 pt-5">
               <h3 className="text-base font-black text-gray-900 mb-4">
                 {editingActivity ? "Modifier l'activité" : "Nouvelle activité cardio"}
               </h3>
@@ -1248,9 +1209,63 @@ export default function ActivitiesPage() {
         </div>
       )}
 
+      {/* ── Custom Activity Form modal ── */}
+      {showCustomForm && (
+        <div
+          data-modal="" className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowCustomForm(false)}
+        >
+          <div
+            className="modal-enter bg-white rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-5 pb-6 pt-5">
+              <h3 className="text-base font-black text-gray-900 mb-4">Nouvelle activité</h3>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1.5">Titre <span className="text-red-400">*</span></label>
+                  <input value={custName} onChange={e => setCustName(e.target.value)} placeholder="ex: Football, Boxe, Yoga…" autoFocus
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-green-500/50"/>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1.5">Date</label>
+                  <input type="date" value={custDate} onChange={e => setCustDate(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-green-500/50"/>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1.5">Durée <span className="text-gray-400 font-normal">(optionnel)</span></label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <input type="number" min="0" value={custDurH} onChange={e => setCustDurH(e.target.value)} placeholder="0h"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none text-center"/>
+                    </div>
+                    <div className="flex-1">
+                      <input type="number" min="0" max="59" value={custDurM} onChange={e => setCustDurM(e.target.value)} placeholder="min"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none text-center"/>
+                    </div>
+                    <div className="flex-1">
+                      <input type="number" min="0" max="59" value={custDurS} onChange={e => setCustDurS(e.target.value)} placeholder="sec"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none text-center"/>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1.5">Notes <span className="text-gray-400 font-normal">(optionnel)</span></label>
+                  <textarea value={custNotes} onChange={e => setCustNotes(e.target.value)} placeholder="Ressenti, résultat…" rows={3}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 outline-none resize-none"/>
+                </div>
+              </div>
+              <button onClick={handleSaveCustomActivity} disabled={custSaving || !custName.trim()} className="w-full mt-5 py-3 bg-green-600 rounded-xl text-sm font-bold text-white hover:bg-green-500 transition-colors disabled:opacity-50">
+                {custSaving ? "..." : "Ajouter →"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Voice recording overlay ── */}
       {voiceRecording && (
-        <div className="fixed inset-0 bg-black/85 z-50 flex flex-col items-center justify-center gap-6 px-6">
+        <div data-modal="" className="fixed inset-0 bg-black/85 z-50 flex flex-col items-center justify-center gap-6 px-6">
           <div className="w-20 h-20 rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center animate-pulse">
             <svg className="w-9 h-9 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
@@ -1274,7 +1289,7 @@ export default function ActivitiesPage() {
 
       {/* ── Voice parsing overlay ── */}
       {voiceParsing && (
-        <div className="fixed inset-0 bg-black/85 z-50 flex flex-col items-center justify-center gap-5 px-6">
+        <div data-modal="" className="fixed inset-0 bg-black/85 z-50 flex flex-col items-center justify-center gap-5 px-6">
           <div className="w-16 h-16 rounded-full bg-blue-600/20 flex items-center justify-center">
             <svg className="w-8 h-8 text-blue-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -1296,7 +1311,7 @@ export default function ActivitiesPage() {
 
       {/* ── Voice saving overlay ── */}
       {voiceSaving && (
-        <div className="fixed inset-0 bg-black/85 z-50 flex flex-col items-center justify-center gap-5 px-6">
+        <div data-modal="" className="fixed inset-0 bg-black/85 z-50 flex flex-col items-center justify-center gap-5 px-6">
           <div className="w-16 h-16 rounded-full bg-blue-600/20 flex items-center justify-center">
             <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
           </div>
@@ -1326,12 +1341,11 @@ export default function ActivitiesPage() {
         </div>
       )}
 
-      {/* ── Voice error overlay ── */}
+      {/* ── Voice error modal ── */}
       {voiceError && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setVoiceError(null)}>
-          <div className="bg-white border border-gray-200 shadow-2xl rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-gray-300" /></div>
-            <div className="px-5 pb-8 pt-3">
+        <div data-modal="" className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setVoiceError(null)}>
+          <div className="modal-enter bg-white rounded-3xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="px-5 pb-6 pt-5">
               <div className="flex items-start gap-4 mb-5">
                 <div className="w-12 h-12 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
                   <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1378,12 +1392,11 @@ export default function ActivitiesPage() {
         </div>
       )}
 
-      {/* ── Delete confirmation ── */}
+      {/* ── Delete confirmation modal ── */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="sheet-enter bg-white border border-gray-200 shadow-2xl rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-gray-300" /></div>
-            <div className="px-5 pb-8 pt-4">
+        <div data-modal="" className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="modal-enter bg-white rounded-3xl w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="px-5 pb-6 pt-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-11 h-11 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1417,23 +1430,14 @@ export default function ActivitiesPage() {
         </div>
       )}
 
-      {/* ── Voice preview bottom sheet ── */}
+      {/* ── Voice preview modal ── */}
       {voicePreview && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setVoicePreview(null)}>
+        <div data-modal="" className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setVoicePreview(null)}>
           <div
-            className="sheet-enter bg-white border border-gray-200 shadow-2xl rounded-t-3xl w-full max-w-lg max-h-[85vh] flex flex-col"
-            style={voicePreviewDrag.style}
+            className="modal-enter bg-white rounded-3xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
-            <div
-              className="flex justify-center pt-3 pb-1 cursor-grab shrink-0"
-              onTouchStart={voicePreviewDrag.onDragStart}
-              onTouchMove={voicePreviewDrag.onDragMove}
-              onTouchEnd={voicePreviewDrag.onDragEnd}
-            >
-              <div className="w-10 h-1 rounded-full bg-gray-300" />
-            </div>
-            <div className="px-5 pt-2 pb-2 shrink-0">
+            <div className="px-5 pt-5 pb-2 shrink-0">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
                   <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

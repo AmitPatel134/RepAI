@@ -59,15 +59,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         ...(date !== undefined && { date: new Date(date) }),
         ...(exercises !== undefined && {
           exercises: {
-            create: exercises.map((ex: { name: string; category?: string; sets: { reps?: number; weight?: number; rpe?: number }[] }, ei: number) => ({
+            create: exercises.map((ex: { name: string; category?: string; isUnilateral?: boolean; notes?: string; sets: { reps?: number; weight?: number; rpe?: number; repsRight?: number; weightRight?: number }[] }, ei: number) => ({
               name: ex.name,
               category: ex.category ?? "strength",
+              isUnilateral: ex.isUnilateral ?? false,
+              notes: ex.notes || null,
               order: ei,
               sets: {
-                create: ex.sets.map((s: { reps?: number; weight?: number; rpe?: number }, si: number) => ({
+                create: ex.sets.map((s: { reps?: number; weight?: number; rpe?: number; repsRight?: number; weightRight?: number }, si: number) => ({
                   reps: s.reps || null,
                   weight: s.weight || null,
                   rpe: s.rpe || null,
+                  repsRight: s.repsRight || null,
+                  weightRight: s.weightRight || null,
                   order: si,
                 })),
               },

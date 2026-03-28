@@ -18,6 +18,7 @@ model User {
   planExpiresAt   DateTime?
   createdAt       DateTime       @default(now())
   // Fitness profile
+  birthDate       DateTime?
   age             Int?
   heightCm        Int?
   weightKg        Float?
@@ -91,25 +92,29 @@ model Workout {
 }
 
 model Exercise {
-  id        String  @id @default(cuid())
-  workoutId String
-  workout   Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
-  name      String
-  category  String  @default("strength")
-  sets      Set[]
-  order     Int     @default(0)
+  id           String  @id @default(cuid())
+  workoutId    String
+  workout      Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  name         String
+  category     String  @default("strength")
+  isUnilateral Boolean @default(false)
+  notes        String?
+  sets         Set[]
+  order        Int     @default(0)
 }
 
 model Set {
-  id         String   @id @default(cuid())
-  exerciseId String
-  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
-  reps       Int?
-  weight     Float?
-  duration   Int?
-  rpe        Float?
-  notes      String?
-  order      Int      @default(0)
+  id          String   @id @default(cuid())
+  exerciseId  String
+  exercise    Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  reps        Int?
+  weight      Float?
+  repsRight   Int?
+  weightRight Float?
+  duration    Int?
+  rpe         Float?
+  notes       String?
+  order       Int      @default(0)
 }
 
 model CoachSession {

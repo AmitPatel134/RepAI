@@ -36,6 +36,7 @@ type DashboardData = {
 }
 
 type UserProfile = {
+  birthDate: string | null
   age: number | null
   heightCm: number | null
   weightKg: number | null
@@ -173,15 +174,16 @@ export default function HomePage() {
 
         {/* ── PROFILE CARD ────────────────────────────────────────── */}
         {profile?.profileComplete ? (
-          <a href="/app/profil" className="relative overflow-hidden bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4 hover:border-violet-200 transition-colors group shadow-sm">
+          <a href="/app/profil" className="relative overflow-hidden bg-white border border-gray-100 rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:border-violet-200 transition-colors group shadow-sm">
             <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-violet-500" />
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shrink-0 shadow-md shadow-violet-500/30 ml-2">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-y-1 mb-1">
+            <div className="flex-1 min-w-0 ml-1">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="text-[11px] font-black text-violet-600 uppercase tracking-widest shrink-0">Profil</span>
+                {profile.goal && (
+                  <span className="text-sm text-gray-900 truncate">{GOAL_LABELS[profile.goal] ?? profile.goal}</span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-y-1">
                 {[
                   profile.age ? `${profile.age} ans` : null,
                   profile.heightCm ? `${profile.heightCm} cm` : null,
@@ -190,14 +192,11 @@ export default function HomePage() {
                   profile.restingHR ? `♥ ${profile.restingHR} bpm` : null,
                 ].filter(Boolean).map((item, i, arr) => (
                   <span key={i} className="flex items-center">
-                    <span className="text-xs font-semibold text-gray-600">{item}</span>
+                    <span className="text-xs font-semibold text-gray-500">{item}</span>
                     {i < arr.length - 1 && <span className="mx-1.5 text-gray-200">·</span>}
                   </span>
                 ))}
               </div>
-              {profile.goal && (
-                <p className="text-sm font-bold text-gray-900 truncate">{GOAL_LABELS[profile.goal] ?? profile.goal}</p>
-              )}
             </div>
             <svg className="w-4 h-4 text-gray-300 group-hover:text-violet-400 shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

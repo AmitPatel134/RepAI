@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { authFetch } from "@/lib/authFetch"
+import { invalidateCache } from "@/lib/appCache"
 import LoadingScreen from "@/components/LoadingScreen"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -15,15 +16,19 @@ type Activity = {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+const CARDIO_COLOR = "#f97316"
+const CUSTOM_COLOR  = "#16a34a"
+
 const CARDIO_TYPES = [
-  { key: "running",    label: "Course",     color: "#f97316" },
-  { key: "cycling",    label: "Vélo",       color: "#3b82f6" },
-  { key: "swimming",   label: "Natation",   color: "#06b6d4" },
-  { key: "walking",    label: "Marche",     color: "#22c55e" },
-  { key: "hiking",     label: "Randonnée",  color: "#a3a3a3" },
-  { key: "rowing",     label: "Aviron",     color: "#8b5cf6" },
-  { key: "elliptical", label: "Elliptique", color: "#ec4899" },
-  { key: "other",      label: "Autre",      color: "#6b7280" },
+  { key: "running",    label: "Course",     color: CARDIO_COLOR },
+  { key: "cycling",    label: "Vélo",       color: CARDIO_COLOR },
+  { key: "swimming",   label: "Natation",   color: CARDIO_COLOR },
+  { key: "walking",    label: "Marche",     color: CARDIO_COLOR },
+  { key: "hiking",     label: "Randonnée",  color: CARDIO_COLOR },
+  { key: "rowing",     label: "Aviron",     color: CARDIO_COLOR },
+  { key: "elliptical", label: "Elliptique", color: CARDIO_COLOR },
+  { key: "other",      label: "Autre",      color: CARDIO_COLOR },
+  { key: "custom",     label: "Autre",      color: CUSTOM_COLOR },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -166,6 +171,7 @@ export default function ActivityDetailPage() {
     if (r.ok) {
       const updated = await r.json()
       setActivity(updated)
+      invalidateCache("/api/activities")
       setEditMode(false)
     }
     setSaving(false)
@@ -194,6 +200,7 @@ export default function ActivityDetailPage() {
   async function handleDelete() {
     setDeleting(true)
     await authFetch(`/api/activities/${id}`, { method: "DELETE" })
+    invalidateCache("/api/activities")
     router.push("/app/activities")
   }
 
@@ -235,246 +242,211 @@ export default function ActivityDetailPage() {
 
         {/* ── READ MODE ── */}
         {!editMode && (
-          <div className="flex flex-col gap-4 py-4 px-4">
+          <div className="flex flex-col gap-3 py-4 px-4">
 
-            {/* Icon + type hero */}
-            <div className="flex flex-col items-center py-8 gap-3">
-              <div className="w-20 h-20 rounded-2xl flex items-center justify-center" style={{ backgroundColor: info.color + "22" }}>
-                <span style={{ color: info.color }}>
-                  <CardioIcon type={activity.type} size={36} />
-                </span>
-              </div>
-              <p className="text-2xl font-extrabold" style={{ color: info.color }}>{info.label}</p>
-              <p className="text-sm text-gray-500">{fmtDate(activity.date)}</p>
-            </div>
+            {/* Main card */}
+            <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
 
-            {/* Date — inline editable */}
-            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-              <button
-                className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-colors"
-                onClick={() => {
-                  setPendingDate(activity.date.slice(0, 10))
-                  setDatePickerOpen(v => !v)
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: info.color + "18" }}>
-                    <svg className="w-4 h-4" style={{ color: info.color }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              {/* Top: icon + label + date */}
+              <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: info.color + "20" }}>
+                  <span style={{ color: info.color }}>
+                    <CardioIcon type={activity.type} size={22} />
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-extrabold text-gray-900">
+                    {activity.type === "custom" ? activity.name : info.label}
+                  </p>
+                  <button
+                    className="flex items-center gap-1 mt-0.5 group"
+                    onClick={() => { setPendingDate(activity.date.slice(0, 10)); setDatePickerOpen(v => !v) }}
+                  >
+                    <span className="text-xs text-gray-400 capitalize group-hover:text-gray-700 transition-colors">{fmtDate(activity.date)}</span>
+                    <svg className="w-3 h-3 text-gray-300 group-hover:text-gray-500 transition-colors" style={{ transform: datePickerOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Date</p>
-                    <p className="text-sm font-bold text-gray-900 capitalize">{fmtDate(activity.date)}</p>
-                  </div>
+                  </button>
                 </div>
-                <svg
-                  className="w-4 h-4 text-gray-400 transition-transform duration-300"
-                  style={{ transform: datePickerOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+                <div className="w-1 h-10 rounded-full shrink-0" style={{ backgroundColor: info.color }} />
+              </div>
 
-              <div style={{
-                maxHeight: datePickerOpen ? "160px" : "0px",
-                opacity: datePickerOpen ? 1 : 0,
-                overflow: "hidden",
-                transition: "max-height 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease",
-              }}>
-                <div className="px-4 pb-4 flex flex-col gap-3">
-                  <input
-                    type="date"
-                    value={pendingDate}
-                    onChange={e => setPendingDate(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-400 transition-colors"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setDatePickerOpen(false)}
-                      className="flex-1 py-2 border border-gray-200 rounded-xl text-sm font-bold text-gray-400 hover:text-gray-700 transition-colors"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      onClick={handleSaveDate}
-                      disabled={savingDate}
-                      className="flex-[2] py-2 rounded-xl text-sm font-bold text-white transition-colors disabled:opacity-50"
-                      style={{ backgroundColor: info.color }}
-                    >
-                      {savingDate ? "..." : "Confirmer"}
-                    </button>
-                  </div>
+              {/* Date picker accordion */}
+              <div style={{ maxHeight: datePickerOpen ? "120px" : "0px", opacity: datePickerOpen ? 1 : 0, overflow: "hidden", transition: "max-height 0.3s ease, opacity 0.2s ease" }}>
+                <div className="px-4 pb-3 flex gap-2 border-t border-gray-50">
+                  <input type="date" value={pendingDate} onChange={e => setPendingDate(e.target.value)}
+                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-900 outline-none transition-colors" style={{ fontSize: 14 }} />
+                  <button onClick={() => setDatePickerOpen(false)}
+                    className="px-3 py-2 text-xs font-bold text-gray-400 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                    ✕
+                  </button>
+                  <button onClick={handleSaveDate} disabled={savingDate}
+                    className="px-4 py-2 text-xs font-bold text-white rounded-xl disabled:opacity-50 transition-opacity"
+                    style={{ backgroundColor: info.color }}>
+                    {savingDate ? "…" : "OK"}
+                  </button>
                 </div>
               </div>
+
+              {/* Stats — 3-col grid */}
+              {(activity.durationSec || activity.distanceM || activity.avgPaceSecKm || activity.avgSpeedKmh || activity.avgHeartRate || activity.calories || activity.elevationM) && (
+                <div className="border-t border-gray-100 px-4 py-3">
+                  <div className="grid grid-cols-3 gap-x-3 gap-y-3">
+                    {activity.durationSec && <StatItem label="Durée" value={fmtDuration(activity.durationSec)!} color={info.color} />}
+                    {activity.distanceM && <StatItem label="Distance" value={fmtDist(activity.distanceM)!} color={info.color} />}
+                    {activity.avgPaceSecKm
+                      ? <StatItem label="Allure" value={fmtPace(activity.avgPaceSecKm)!} color={info.color} />
+                      : activity.avgSpeedKmh
+                        ? <StatItem label="Vitesse" value={`${activity.avgSpeedKmh.toFixed(1)} km/h`} color={info.color} />
+                        : null}
+                    {activity.avgHeartRate && <StatItem label="FC moy." value={`${activity.avgHeartRate} bpm`} color={info.color} />}
+                    {activity.calories && <StatItem label="Calories" value={`${activity.calories} kcal`} color={info.color} />}
+                    {activity.elevationM && <StatItem label="Dénivelé" value={`+${activity.elevationM} m`} color={info.color} />}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              {activity.notes && (
+                <div className="border-t border-gray-100 px-4 py-3">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Notes</p>
+                  <p className="text-sm text-gray-600 leading-relaxed">{activity.notes}</p>
+                </div>
+              )}
             </div>
-
-            {/* Stats grid */}
-            <div className="grid grid-cols-2 gap-3">
-              {activity.durationSec && (
-                <StatCard label="Durée" value={fmtDuration(activity.durationSec)!} icon="⏱" />
-              )}
-              {activity.distanceM && (
-                <StatCard label="Distance" value={fmtDist(activity.distanceM)!} icon="📍" />
-              )}
-              {activity.avgPaceSecKm && (
-                <StatCard label="Allure moy." value={fmtPace(activity.avgPaceSecKm)!} icon="⚡" />
-              )}
-              {!activity.avgPaceSecKm && activity.avgSpeedKmh && (
-                <StatCard label="Vitesse moy." value={`${activity.avgSpeedKmh.toFixed(1)} km/h`} icon="💨" />
-              )}
-              {activity.avgHeartRate && (
-                <StatCard label="FC moyenne" value={`${activity.avgHeartRate} bpm`} icon="❤️" />
-              )}
-              {activity.calories && (
-                <StatCard label="Calories" value={`${activity.calories} kcal`} icon="🔥" />
-              )}
-              {activity.elevationM && (
-                <StatCard label="Dénivelé" value={`${activity.elevationM} m`} icon="⛰" />
-              )}
-            </div>
-
-            {/* Notes */}
-            {activity.notes && (
-              <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Notes</p>
-                <p className="text-sm text-gray-600 leading-relaxed">{activity.notes}</p>
-              </div>
-            )}
-
-            {/* Delete button */}
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="mt-2 w-full py-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-sm font-bold text-red-400 hover:bg-red-500/20 transition-colors"
-            >
-              Supprimer cette activité
-            </button>
           </div>
         )}
 
-        {/* ── EDIT MODE ── */}
-        {editMode && (
-          <div className="py-4 px-4 flex flex-col gap-4">
-
-            {/* Type selector */}
-            <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Type d&apos;activité</p>
-              <div className="overflow-x-auto">
-                <div className="flex gap-2 w-max pb-1">
-                  {CARDIO_TYPES.map(t => (
-                    <button key={t.key} onClick={() => setCType(t.key)}
-                      className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl border transition-all"
-                      style={cType === t.key
-                        ? { backgroundColor: t.color + "15", borderColor: t.color + "66", color: t.color }
-                        : { backgroundColor: "#f9fafb", borderColor: "#e5e7eb", color: "#6b7280" }}>
-                      <CardioIcon type={t.key} size={18} />
-                      <span className="text-[10px] font-bold">{t.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Date */}
-            <div>
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wide block mb-1.5">Date</label>
-              <input type="date" value={cDate} onChange={e => setCDate(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-violet-400 transition-colors"/>
-            </div>
-
-            {/* Distance + Duration */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Distance (km)</label>
-                <input type="number" min="0" step="0.1" value={cDist} onChange={e => setCDist(e.target.value)} placeholder="ex: 5.2"
-                  className="w-full mt-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none focus:border-violet-400 transition-colors"/>
-              </div>
-              <div>
-                <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Durée</label>
-                <div className="flex gap-1 mt-1">
-                  <input type="number" min="0" value={cDurH} onChange={e => setCDurH(e.target.value)} placeholder="0h"
-                    className="w-1/3 bg-white border border-gray-200 rounded-xl px-1 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
-                  <input type="number" min="0" max="59" value={cDurM} onChange={e => setCDurM(e.target.value)} placeholder="min"
-                    className="w-1/3 bg-white border border-gray-200 rounded-xl px-1 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
-                  <input type="number" min="0" max="59" value={cDurS} onChange={e => setCDurS(e.target.value)} placeholder="sec"
-                    className="w-1/3 bg-white border border-gray-200 rounded-xl px-1 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
-                </div>
-              </div>
-            </div>
-
-            {/* Other stats */}
-            <div className="grid grid-cols-3 gap-2">
-              {(cType === "running" || cType === "cycling" || cType === "hiking") && (
-                <div>
-                  <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Dénivelé (m)</label>
-                  <input type="number" min="0" value={cElev} onChange={e => setCElev(e.target.value)} placeholder="—"
-                    className="w-full mt-1 bg-white border border-gray-200 rounded-xl px-2 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
-                </div>
-              )}
-              <div>
-                <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">FC moy</label>
-                <input type="number" min="0" value={cHR} onChange={e => setCHR(e.target.value)} placeholder="bpm"
-                  className="w-full mt-1 bg-white border border-gray-200 rounded-xl px-2 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
-              </div>
-              <div>
-                <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Calories</label>
-                <input type="number" min="0" value={cCal} onChange={e => setCCal(e.target.value)} placeholder="kcal"
-                  className="w-full mt-1 bg-white border border-gray-200 rounded-xl px-2 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div>
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wide block mb-1.5">Notes</label>
-              <textarea value={cNotes} onChange={e => setCNotes(e.target.value)} placeholder="Notes (optionnel)" rows={3}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none resize-none focus:border-violet-400 transition-colors"/>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Floating bar in edit mode */}
+      {/* ── EDIT MODAL ── */}
       {editMode && (
-        <div
-          className="fixed left-0 right-0 flex justify-center gap-3 z-40 pointer-events-none"
-          style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
-        >
-          <button
-            onClick={cancelEdit}
-            className="pointer-events-auto flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 shadow-xl hover:bg-gray-50 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Annuler
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="pointer-events-auto flex items-center gap-2 px-6 py-3 bg-violet-600 border border-violet-500/40 rounded-2xl text-sm font-bold text-white shadow-2xl shadow-black/60 hover:bg-violet-500 transition-colors disabled:opacity-50"
-          >
-            {saving ? (
-              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-            {saving ? "Sauvegarde..." : "Sauvegarder"}
-          </button>
+        <div data-modal="" className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={cancelEdit}>
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto modal-enter" onClick={e => e.stopPropagation()}>
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100">
+              <p className="text-base font-extrabold text-gray-900">Modifier l&apos;activité</p>
+              <button onClick={cancelEdit} className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-5 py-4 flex flex-col gap-4">
+              {/* Type selector */}
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Type d&apos;activité</p>
+                <div className="overflow-x-auto">
+                  <div className="flex gap-2 w-max pb-1">
+                    {CARDIO_TYPES.map(t => (
+                      <button key={t.key} onClick={() => setCType(t.key)}
+                        className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl border transition-all"
+                        style={cType === t.key
+                          ? { backgroundColor: t.color + "15", borderColor: t.color + "66", color: t.color }
+                          : { backgroundColor: "#f9fafb", borderColor: "#e5e7eb", color: "#6b7280" }}>
+                        <CardioIcon type={t.key} size={18} />
+                        <span className="text-[10px] font-bold">{t.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wide block mb-1.5">Date</label>
+                <input type="date" value={cDate} onChange={e => setCDate(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none focus:border-violet-400 transition-colors"/>
+              </div>
+
+              {/* Distance + Duration */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Distance (km)</label>
+                  <input type="number" min="0" step="0.1" value={cDist} onChange={e => setCDist(e.target.value)} placeholder="ex: 5.2"
+                    className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none focus:border-violet-400 transition-colors"/>
+                </div>
+                <div>
+                  <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Durée</label>
+                  <div className="flex gap-1 mt-1">
+                    <input type="number" min="0" value={cDurH} onChange={e => setCDurH(e.target.value)} placeholder="0h"
+                      className="w-1/3 bg-gray-50 border border-gray-200 rounded-xl px-1 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
+                    <input type="number" min="0" max="59" value={cDurM} onChange={e => setCDurM(e.target.value)} placeholder="min"
+                      className="w-1/3 bg-gray-50 border border-gray-200 rounded-xl px-1 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
+                    <input type="number" min="0" max="59" value={cDurS} onChange={e => setCDurS(e.target.value)} placeholder="sec"
+                      className="w-1/3 bg-gray-50 border border-gray-200 rounded-xl px-1 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
+                  </div>
+                </div>
+              </div>
+
+              {/* Other stats */}
+              <div className="grid grid-cols-3 gap-2">
+                {(cType === "running" || cType === "cycling" || cType === "hiking") && (
+                  <div>
+                    <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Dénivelé (m)</label>
+                    <input type="number" min="0" value={cElev} onChange={e => setCElev(e.target.value)} placeholder="—"
+                      className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
+                  </div>
+                )}
+                <div>
+                  <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">FC moy</label>
+                  <input type="number" min="0" value={cHR} onChange={e => setCHR(e.target.value)} placeholder="bpm"
+                    className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
+                </div>
+                <div>
+                  <label className="text-[11px] text-gray-400 font-bold uppercase tracking-wide ml-1">Calories</label>
+                  <input type="number" min="0" value={cCal} onChange={e => setCCal(e.target.value)} placeholder="kcal"
+                    className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-3 text-sm text-gray-900 placeholder-gray-300 outline-none text-center focus:border-violet-400 transition-colors"/>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wide block mb-1.5">Notes</label>
+                <textarea value={cNotes} onChange={e => setCNotes(e.target.value)} placeholder="Notes (optionnel)" rows={3}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none resize-none focus:border-violet-400 transition-colors"/>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3 pt-1">
+                <button onClick={cancelEdit}
+                  className="flex-1 py-3 border border-gray-200 rounded-xl text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">
+                  Annuler
+                </button>
+                <button onClick={handleSave} disabled={saving}
+                  className="flex-[2] py-3 bg-violet-600 rounded-xl text-sm font-bold text-white hover:bg-violet-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  {saving ? (
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                  {saving ? "Sauvegarde..." : "Sauvegarder"}
+                </button>
+              </div>
+
+              {/* Delete — only in edit mode */}
+              <button
+                onClick={() => { cancelEdit(); setShowDeleteConfirm(true) }}
+                className="w-full py-2.5 bg-red-50 border border-red-200 rounded-xl text-sm font-bold text-red-400 hover:bg-red-100 transition-colors"
+              >
+                Supprimer cette activité
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Delete confirm sheet */}
+      {/* Delete confirm modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="bg-white border border-gray-200 rounded-t-3xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-gray-300" /></div>
-            <div className="px-5 pb-8 pt-4">
+        <div data-modal="" className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-sm modal-enter" onClick={e => e.stopPropagation()}>
+            <div className="px-5 py-5">
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-11 h-11 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -504,16 +476,13 @@ export default function ActivityDetailPage() {
   )
 }
 
-// ─── StatCard ─────────────────────────────────────────────────────────────────
+// ─── StatItem ─────────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, icon }: { label: string; value: string; icon: string }) {
+function StatItem({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col gap-1">
-      <div className="flex items-center gap-1.5">
-        <span className="text-base">{icon}</span>
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">{label}</p>
-      </div>
-      <p className="text-xl font-extrabold text-gray-900">{value}</p>
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-wide mb-0.5" style={{ color: color + "cc" }}>{label}</p>
+      <p className="text-sm font-extrabold text-gray-900 leading-tight">{value}</p>
     </div>
   )
 }

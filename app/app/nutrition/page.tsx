@@ -83,56 +83,6 @@ function resizeImage(file: File, maxPx = 900, quality = 0.75): Promise<string> {
   })
 }
 
-// ─── useSheetDrag ─────────────────────────────────────────────────────────────
-
-function useSheetDrag(onClose: () => void) {
-  const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
-  const [translateY, setTranslateY] = useState(0)
-  const [transitioning, setTransitioning] = useState(false)
-  const yRef = useRef(0)
-  const startY = useRef(0)
-  const lastY = useRef(0)
-  const lastT = useRef(0)
-  const vel = useRef(0)
-
-  const onDragStart = (e: React.TouchEvent) => {
-    startY.current = e.touches[0].clientY
-    lastY.current = e.touches[0].clientY
-    lastT.current = Date.now()
-    vel.current = 0
-    setTransitioning(false)
-  }
-  const onDragMove = (e: React.TouchEvent) => {
-    const y = e.touches[0].clientY
-    const now = Date.now()
-    const dt = now - lastT.current
-    if (dt > 0) vel.current = (y - lastY.current) / dt
-    lastY.current = y
-    lastT.current = now
-    const newY = Math.max(0, y - startY.current)
-    yRef.current = newY
-    setTranslateY(newY)
-  }
-  const onDragEnd = () => {
-    setTransitioning(true)
-    if (yRef.current > 120 || vel.current > 0.6) {
-      setTranslateY(window.innerHeight)
-      setTimeout(() => { onCloseRef.current(); yRef.current = 0; setTranslateY(0); setTransitioning(false) }, 300)
-    } else {
-      yRef.current = 0; setTranslateY(0)
-      setTimeout(() => setTransitioning(false), 300)
-    }
-  }
-  const reset = () => { yRef.current = 0; setTranslateY(0); setTransitioning(false) }
-  const style: React.CSSProperties = (yRef.current > 0 || transitioning)
-    ? {
-        transform: `translateY(${translateY}px)`,
-        transition: transitioning ? "transform 0.3s cubic-bezier(0.4,0,0.2,1)" : "none",
-      }
-    : {}
-  return { style, onDragStart, onDragMove, onDragEnd, reset }
-}
 
 // ─── MacroBar ─────────────────────────────────────────────────────────────────
 
@@ -168,6 +118,7 @@ export default function NutritionPage() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [editName, setEditName] = useState("")
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
+  const [isManualEntry, setIsManualEntry] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [editMode, setEditMode] = useState(false)
@@ -179,11 +130,6 @@ export default function NutritionPage() {
   const lpMoved = useRef(false)
   const lpStartX = useRef(0)
   const lpStartY = useRef(0)
-
-  const compositionDrag = useSheetDrag(() => closeAnalysis())
-  const macrosDrag = useSheetDrag(() => closeAnalysis())
-  const detailDrag = useSheetDrag(() => { setSelectedMeal(null); setDetailImageUrl(null) })
-  const errorDrag = useSheetDrag(() => setAnalyzeError(null))
 
   const [saving, setSaving] = useState(false)
   const [mealDate, setMealDate] = useState(new Date().toISOString().slice(0, 10))
@@ -275,7 +221,6 @@ export default function NutritionPage() {
       const data = await r.json()
       if (!r.ok) { setAnalyzeError(data.error ?? "Erreur d'analyse"); setAnalyzingStep(null); return }
       setCompositionResult(data)
-      compositionDrag.reset()
       setCompositionText(typeof data.composition === "string" ? data.composition : "")
       setEditName(typeof data.name === "string" ? data.name : "")
     } catch (err) {
@@ -305,7 +250,6 @@ export default function NutritionPage() {
         return
       }
       if (!r.ok) { setAnalyzeError(data.error ?? "Erreur de calcul"); setAnalyzingStep(null); return }
-      macrosDrag.reset()
       setAnalysisResult({
         ...data,
         calories: data.calories ?? 0,
@@ -326,6 +270,17 @@ export default function NutritionPage() {
   function closeAnalysis() {
     setPreviewUrl(null); setCompositionResult(null); setCompositionText("")
     setEditingComposition(false); setAnalysisResult(null); setEditName(""); setAnalyzeError(null)
+    setIsManualEntry(false)
+  }
+
+  function openManualEntry() {
+    setPreviewUrl(null)
+    setCompositionResult({ name: "", composition: "" })
+    setCompositionText("")
+    setEditName("")
+    setEditingComposition(true)
+    setIsManualEntry(true)
+    setAnalyzeError(null)
   }
 
   async function handleSaveMeal() {
@@ -393,7 +348,7 @@ export default function NutritionPage() {
     if (editMode) { toggleSelect(id); return }
     const meal = meals.find(m => m.id === id)
     if (meal) {
-      setSelectedMeal(meal); setDetailImageUrl(null); detailDrag.reset()
+      setSelectedMeal(meal); setDetailImageUrl(null)
       authFetch(`/api/nutrition/${id}`).then(r => r.json()).then(d => {
         if (d.imageUrl) setDetailImageUrl(d.imageUrl)
       }).catch(() => {})
@@ -440,16 +395,31 @@ export default function NutritionPage() {
               <p className="text-xs font-medium text-white/60 mb-1">Repas & suivi nutritionnel</p>
               <h1 className="text-3xl font-bold text-white tracking-tight font-[family-name:var(--font-barlow-condensed)]">Nutrition</h1>
             </div>
-            <button
-              onClick={() => { if (isDemo || mealLimitReached) return; fileInputRef.current?.click() }}
-              disabled={mealLimitReached}
-              className={`flex items-center gap-2 font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors ${mealLimitReached ? "bg-white/30 text-white/60 cursor-not-allowed" : "bg-white text-orange-600 hover:bg-orange-50"}`}
-            >
-              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
-              </svg>
-              <span className="hidden sm:inline">{mealLimitReached ? "Limite atteinte" : "Analyser un repas"}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Camera button — photo entry */}
+              <button
+                onClick={() => { if (!isDemo && !mealLimitReached) fileInputRef.current?.click() }}
+                disabled={mealLimitReached}
+                title="Analyser une photo"
+                className={`flex items-center justify-center w-10 h-10 rounded-xl transition-colors ${mealLimitReached ? "bg-white/30 text-white/60 cursor-not-allowed" : "bg-white/20 text-white hover:bg-white/30"}`}
+              >
+                <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                </svg>
+              </button>
+              {/* Plus button — manual entry */}
+              <button
+                onClick={() => { if (!isDemo && !mealLimitReached) openManualEntry() }}
+                disabled={mealLimitReached}
+                className={`flex items-center gap-2 font-bold text-sm px-3 py-2.5 md:px-4 rounded-xl transition-colors ${mealLimitReached ? "bg-white/30 text-white/60 cursor-not-allowed" : "bg-white text-orange-600 hover:bg-orange-50"}`}
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                </svg>
+                <span className="hidden sm:inline">{mealLimitReached ? "Limite atteinte" : "Saisir un repas"}</span>
+              </button>
+            </div>
           </div>
 
           {/* Free plan meal usage */}
@@ -681,7 +651,7 @@ export default function NutritionPage() {
 
       {/* ── Step 1: Analyzing image overlay ── */}
       {analyzingStep === "describe" && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center gap-5 px-6">
+        <div data-modal="" className="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center gap-5 px-6">
           {previewUrl && (
             <div className="w-28 h-28 rounded-2xl overflow-hidden border border-white/20">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -706,7 +676,7 @@ export default function NutritionPage() {
 
       {/* ── Step 2: Calculating macros overlay ── */}
       {analyzingStep === "calculate" && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center gap-5 px-6">
+        <div data-modal="" className="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center gap-5 px-6">
           <div className="w-14 h-14 rounded-full bg-orange-500/20 flex items-center justify-center">
             <svg className="w-7 h-7 text-orange-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25v-.008zm2.498-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008v-.008zm2.504-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008v-.008zm2.498-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008v-.008zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.656 4.5 4.77V19.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V4.77c0-1.114-.806-2.07-1.907-2.198A48.424 48.424 0 0012 2.25z" />
@@ -722,34 +692,23 @@ export default function NutritionPage() {
         </div>
       )}
 
-      {/* ── Step 1 result: Composition sheet ── */}
+      {/* ── Step 1 result: Composition modal ── */}
       {!analyzingStep && compositionResult && !analysisResult && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center" onClick={!editingComposition ? closeAnalysis : undefined}>
+        <div data-modal="" className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={!editingComposition ? closeAnalysis : undefined}>
           <div
-            className="sheet-enter bg-white border border-gray-200 rounded-t-3xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-y-auto shadow-2xl"
-            style={compositionDrag.style}
+            className="modal-enter bg-white rounded-3xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
             {!editingComposition ? (
               <>
-                <div
-                  className="relative cursor-grab shrink-0"
-                  onTouchStart={compositionDrag.onDragStart}
-                  onTouchMove={compositionDrag.onDragMove}
-                  onTouchEnd={compositionDrag.onDragEnd}
-                >
-                  {previewUrl && (
-                    <div className="w-full overflow-hidden rounded-t-3xl bg-gray-100">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={previewUrl} alt="Repas" className="w-full object-cover" style={{ maxHeight: "240px" }} />
-                    </div>
-                  )}
-                  <div className="absolute top-2.5 left-0 right-0 flex justify-center pointer-events-none">
-                    <div className="w-10 h-1 rounded-full bg-white/60" />
+                {previewUrl && (
+                  <div className="w-full overflow-hidden rounded-t-3xl bg-gray-100 shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={previewUrl} alt="Repas" className="w-full object-cover" style={{ maxHeight: "200px" }} />
                   </div>
-                </div>
+                )}
 
-                <div className="px-5 pt-3 pb-1 shrink-0">
+                <div className="px-5 pt-4 pb-1 shrink-0">
                   <p className="text-base font-extrabold text-gray-900">{editName || compositionResult.name}</p>
                 </div>
 
@@ -761,7 +720,7 @@ export default function NutritionPage() {
                   </div>
                 </div>
 
-                <div className="px-5 pb-8 pt-3 shrink-0 border-t border-gray-100 flex flex-col gap-3">
+                <div className="px-5 pb-6 pt-3 shrink-0 border-t border-gray-100 flex flex-col gap-3">
                   <button
                     onClick={handleCalculate}
                     disabled={!compositionText.trim()}
@@ -787,16 +746,13 @@ export default function NutritionPage() {
               </>
             ) : (
               <>
-                <div
-                  className="flex justify-center pt-2.5 pb-2 cursor-grab shrink-0"
-                  onTouchStart={compositionDrag.onDragStart}
-                  onTouchMove={compositionDrag.onDragMove}
-                  onTouchEnd={compositionDrag.onDragEnd}
-                >
-                  <div className="w-10 h-1 rounded-full bg-gray-300" />
+                <div className="px-5 pt-5 pb-1 shrink-0 flex items-center justify-between">
+                  <p className="text-sm font-extrabold text-gray-900">{isManualEntry ? "Saisie manuelle" : "Modifier la composition"}</p>
+                  <button onClick={closeAnalysis} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
                 </div>
-                <div className="overflow-y-auto flex-1 px-5 pt-2">
-                  <p className="text-sm font-extrabold text-gray-900 mb-3">Modifier la composition</p>
+                <div className="overflow-y-auto flex-1 px-5 pt-3">
                   <div className="mb-3">
                     <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Nom du repas</label>
                     <input
@@ -818,15 +774,25 @@ export default function NutritionPage() {
                     />
                   </div>
                 </div>
-                <div className="px-5 pb-8 pt-3 shrink-0 border-t border-gray-100 flex flex-col gap-3">
+                <div className="px-5 pb-6 pt-3 shrink-0 border-t border-gray-100 flex flex-col gap-3">
+                  {isManualEntry ? (
+                    <button
+                      onClick={handleCalculate}
+                      disabled={!compositionText.trim()}
+                      className="w-full py-4 bg-orange-500 rounded-2xl text-base font-extrabold text-white hover:bg-orange-400 transition-colors shadow-lg shadow-orange-500/20 disabled:opacity-40"
+                    >
+                      Analyser les nutriments
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setEditingComposition(false)}
+                      className="w-full py-4 bg-orange-500 rounded-2xl text-base font-extrabold text-white hover:bg-orange-400 transition-colors shadow-lg shadow-orange-500/20"
+                    >
+                      Valider les modifications
+                    </button>
+                  )}
                   <button
-                    onClick={() => setEditingComposition(false)}
-                    className="w-full py-4 bg-orange-500 rounded-2xl text-base font-extrabold text-white hover:bg-orange-400 transition-colors shadow-lg shadow-orange-500/20"
-                  >
-                    Valider les modifications
-                  </button>
-                  <button
-                    onClick={() => setEditingComposition(false)}
+                    onClick={closeAnalysis}
                     className="w-full py-3 border border-gray-200 rounded-xl text-sm font-bold text-gray-400 hover:text-gray-900 transition-colors"
                   >
                     Annuler
@@ -838,33 +804,22 @@ export default function NutritionPage() {
         </div>
       )}
 
-      {/* ── Step 2 result: Macros sheet ── */}
+      {/* ── Step 2 result: Macros modal ── */}
       {!analyzingStep && analysisResult && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center" onClick={closeAnalysis}>
+        <div data-modal="" className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={closeAnalysis}>
           <div
-            className="sheet-enter bg-white border border-gray-200 rounded-t-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl"
-            style={macrosDrag.style}
+            className="modal-enter bg-white rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
-            <div className="pb-8">
-              <div
-                className="relative cursor-grab"
-                onTouchStart={macrosDrag.onDragStart}
-                onTouchMove={macrosDrag.onDragMove}
-                onTouchEnd={macrosDrag.onDragEnd}
-              >
-                {previewUrl && (
-                  <div className="w-full overflow-hidden rounded-t-3xl bg-gray-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={previewUrl} alt="Repas" className="w-full object-cover" style={{ maxHeight: "240px" }} />
-                  </div>
-                )}
-                <div className="absolute top-2.5 left-0 right-0 flex justify-center pointer-events-none">
-                  <div className="w-10 h-1 rounded-full bg-white/60" />
+            <div className="pb-6">
+              {previewUrl && (
+                <div className="w-full overflow-hidden rounded-t-3xl bg-gray-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={previewUrl} alt="Repas" className="w-full object-cover" style={{ maxHeight: "180px" }} />
                 </div>
-              </div>
+              )}
 
-              <div className="px-5 pt-3 mb-4">
+              <div className="px-5 pt-4 mb-4">
                 <input
                   value={editName}
                   onChange={e => setEditName(e.target.value)}
@@ -924,7 +879,7 @@ export default function NutritionPage() {
                 </>
               )}
 
-              <div className="h-4" />
+              <div className="h-2" />
               <div className="px-5">
                 <button
                   onClick={handleSaveMeal} disabled={saving}
@@ -941,39 +896,28 @@ export default function NutritionPage() {
         </div>
       )}
 
-      {/* ── Meal detail sheet ── */}
+      {/* ── Meal detail modal ── */}
       {selectedMeal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center" onClick={() => { setSelectedMeal(null); setDetailImageUrl(null) }}>
+        <div data-modal="" className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => { setSelectedMeal(null); setDetailImageUrl(null) }}>
           <div
-            className="sheet-enter bg-white border border-gray-200 rounded-t-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl"
-            style={detailDrag.style}
+            className="modal-enter bg-white rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
-            <div className="pb-8">
-              <div
-                className="relative cursor-grab"
-                onTouchStart={detailDrag.onDragStart}
-                onTouchMove={detailDrag.onDragMove}
-                onTouchEnd={detailDrag.onDragEnd}
-              >
-                <div className="w-full overflow-hidden rounded-t-3xl bg-gray-100" style={{ minHeight: selectedMeal.imageThumb ? undefined : "80px" }}>
-                  {(detailImageUrl || selectedMeal.imageThumb) ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={detailImageUrl ?? selectedMeal.imageThumb!} alt={selectedMeal.name} className="w-full object-cover" style={{ maxHeight: "240px" }} />
-                  ) : (
-                    <div className="w-full h-24 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-orange-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <div className="absolute top-2.5 left-0 right-0 flex justify-center pointer-events-none">
-                  <div className="w-10 h-1 rounded-full bg-white/60" />
-                </div>
+            <div className="pb-6">
+              <div className="w-full overflow-hidden rounded-t-3xl bg-gray-100">
+                {(detailImageUrl || selectedMeal.imageThumb) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={detailImageUrl ?? selectedMeal.imageThumb!} alt={selectedMeal.name} className="w-full object-cover" style={{ maxHeight: "180px" }} />
+                ) : (
+                  <div className="w-full h-16 flex items-center justify-center">
+                    <svg className="w-7 h-7 text-orange-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                    </svg>
+                  </div>
+                )}
               </div>
 
-              <div className="px-5 pt-3 mb-4">
+              <div className="px-5 pt-4 mb-4">
                 <p className="text-base font-extrabold text-gray-900">{selectedMeal.name}</p>
                 <p className="text-[11px] text-gray-400 mt-0.5">{fmtDate(selectedMeal.date)}</p>
               </div>
@@ -988,7 +932,7 @@ export default function NutritionPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-4 px-5 mb-6">
+              <div className="grid grid-cols-4 px-5 mb-4">
                 {[
                   { label: "Protéines", value: selectedMeal.proteins, color: "#3b82f6", daily: 50 },
                   { label: "Glucides",  value: selectedMeal.carbs,    color: "#22c55e", daily: 260 },
@@ -1005,52 +949,40 @@ export default function NutritionPage() {
                   </div>
                 ))}
               </div>
-              <div className="h-10" />
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Error sheet ── */}
+      {/* ── Error modal ── */}
       {analyzeError && !analyzingStep && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center" onClick={() => setAnalyzeError(null)}>
+        <div data-modal="" className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setAnalyzeError(null)}>
           <div
-            className="sheet-enter bg-white border border-gray-200 rounded-t-3xl w-full max-w-lg text-center shadow-2xl"
-            style={errorDrag.style}
+            className="modal-enter bg-white rounded-3xl w-full max-w-sm text-center shadow-2xl p-6"
             onClick={e => e.stopPropagation()}
           >
-            <div
-              className="flex justify-center pt-2.5 pb-1 cursor-grab"
-              onTouchStart={errorDrag.onDragStart}
-              onTouchMove={errorDrag.onDragMove}
-              onTouchEnd={errorDrag.onDragEnd}
-            >
-              <div className="w-10 h-1 rounded-full bg-gray-300" />
-            </div>
-            <div className="px-5 pb-8">
-              {mealLimitReached ? (
-                <>
-                  <p className="text-orange-500 font-bold mb-2">Limite atteinte</p>
-                  <p className="text-gray-500 text-sm mb-5">{analyzeError}</p>
-                  <div className="flex flex-col gap-2">
-                    <a href="/pricing" className="px-6 py-3 bg-orange-500 rounded-xl text-sm font-bold text-white hover:bg-orange-400 transition-colors">
-                      Passer Pro →
-                    </a>
-                    <button onClick={() => setAnalyzeError(null)} className="px-6 py-2.5 bg-gray-100 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-200 transition-colors">
-                      Fermer
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="text-red-500 font-bold mb-2">Erreur d&apos;analyse</p>
-                  <p className="text-gray-500 text-sm mb-5">{analyzeError}</p>
+            {mealLimitReached ? (
+              <>
+                <p className="text-orange-500 font-bold mb-2">Limite atteinte</p>
+                <p className="text-gray-500 text-sm mb-5">{analyzeError}</p>
+                <div className="flex flex-col gap-2">
+                  <a href="/pricing" className="px-6 py-3 bg-orange-500 rounded-xl text-sm font-bold text-white hover:bg-orange-400 transition-colors">
+                    Passer Pro →
+                  </a>
                   <button onClick={() => setAnalyzeError(null)} className="px-6 py-2.5 bg-gray-100 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-200 transition-colors">
-                    OK
+                    Fermer
                   </button>
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-red-500 font-bold mb-2">Erreur d&apos;analyse</p>
+                <p className="text-gray-500 text-sm mb-5">{analyzeError}</p>
+                <button onClick={() => setAnalyzeError(null)} className="px-6 py-2.5 bg-gray-100 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-200 transition-colors">
+                  OK
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

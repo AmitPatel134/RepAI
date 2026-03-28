@@ -531,17 +531,17 @@ export default function ProgressPage() {
           </div>
         )}
 
-        {/* Exercise picker */}
+        {/* Exercise picker modal */}
         {showExPicker && (
-          <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center" onClick={() => setShowExPicker(false)}>
-            <div className="bg-white border border-gray-200 rounded-t-3xl w-full max-w-lg flex flex-col shadow-xl" style={{ maxHeight: "85vh" }} onClick={e => e.stopPropagation()}>
-              <div className="flex justify-center pt-3 pb-1 shrink-0">
-                <div className="w-10 h-1 rounded-full bg-gray-300" />
-              </div>
-              <div className="px-4 pt-2 pb-1 shrink-0">
+          <div data-modal="" className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowExPicker(false)}>
+            <div className="modal-enter bg-white rounded-3xl w-full max-w-lg flex flex-col shadow-2xl max-h-[80vh]" onClick={e => e.stopPropagation()}>
+              <div className="px-5 pt-5 pb-2 shrink-0 flex items-center justify-between">
                 <p className="text-sm font-extrabold text-gray-900">Choisir un exercice</p>
+                <button onClick={() => setShowExPicker(false)} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
               </div>
-              <div className="overflow-y-auto px-4 pb-6 flex flex-col gap-2 mt-3">
+              <div className="overflow-y-auto px-4 pb-5 flex flex-col gap-2">
                 {exerciseOptions.map(opt => (
                   <button
                     key={opt.key}
