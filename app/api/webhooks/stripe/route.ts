@@ -77,7 +77,7 @@ export async function POST(request: Request) {
       if (!email) break
       if (["active", "trialing"].includes(sub.status)) {
         await setUserPlan(email, planFromSubscription(sub))
-      } else if (["canceled", "unpaid", "past_due", "paused"].includes(sub.status)) {
+      } else if (["canceled", "unpaid", "paused"].includes(sub.status)) {
         await clearSubscription(email)
       }
       break
