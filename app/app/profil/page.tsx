@@ -396,7 +396,7 @@ export default function ProfilPage() {
               <div>
                 <label className="text-xs font-semibold text-gray-400 mb-1 block">Date de naissance</label>
                 <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)}
-                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 10)).toISOString().slice(0, 10)}
+                  max={new Date().toISOString().slice(0, 10)}
                   min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().slice(0, 10)}
                   className="w-full px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 focus:outline-none focus:border-violet-400 transition-colors" />
               </div>
@@ -529,51 +529,54 @@ export default function ProfilPage() {
           </form>
         </AccordionSection>
 
-        {/* Export + Import + Session */}
+        {/* Export + Import */}
+        <AccordionSection title="Exporter / Importer mes données" open={openSection === "data"} onToggle={() => toggleSection("data")}>
+          <div className="flex flex-col gap-5">
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Exporter mes données</p>
+              <p className="text-xs text-gray-400 mb-3">Télécharge un fichier CSV avec tout ton historique (séances, activités, nutrition, poids).</p>
+              <button onClick={handleExport} disabled={exporting}
+                className="flex items-center gap-2 px-5 py-2.5 bg-violet-50 border border-violet-200 text-sm font-bold text-violet-600 rounded-xl hover:bg-violet-100 transition-colors disabled:opacity-50">
+                {exporting ? (
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                  </svg>
+                )}
+                {exporting ? "Préparation…" : "Télécharger CSV"}
+              </button>
+            </div>
+
+            <div className="h-px bg-gray-100" />
+
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Importer des données</p>
+              <p className="text-xs text-gray-400 mb-3">Importe un fichier CSV exporté depuis RepAI pour restaurer ton historique.</p>
+              <input ref={importInputRef} type="file" accept=".csv" className="hidden" onChange={handleImport} />
+              <button onClick={() => importInputRef.current?.click()} disabled={importing}
+                className="flex items-center gap-2 px-5 py-2.5 bg-orange-50 border border-orange-200 text-sm font-bold text-orange-600 rounded-xl hover:bg-orange-100 transition-colors disabled:opacity-50">
+                {importing ? (
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4 0l4-4m0 0l4 4m-4-4v12"/>
+                  </svg>
+                )}
+                {importing ? "Import en cours…" : "Importer CSV"}
+              </button>
+            </div>
+          </div>
+        </AccordionSection>
+
+        {/* Session */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 flex flex-col gap-5">
-          <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Exporter mes données</p>
-            <p className="text-xs text-gray-400 mb-3">Télécharge un fichier CSV avec tout ton historique (séances, activités, nutrition, poids).</p>
-            <button onClick={handleExport} disabled={exporting}
-              className="flex items-center gap-2 px-5 py-2.5 bg-violet-50 border border-violet-200 text-sm font-bold text-violet-600 rounded-xl hover:bg-violet-100 transition-colors disabled:opacity-50">
-              {exporting ? (
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-              )}
-              {exporting ? "Préparation…" : "Télécharger CSV"}
-            </button>
-          </div>
-
-          <div className="h-px bg-gray-100" />
-
-          <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Importer des données</p>
-            <p className="text-xs text-gray-400 mb-3">Importe un fichier CSV exporté depuis RepAI pour restaurer ton historique.</p>
-            <input ref={importInputRef} type="file" accept=".csv" className="hidden" onChange={handleImport} />
-            <button onClick={() => importInputRef.current?.click()} disabled={importing}
-              className="flex items-center gap-2 px-5 py-2.5 bg-orange-50 border border-orange-200 text-sm font-bold text-orange-600 rounded-xl hover:bg-orange-100 transition-colors disabled:opacity-50">
-              {importing ? (
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4 0l4-4m0 0l4 4m-4-4v12"/>
-                </svg>
-              )}
-              {importing ? "Import en cours…" : "Importer CSV"}
-            </button>
-          </div>
-
-          <div className="h-px bg-gray-100" />
-
           <div>
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Session</p>
             <div className="flex flex-col gap-3">

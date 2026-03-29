@@ -141,7 +141,7 @@ export default function OnboardingPage() {
                 <div className="mb-4">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Date de naissance <span className="text-red-400">*</span></label>
                   <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)}
-                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 10)).toISOString().slice(0, 10)}
+                    max={new Date().toISOString().slice(0, 10)}
                     min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().slice(0, 10)}
                     className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 focus:outline-none focus:border-violet-400 transition-colors" />
                 </div>
