@@ -86,7 +86,7 @@ export default function OnboardingPage() {
         }),
       })
       if (res.ok) {
-        router.push("/app")
+        window.location.href = "/app"
       } else {
         const body = await res.json().catch(() => ({}))
         setError(body.error ?? "Erreur lors de la sauvegarde. Réessayez.")
