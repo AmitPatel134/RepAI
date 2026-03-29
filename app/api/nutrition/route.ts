@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
+import { isPro } from "@/lib/plans"
 import { NextRequest } from "next/server"
 
 export const dynamic = "force-dynamic"
@@ -12,18 +13,33 @@ export async function GET(request: NextRequest) {
     const user = await prisma.user.findUnique({ where: { email: authUser.email } })
     if (!user) return Response.json([])
 
-    const meals = await prisma.meal.findMany({
-      where: { userId: user.id },
-      orderBy: { date: "desc" },
-      select: {
-        id: true, name: true, date: true,
-        calories: true, proteins: true, carbs: true, fats: true, fiber: true,
-        notes: true, imageThumb: true,
-      },
-    })
+    // Free plan: only last 7 days of history
+    const dateFilter = !isPro(user.plan ?? "free")
+      ? { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+      : undefined
 
-    return Response.json(meals)
-  } catch {
+    const url = new URL(request.url)
+    const limit  = Math.min(parseInt(url.searchParams.get("limit")  ?? "20"), 100)
+    const offset = Math.max(parseInt(url.searchParams.get("offset") ?? "0"),  0)
+
+    const [meals, total] = await Promise.all([
+      prisma.meal.findMany({
+        where: { userId: user.id, ...(dateFilter ? { date: dateFilter } : {}) },
+        orderBy: { date: "desc" },
+        skip: offset,
+        take: limit,
+        select: {
+          id: true, name: true, date: true,
+          calories: true, proteins: true, carbs: true, fats: true, fiber: true,
+          notes: true, imageThumb: true,
+        },
+      }),
+      prisma.meal.count({ where: { userId: user.id, ...(dateFilter ? { date: dateFilter } : {}) } }),
+    ])
+
+    return Response.json({ items: meals, total, limit, offset })
+  } catch (e) {
+    console.error("[nutrition GET]", e)
     return Response.json({ error: "Database error" }, { status: 500 })
   }
 }

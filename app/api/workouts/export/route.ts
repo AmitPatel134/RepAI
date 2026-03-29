@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
     const user = await prisma.user.findUnique({ where: { email: authUser.email } })
-    if (!user) return new Response("date,workout_name,workout_type,notes,exercise_name,set_number,reps,weight_kg,rpe\n", {
+    if (!user) return new Response("date,workout_name,notes,exercise_name,set_number,reps,weight_kg,rpe\n", {
       headers: { "Content-Type": "text/csv", "Content-Disposition": "attachment; filename=repai_workouts.csv" },
     })
 
@@ -25,27 +25,26 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    const rows: string[] = ["date,workout_name,workout_type,notes,exercise_name,set_number,reps,weight_kg,rpe"]
+    const rows: string[] = ["date,workout_name,notes,exercise_name,set_number,reps,weight_kg,rpe"]
 
     for (const w of workouts) {
       const date = w.date.toISOString().slice(0, 10)
       const name = csvEscape(w.name)
-      const type = csvEscape(w.type)
       const notes = csvEscape(w.notes ?? "")
 
       if (w.exercises.length === 0) {
-        rows.push(`${date},${name},${type},${notes},,,,,`)
+        rows.push(`${date},${name},${notes},,,,`)
         continue
       }
 
       for (const ex of w.exercises) {
         const exName = csvEscape(ex.name)
         if (ex.sets.length === 0) {
-          rows.push(`${date},${name},${type},${notes},${exName},,,,`)
+          rows.push(`${date},${name},${notes},${exName},,,`)
           continue
         }
         ex.sets.forEach((s, i) => {
-          rows.push(`${date},${name},${type},${notes},${exName},${i + 1},${s.reps ?? ""},${s.weight ?? ""},${s.rpe ?? ""}`)
+          rows.push(`${date},${name},${notes},${exName},${i + 1},${s.reps ?? ""},${s.weight ?? ""},${s.rpe ?? ""}`)
         })
       }
     }

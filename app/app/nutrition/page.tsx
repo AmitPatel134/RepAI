@@ -139,16 +139,25 @@ export default function NutritionPage() {
 
       // Refresh in background
       Promise.all([
-        authFetch("/api/nutrition").then(r => r.json()).catch(() => []),
+        authFetch("/api/nutrition?limit=20").then(r => r.json()).catch(() => ({ items: [] })),
         authFetch("/api/plan").then(r => r.json()).catch(() => ({ plan: "free", usage: { mealsThisMonth: 0 } })),
       ]).then(([data, p]) => {
-        if (Array.isArray(data)) { setMeals(data); setCached("/api/nutrition", data) }
+        const items = Array.isArray(data) ? data : (data?.items ?? [])
+        setMeals(items); setCached("/api/nutrition", items)
         setPlan(p?.plan ?? "free")
         setMealsThisMonth(p?.usage?.mealsThisMonth ?? 0)
         setCached("/api/plan", p)
       }).catch(() => {}).finally(() => setLoading(false))
     })
   }, [])
+
+  // Lock scroll when meal detail is open
+  useEffect(() => {
+    if (!selectedMeal) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => { document.body.style.overflow = prev }
+  }, [selectedMeal])
 
   // ─── Grouping ──────────────────────────────────────────────────────────────
 
@@ -833,23 +842,37 @@ export default function NutritionPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-4 px-5 mb-4">
-                {[
-                  { label: "Protéines", value: selectedMeal.proteins, color: "#3b82f6", daily: 50 },
-                  { label: "Glucides",  value: selectedMeal.carbs,    color: "#22c55e", daily: 260 },
-                  { label: "Lipides",   value: selectedMeal.fats,     color: "#f59e0b", daily: 70 },
-                  { label: "Fibres",    value: selectedMeal.fiber,    color: "#a78bfa", daily: 25 },
-                ].map((m, i) => (
-                  <div key={m.label} className={`flex flex-col items-center pt-3 ${i > 0 ? "border-l border-gray-100" : ""}`}>
-                    <div className="w-8 h-0.5 rounded-full mb-2" style={{ backgroundColor: m.color }} />
-                    <span className="text-[9px] font-black uppercase tracking-wider mb-1" style={{ color: m.color }}>{m.label}</span>
-                    <span className="text-xl font-black text-gray-900 leading-none">
-                      {m.value != null ? Math.round(m.value) : "—"}
-                    </span>
-                    <span className="text-[10px] font-bold mt-0.5" style={{ color: m.color + "99" }}>/{m.daily}g</span>
+              {plan === "free" ? (
+                <div className="mx-5 mb-4 rounded-2xl border border-orange-100 bg-orange-50 px-4 py-4 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
+                    <svg className="w-[18px] h-[18px] text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
                   </div>
-                ))}
-              </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-gray-900 leading-snug">Macronutriments bloqués</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Passe en Premium pour voir les protéines, glucides, lipides et fibres.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 px-5 mb-4">
+                  {[
+                    { label: "Protéines", value: selectedMeal.proteins, color: "#3b82f6", daily: 50 },
+                    { label: "Glucides",  value: selectedMeal.carbs,    color: "#22c55e", daily: 260 },
+                    { label: "Lipides",   value: selectedMeal.fats,     color: "#f59e0b", daily: 70 },
+                    { label: "Fibres",    value: selectedMeal.fiber,    color: "#a78bfa", daily: 25 },
+                  ].map((m, i) => (
+                    <div key={m.label} className={`flex flex-col items-center pt-3 ${i > 0 ? "border-l border-gray-100" : ""}`}>
+                      <div className="w-8 h-0.5 rounded-full mb-2" style={{ backgroundColor: m.color }} />
+                      <span className="text-[9px] font-black uppercase tracking-wider mb-1" style={{ color: m.color }}>{m.label}</span>
+                      <span className="text-xl font-black text-gray-900 leading-none">
+                        {m.value != null ? Math.round(m.value) : "—"}
+                      </span>
+                      <span className="text-[10px] font-bold mt-0.5" style={{ color: m.color + "99" }}>/{m.daily}g</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="px-5 pt-2 pb-2 border-t border-gray-100 mt-2 mx-0">
                 {showMealDeleteConfirm ? (
                   <div className="flex flex-col gap-2">

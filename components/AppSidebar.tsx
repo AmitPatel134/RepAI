@@ -5,7 +5,35 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import AppLogo from "./AppLogo"
 
+// Order: Coach, Nutrition | Accueil | Activités, Progrès
 const navItems = [
+  {
+    href: "/app/coach",
+    label: "Coach",
+    exact: false,
+    activeColor: "text-violet-600",
+    activeBg: "bg-violet-50",
+    activeSolid: "bg-violet-600",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/app/nutrition",
+    label: "Nutrition",
+    exact: false,
+    activeColor: "text-orange-500",
+    activeBg: "bg-orange-50",
+    activeSolid: "bg-orange-500",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5C10.5 6.5 9 7 8 7c-1 0-2.2-.7-3.2-.7C2.5 6.3 1.5 8.5 1.5 11c0 4 3 8.5 5.5 8.5.9 0 1.8-.6 2.8-.6s1.9.6 2.8.6C15 19.5 18 15 18 11c0-2.5-1.5-4.7-4-4.7-.8 0-1.6.3-2.5.3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5C12 4.5 13.5 3 15 2" />
+      </svg>
+    ),
+  },
   {
     href: "/app",
     label: "Accueil",
@@ -45,43 +73,16 @@ const navItems = [
       </svg>
     ),
   },
-  {
-    href: "/app/coach",
-    label: "Coach",
-    exact: false,
-    activeColor: "text-violet-600",
-    activeBg: "bg-violet-50",
-    activeSolid: "bg-violet-600",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-      </svg>
-    ),
-  },
 ]
 
-const nutrition = {
-  href: "/app/nutrition",
-  label: "Nutrition",
-  exact: false,
-  activeColor: "text-orange-500",
-  activeBg: "bg-orange-50",
-  activeSolid: "bg-orange-500",
-  icon: (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5C10.5 6.5 9 7 8 7c-1 0-2.2-.7-3.2-.7C2.5 6.3 1.5 8.5 1.5 11c0 4 3 8.5 5.5 8.5.9 0 1.8-.6 2.8-.6s1.9.6 2.8.6C15 19.5 18 15 18 11c0-2.5-1.5-4.7-4-4.7-.8 0-1.6.3-2.5.3z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5C12 4.5 13.5 3 15 2" />
-    </svg>
-  ),
-}
-
-// Left: Progrès, Activités — Center: Accueil — Right: Coach, Nutrition
-const mobileNavSide = [navItems[2], navItems[1], navItems[3], nutrition]
-const mobileNavHome = navItems[0]
+// Left: Coach, Nutrition — Center: Accueil — Right: Activités, Progrès
+const mobileNavSide = [navItems[0], navItems[1], navItems[3], navItems[4]]
+const mobileNavHome = navItems[2]
 
 export default function AppSidebar() {
   const pathname = usePathname()
   const [email, setEmail] = useState<string | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -89,7 +90,18 @@ export default function AppSidebar() {
     })
   }, [])
 
-  const hideNav = pathname.startsWith("/app/workouts/") || pathname.startsWith("/app/activities/")
+  // Watch for [data-modal] elements to hide navbar
+  useEffect(() => {
+    function check() {
+      setModalOpen(!!document.querySelector("[data-modal]"))
+    }
+    check()
+    const observer = new MutationObserver(check)
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [])
+
+  const hideNav = modalOpen || pathname.startsWith("/app/workouts/") || pathname.startsWith("/app/activities/")
 
   function isActive(item: { href: string; exact?: boolean }) {
     return item.exact ? pathname === item.href : pathname.startsWith(item.href)
@@ -126,17 +138,6 @@ export default function AppSidebar() {
         </nav>
 
         <div className="px-3 py-4 border-t border-gray-100 flex flex-col gap-1">
-          <Link
-            href="/app/nutrition"
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              pathname.startsWith("/app/nutrition") ? `${nutrition.activeSolid} text-white` : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-            }`}
-          >
-            <span className={pathname.startsWith("/app/nutrition") ? "text-white" : "text-gray-400"}>
-              {nutrition.icon}
-            </span>
-            Nutrition
-          </Link>
           <a href="/" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-all">
             <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />

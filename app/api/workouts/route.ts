@@ -13,21 +13,34 @@ export async function GET(request: NextRequest) {
     const user = await prisma.user.findUnique({ where: { email: authUser.email } })
     if (!user) return Response.json([])
 
-    const workouts = await prisma.workout.findMany({
-      where: { userId: user.id },
-      orderBy: { date: "desc" },
-      include: {
-        exercises: {
-          orderBy: { order: "asc" },
-          include: {
-            sets: { orderBy: { order: "asc" } },
+    // Free plan: only last 7 days of history
+    const dateFilter = !isPro(user.plan ?? "free")
+      ? { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+      : undefined
+
+    const url = new URL(request.url)
+    const limit  = Math.min(parseInt(url.searchParams.get("limit")  ?? "20"), 100)
+    const offset = Math.max(parseInt(url.searchParams.get("offset") ?? "0"),  0)
+
+    const [workouts, total] = await Promise.all([
+      prisma.workout.findMany({
+        where: { userId: user.id, ...(dateFilter ? { date: dateFilter } : {}) },
+        orderBy: { date: "desc" },
+        skip: offset,
+        take: limit,
+        include: {
+          exercises: {
+            orderBy: { order: "asc" },
+            include: { sets: { orderBy: { order: "asc" } } },
           },
         },
-      },
-    })
+      }),
+      prisma.workout.count({ where: { userId: user.id, ...(dateFilter ? { date: dateFilter } : {}) } }),
+    ])
 
-    return Response.json(workouts)
-  } catch {
+    return Response.json({ items: workouts, total, limit, offset })
+  } catch (e) {
+    console.error("[workouts GET]", e)
     return Response.json({ error: "Database error" }, { status: 500 })
   }
 }
@@ -57,13 +70,12 @@ export async function POST(request: NextRequest) {
     } catch { /* usageEvent table may not exist yet — allow the request */ }
 
     const body = await request.json()
-    const { name, type, notes, date, exercises } = body
+    const { name, notes, date, exercises } = body
 
     const workout = await prisma.workout.create({
       data: {
         userId: user.id,
         name,
-        type: type || "fullbody",
         notes: notes || null,
         date: date ? new Date(date) : new Date(),
       },
@@ -99,7 +111,8 @@ export async function POST(request: NextRequest) {
     await prisma.usageEvent.create({ data: { userId: user.id, type: "session_created" } }).catch(() => {})
 
     return Response.json(full, { status: 201 })
-  } catch {
+  } catch (e) {
+    console.error("[workouts POST]", e)
     return Response.json({ error: "Database error" }, { status: 500 })
   }
 }

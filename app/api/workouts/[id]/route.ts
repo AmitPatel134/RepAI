@@ -43,7 +43,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (!existing) return Response.json({ error: "Not found" }, { status: 404 })
 
     const body = await request.json()
-    const { name, type, notes, date, exercises } = body
+    const { name, notes, date, exercises } = body
 
     // If exercises provided, replace them all
     if (exercises !== undefined) {
@@ -54,7 +54,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       where: { id },
       data: {
         ...(name !== undefined && { name }),
-        ...(type !== undefined && { type }),
         ...(notes !== undefined && { notes: notes || null }),
         ...(date !== undefined && { date: new Date(date) }),
         ...(exercises !== undefined && {

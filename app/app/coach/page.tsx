@@ -109,6 +109,7 @@ export default function CoachPage() {
   const [isDemo, setIsDemo] = useState(false)
   const [plan, setPlan] = useState("free")
   const [coachQuestionsThisWeek, setCoachQuestionsThisWeek] = useState(0)
+  const [weekResetDate, setWeekResetDate] = useState<string | null>(null)
   const [lastSession, setLastSession] = useState<Session | null>(null)
   const [question, setQuestion] = useState("")
   const [loading, setLoading] = useState(false)
@@ -134,77 +135,50 @@ export default function CoachPage() {
         return
       }
 
-      // Instant display: set plan from cache immediately
-      const cP = getCached<{ plan: string; usage?: { coachQuestionsThisWeek?: number } }>("/api/plan")
-      if (cP) { setPlan(cP.plan ?? "free"); setCoachQuestionsThisWeek(cP.usage?.coachQuestionsThisWeek ?? 0); setReady(true) }
-
-      // Build contexts from cached data too
-      const cW = getCached<typeof DEMO_WORKOUTS>("/api/workouts")
-      const cA = getCached<{ type: string; name: string; date: string; distanceM: number | null; durationSec: number | null; avgHeartRate: number | null; avgPaceSecKm: number | null }[]>("/api/activities")
-      const cN = getCached<{ name: string; date: string; calories: number | null; proteins: number | null; carbs: number | null; fats: number | null }[]>("/api/nutrition")
-      if (cW && cW.length > 0) setWorkoutContext(cW.slice(0, 5).map(w => `Séance: ${w.name} (${w.date.slice(0, 10)}) — ${w.exercises?.map(e => `${e.name}: ${e.sets.map(s => `${s.reps}×${s.weight}kg`).join(", ")}`).join(" | ") ?? ""}`).join("\n"))
-      if (cA && cA.length > 0) setActivityContext(cA.slice(0, 5).map(a => { const parts = [a.distanceM ? `${(a.distanceM/1000).toFixed(1)}km` : null, a.durationSec ? `${Math.floor(a.durationSec/60)}min` : null, a.avgHeartRate ? `FC ${a.avgHeartRate}bpm` : null].filter(Boolean).join(", "); return `${a.type} "${a.name}" (${a.date.slice(0,10)})${parts ? ` : ${parts}` : ""}` }).join("\n"))
-      if (cN && cN.length > 0) { const today = new Date().toISOString().slice(0,10); const todayCal = cN.filter(m => m.date.slice(0,10) === today).reduce((s,m) => s+(m.calories??0),0); setNutritionContext((todayCal>0?`Calories aujourd'hui : ${todayCal} kcal\n`:"")+cN.slice(0,10).map(m => `${m.name} (${m.date.slice(0,10)})${m.calories ? ` — ${m.calories} kcal` : ""}`).join("\n")) }
-
-      Promise.all([
-        authFetch("/api/workouts").then(r => r.json()).catch(() => []),
-        authFetch("/api/activities").then(r => r.json()).catch(() => []),
-        authFetch("/api/nutrition").then(r => r.json()).catch(() => []),
-        authFetch("/api/coach").then(r => r.json()).catch(() => []),
-        authFetch("/api/plan").then(r => r.json()).catch(() => ({ plan: "free", usage: { coachQuestionsThisWeek: 0 } })),
-      ]).then(([workouts, activities, meals, coachSessions, planData]) => {
-        setPlan(planData?.plan ?? "free")
-        setCoachQuestionsThisWeek(planData?.usage?.coachQuestionsThisWeek ?? 0)
-        setCached("/api/plan", planData)
-        if (Array.isArray(workouts) && workouts.length > 0) {
-          const ctx = workouts.slice(0, 5).map((w: typeof DEMO_WORKOUTS[0]) =>
-            `Séance: ${w.name} (${w.date.slice(0, 10)}) — ${w.exercises?.map(e =>
-              `${e.name}: ${e.sets.map(s => `${s.reps}×${s.weight}kg`).join(", ")}`
-            ).join(" | ") ?? ""}`
-          ).join("\n")
-          setWorkoutContext(ctx)
-        }
-        if (Array.isArray(activities) && activities.length > 0) {
-          const ctx = activities.slice(0, 5).map((a: { type: string; name: string; date: string; distanceM: number | null; durationSec: number | null; avgHeartRate: number | null; avgPaceSecKm: number | null }) => {
-            const parts = [
-              a.distanceM ? `${(a.distanceM / 1000).toFixed(1)}km` : null,
-              a.durationSec ? `${Math.floor(a.durationSec / 60)}min` : null,
-              a.avgHeartRate ? `FC ${a.avgHeartRate}bpm` : null,
-              a.avgPaceSecKm ? `allure ${Math.floor(a.avgPaceSecKm / 60)}'${(a.avgPaceSecKm % 60).toString().padStart(2, "0")}"/km` : null,
-            ].filter(Boolean).join(", ")
-            return `${a.type} "${a.name}" (${a.date.slice(0, 10)})${parts ? ` : ${parts}` : ""}`
-          }).join("\n")
-          setActivityContext(ctx)
-        }
-        if (Array.isArray(meals) && meals.length > 0) {
-          const today = new Date().toISOString().slice(0, 10)
-          const todayMeals = meals.filter((m: { date: string }) => m.date.slice(0, 10) === today)
-          const todayCal = todayMeals.reduce((s: number, m: { calories: number | null }) => s + (m.calories ?? 0), 0)
-          const ctx = meals.slice(0, 10).map((m: { name: string; date: string; calories: number | null; proteins: number | null; carbs: number | null; fats: number | null }) => {
-            const parts = [
-              m.calories ? `${m.calories} kcal` : null,
-              m.proteins ? `P: ${Math.round(m.proteins)}g` : null,
-              m.carbs ? `G: ${Math.round(m.carbs)}g` : null,
-              m.fats ? `L: ${Math.round(m.fats)}g` : null,
-            ].filter(Boolean).join(", ")
-            return `${m.name} (${m.date.slice(0, 10)})${parts ? ` — ${parts}` : ""}`
-          }).join("\n")
-          setNutritionContext((todayCal > 0 ? `Calories aujourd'hui : ${todayCal} kcal\n` : "") + ctx)
-        }
-        if (Array.isArray(coachSessions) && coachSessions.length > 0) {
-          const apiLatest = coachSessions[0] as { question: string; response: string; createdAt: string }
+      // Instant display from cache
+      const cached = getCached<{
+        plan: string
+        usage: { coachQuestionsThisWeek: number }
+        weekResetDate: string
+        workoutContext: string
+        activityContext: string
+        nutritionContext: string
+        lastSession: Session | null
+      }>("/api/coach/context")
+      if (cached) {
+        setPlan(cached.plan ?? "free")
+        setCoachQuestionsThisWeek(cached.usage?.coachQuestionsThisWeek ?? 0)
+        setWeekResetDate(cached.weekResetDate ?? null)
+        setWorkoutContext(cached.workoutContext ?? "")
+        setActivityContext(cached.activityContext ?? "")
+        setNutritionContext(cached.nutritionContext ?? "")
+        if (cached.lastSession) {
           const storedTs = stored ? new Date(stored.createdAt).getTime() : 0
-          const apiTs = new Date(apiLatest.createdAt).getTime()
-          if (apiTs > storedTs) {
-            const s: Session = { question: apiLatest.question, response: apiLatest.response, createdAt: apiLatest.createdAt }
-            setLastSession(s)
-            saveStored(s)
-          }
+          const apiTs = new Date(cached.lastSession.createdAt).getTime()
+          if (apiTs > storedTs) { setLastSession(cached.lastSession); saveStored(cached.lastSession) }
         }
-        if (Array.isArray(workouts)) setCached("/api/workouts", workouts)
-        if (Array.isArray(activities)) setCached("/api/activities", activities)
-        if (Array.isArray(meals)) setCached("/api/nutrition", meals)
-      }).catch(() => setIsDemo(true)).finally(() => setReady(true))
+        setReady(true)
+      }
+
+      authFetch("/api/coach/context")
+        .then(r => r.json())
+        .then(ctx => {
+          if (!ctx || ctx.error) { setIsDemo(true); return }
+          setPlan(ctx.plan ?? "free")
+          setCoachQuestionsThisWeek(ctx.usage?.coachQuestionsThisWeek ?? 0)
+          setWeekResetDate(ctx.weekResetDate ?? null)
+          setWorkoutContext(ctx.workoutContext ?? "")
+          setActivityContext(ctx.activityContext ?? "")
+          setNutritionContext(ctx.nutritionContext ?? "")
+          if (ctx.lastSession) {
+            const storedTs = stored ? new Date(stored.createdAt).getTime() : 0
+            const apiTs = new Date(ctx.lastSession.createdAt).getTime()
+            if (apiTs > storedTs) { setLastSession(ctx.lastSession); saveStored(ctx.lastSession) }
+          }
+          setCached("/api/coach/context", ctx)
+        })
+        .catch(() => setIsDemo(true))
+        .finally(() => setReady(true))
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -288,13 +262,20 @@ En regardant tes séances récentes, voici mes observations :
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-3xl font-bold text-white tracking-tight font-[family-name:var(--font-barlow-condensed)]">Coach IA</h1>
             {!isDemo && plan === "free" && (
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  <div className={`w-7 h-2.5 rounded ${coachQuestionsThisWeek >= 1 ? "bg-white" : "bg-white/30"}`} />
+              <div className="flex flex-col items-end gap-0.5">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <div className={`w-7 h-2.5 rounded ${coachQuestionsThisWeek >= 1 ? "bg-white" : "bg-white/30"}`} />
+                  </div>
+                  <span className="text-[11px] font-bold text-white/70">{coachQuestionsThisWeek}/1</span>
+                  {weeklyLimitReached && (
+                    <a href="/pricing" className="text-[11px] font-bold text-white bg-white/20 hover:bg-white/30 px-2 py-1 rounded-lg transition-colors shrink-0">Passer Pro →</a>
+                  )}
                 </div>
-                <span className="text-[11px] font-bold text-white/70">{coachQuestionsThisWeek}/1</span>
-                {weeklyLimitReached && (
-                  <a href="/pricing" className="text-[11px] font-bold text-white bg-white/20 hover:bg-white/30 px-2 py-1 rounded-lg transition-colors shrink-0">Passer Pro →</a>
+                {weekResetDate && (
+                  <span className="text-[10px] text-white/40 font-medium">
+                    Recharge le {new Date(weekResetDate).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "short" })}
+                  </span>
                 )}
               </div>
             )}

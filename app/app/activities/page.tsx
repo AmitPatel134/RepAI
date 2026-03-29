@@ -1,9 +1,10 @@
 "use client"
-import React, { useEffect, useState, useRef } from "react"
+import React, { useEffect, useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
-import { getCached, setCached } from "@/lib/appCache"
+import { getCached, setCached, invalidateCache } from "@/lib/appCache"
 import { DEMO_WORKOUTS } from "@/lib/demoData"
 import UpgradeModal from "@/components/UpgradeModal"
 import LoadingScreen from "@/components/LoadingScreen"
@@ -12,7 +13,7 @@ import { Dumbbell } from "lucide-react"
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Workout = {
-  id: string; name: string; type: string; date: string
+  id: string; name: string; date: string
   exercises: { id: string; name: string; sets: { reps: number | null; weight: number | null }[] }[]
 }
 
@@ -31,7 +32,7 @@ type VoiceActivityData = {
   type: string; durationSec?: number | null; distanceM?: number | null
   elevationM?: number | null; avgHeartRate?: number | null; calories?: number | null; notes?: string | null
 }
-type VoiceWorkoutData = { name: string; type: string; exercises: VoiceExercise[]; notes?: string | null }
+type VoiceWorkoutData = { name: string; exercises: VoiceExercise[]; notes?: string | null }
 type VoiceItem =
   | { kind: "workout"; workout: VoiceWorkoutData; date?: string }
   | { kind: "cardio"; activity: VoiceActivityData; date?: string }
@@ -176,6 +177,8 @@ function CardioIcon({ type, size = 18 }: { type: string; size?: number }) {
 
 export default function ActivitiesPage() {
   const router = useRouter()
+  const pathname = usePathname()
+  const prevPathnameRef = useRef(pathname)
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
@@ -183,6 +186,9 @@ export default function ActivitiesPage() {
   const [plan, setPlan] = useState("free")
   const [sessionsThisMonth, setSessionsThisMonth] = useState(0)
   const [upgradeMsg, setUpgradeMsg] = useState<string | null>(null)
+  const [hasMoreWorkouts, setHasMoreWorkouts] = useState(false)
+  const [hasMoreActivities, setHasMoreActivities] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   const [selectedMonthIdx, setSelectedMonthIdx] = useState(0)
 
@@ -235,44 +241,60 @@ export default function ActivitiesPage() {
   const [cNotes, setCNotes] = useState("")
   const [cSaving, setCSaving] = useState(false)
 
-  useEffect(() => {
+  const loadData = useCallback((forceLoading = false) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         setIsDemo(true)
         setWorkouts(DEMO_WORKOUTS as unknown as Workout[])
-        const label = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-        // month nav
         setLoading(false)
         return
       }
-      const email = session.user.email ?? ""
-      void email
 
-      // Instant display from cache if available
-      const cW = getCached<Workout[]>("/api/workouts")
-      const cA = getCached<Activity[]>("/api/activities")
-      const cP = getCached<{ plan: string; usage?: { sessionsThisMonth?: number } }>("/api/plan")
-      if (cW) setWorkouts(cW)
-      if (cA) setActivities(cA)
-      if (cP) { setPlan(cP.plan ?? "free"); setSessionsThisMonth(cP.usage?.sessionsThisMonth ?? 0) }
-      if (cW && cA && cP) setLoading(false)
+      if (forceLoading) {
+        invalidateCache("/api/workouts")
+        invalidateCache("/api/activities")
+        setLoading(true)
+      } else {
+        const cW = getCached<Workout[]>("/api/workouts")
+        const cA = getCached<Activity[]>("/api/activities")
+        const cP = getCached<{ plan: string; usage?: { sessionsThisMonth?: number } }>("/api/plan")
+        if (cW) setWorkouts(cW)
+        if (cA) setActivities(cA)
+        if (cP) { setPlan(cP.plan ?? "free"); setSessionsThisMonth(cP.usage?.sessionsThisMonth ?? 0) }
+        if (cW && cA && cP) setLoading(false)
+      }
 
-      // Always refresh in background
+      // Always refresh from network
       Promise.all([
-        authFetch("/api/workouts").then(r => r.json()).catch(() => []),
-        authFetch("/api/activities").then(r => r.json()).catch(() => []),
+        authFetch("/api/workouts?limit=20").then(r => r.json()).catch(() => ({ items: [] })),
+        authFetch("/api/activities?limit=20").then(r => r.json()).catch(() => ({ items: [] })),
         authFetch("/api/plan").then(r => r.json()).catch(() => ({ plan: "free" })),
       ]).then(([w, a, p]) => {
-        if (Array.isArray(w)) { setWorkouts(w); setCached("/api/workouts", w) }
-        if (Array.isArray(a)) { setActivities(a); setCached("/api/activities", a) }
+        const wItems: Workout[] = Array.isArray(w) ? w : (w?.items ?? [])
+        const aItems: Activity[] = Array.isArray(a) ? a : (a?.items ?? [])
+        setWorkouts(wItems); setCached("/api/workouts", wItems)
+        setActivities(aItems); setCached("/api/activities", aItems)
+        setHasMoreWorkouts((w?.total ?? wItems.length) > wItems.length)
+        setHasMoreActivities((a?.total ?? aItems.length) > aItems.length)
         setPlan(p?.plan ?? "free")
         setSessionsThisMonth(p?.usage?.sessionsThisMonth ?? 0)
         setCached("/api/plan", p)
-        const label = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-        void label
-      }).finally(() => setLoading(false))
+      }).catch(e => console.error("[activities loadData]", e)).finally(() => setLoading(false))
     })
   }, [])
+
+  // Initial load
+  useEffect(() => { loadData() }, [loadData])
+
+  // Reload with loading screen when returning from a detail page
+  useEffect(() => {
+    const prev = prevPathnameRef.current
+    prevPathnameRef.current = pathname
+    const comingBackFromDetail =
+      pathname === "/app/activities" &&
+      (prev.startsWith("/app/activities/") || prev.startsWith("/app/workouts/"))
+    if (comingBackFromDetail) loadData(true)
+  }, [pathname, loadData])
 
   // ─── Unified list ─────────────────────────────────────────────────────────
 
@@ -335,7 +357,7 @@ export default function ActivitiesPage() {
     const r = await authFetch("/api/workouts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: wName.trim(), type: "", notes: wNotes, date: wDate, exercises: wExercises }),
+      body: JSON.stringify({ name: wName.trim(), notes: wNotes, date: wDate, exercises: wExercises }),
     })
     if (r.status === 429) {
       setShowWorkoutForm(false)
@@ -564,7 +586,6 @@ export default function ActivitiesPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: w.name || "Séance",
-            type: "",
             notes: w.notes || null,
             date: item.date || localToday,
             exercises: w.exercises || [],
@@ -812,6 +833,30 @@ export default function ActivitiesPage() {
                 </div>
               ))}
             </div>
+
+            {/* Load more button */}
+            {(hasMoreWorkouts || hasMoreActivities) && (
+              <div className="flex justify-center pt-2 pb-4 px-4">
+                <button
+                  onClick={async () => {
+                    setLoadingMore(true)
+                    try {
+                      const [w, a] = await Promise.all([
+                        hasMoreWorkouts ? authFetch(`/api/workouts?limit=20&offset=${workouts.length}`).then(r => r.json()).catch(() => ({ items: [] })) : Promise.resolve(null),
+                        hasMoreActivities ? authFetch(`/api/activities?limit=20&offset=${activities.length}`).then(r => r.json()).catch(() => ({ items: [] })) : Promise.resolve(null),
+                      ])
+                      if (w) { const more = w?.items ?? []; setWorkouts(p => [...p, ...more]); setHasMoreWorkouts((w?.total ?? 0) > workouts.length + more.length) }
+                      if (a) { const more = a?.items ?? []; setActivities(p => [...p, ...more]); setHasMoreActivities((a?.total ?? 0) > activities.length + more.length) }
+                    } catch (e) { console.error("[load more]", e) }
+                    finally { setLoadingMore(false) }
+                  }}
+                  disabled={loadingMore}
+                  className="px-6 py-2.5 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  {loadingMore ? "Chargement…" : "Charger plus"}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

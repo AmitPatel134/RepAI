@@ -5,8 +5,8 @@ import { authFetch } from "@/lib/authFetch"
 import LoadingScreen from "@/components/LoadingScreen"
 import Toast from "@/components/Toast"
 
-const PREMIUM_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PRICE_ID ?? "price_1TCiSUIRxjgeiG9AzGDGeyDG"
-const PREMIUM_PLUS_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PLUS_PRICE_ID ?? "price_1TCiSUIRxjgeiG9AzGDGeyDG"
+const PREMIUM_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PRICE_ID!
+const PREMIUM_PLUS_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PLUS_PRICE_ID!
 
 function planLabel(plan: string) {
   if (plan === "premium_plus") return "Premium+"
@@ -103,6 +103,7 @@ export default function ProfilPage() {
   const [toast, setToast] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(false)
   const importInputRef = useRef<HTMLInputElement>(null)
 
   // Accordion open state — only "session" open by default
@@ -251,6 +252,25 @@ export default function ProfilPage() {
   async function handleLogout() {
     await supabase.auth.signOut()
     window.location.href = "/"
+  }
+
+  async function handleDeleteAccount() {
+    if (!window.confirm("Supprimer définitivement ton compte et toutes tes données ? Cette action est irréversible.")) return
+    setDeletingAccount(true)
+    try {
+      const res = await authFetch("/api/profile/delete", { method: "DELETE" })
+      if (res.ok) {
+        await supabase.auth.signOut()
+        window.location.href = "/"
+      } else {
+        const data = await res.json()
+        showToast("Erreur : " + (data.error ?? "impossible de supprimer le compte"))
+      }
+    } catch {
+      showToast("Erreur réseau")
+    } finally {
+      setDeletingAccount(false)
+    }
   }
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
@@ -556,10 +576,16 @@ export default function ProfilPage() {
 
           <div>
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Session</p>
-            <button onClick={handleLogout}
-              className="px-5 py-2.5 border-2 border-gray-200 text-sm font-bold text-gray-600 rounded-xl hover:border-red-300 hover:text-red-600 transition-colors">
-              Se déconnecter
-            </button>
+            <div className="flex flex-col gap-3">
+              <button onClick={handleLogout}
+                className="self-start px-5 py-2.5 border-2 border-gray-200 text-sm font-bold text-gray-600 rounded-xl hover:border-red-300 hover:text-red-600 transition-colors">
+                Se déconnecter
+              </button>
+              <button onClick={handleDeleteAccount} disabled={deletingAccount}
+                className="self-start px-5 py-2.5 border-2 border-red-100 text-sm font-bold text-red-400 rounded-xl hover:border-red-400 hover:text-red-600 transition-colors disabled:opacity-50">
+                {deletingAccount ? "Suppression…" : "Supprimer mon compte"}
+              </button>
+            </div>
           </div>
         </div>
 

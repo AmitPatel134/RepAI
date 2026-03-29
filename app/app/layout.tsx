@@ -9,14 +9,14 @@ import NutritionPage from "./nutrition/page"
 import ProgressPage from "./progress/page"
 import CoachPage from "./coach/page"
 
-const PAGE_ORDER = ["/app/progress", "/app/activities", "/app", "/app/coach", "/app/nutrition"]
+const PAGE_ORDER = ["/app/coach", "/app/nutrition", "/app", "/app/activities", "/app/progress"]
 
 const MAIN_PAGES = [
-  { path: "/app/progress",   Component: ProgressPage },
-  { path: "/app/activities", Component: ActivitiesPage },
-  { path: "/app",            Component: HomePage },
   { path: "/app/coach",      Component: CoachPage },
   { path: "/app/nutrition",  Component: NutritionPage },
+  { path: "/app",            Component: HomePage },
+  { path: "/app/activities", Component: ActivitiesPage },
+  { path: "/app/progress",   Component: ProgressPage },
 ]
 
 function getPageIndex(p: string) {

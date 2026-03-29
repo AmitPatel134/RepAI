@@ -1,16 +1,33 @@
 "use client"
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
-import { getCached, setCached } from "@/lib/appCache"
+import { getCached, setCached, invalidateCache } from "@/lib/appCache"
 import LoadingScreen from "@/components/LoadingScreen"
 
-const TYPE_LABELS: Record<string, string> = {
-  fullbody: "Full Body", push: "Push", pull: "Pull", legs: "Legs",
-  upper: "Upper Body", lower: "Lower Body", cardio: "Cardio", hiit: "HIIT",
-  mobility: "Mobilité", crossfit: "CrossFit", force: "Force", dos: "Dos",
-  bras: "Bras", epaules: "Épaules", abdos: "Abdominaux",
+
+const ACTIVITY_TYPE_LABELS: Record<string, string> = {
+  running: "Course à pied", cycling: "Vélo", swimming: "Natation",
+  walking: "Marche", hiking: "Randonnée", rowing: "Aviron",
+  elliptical: "Elliptique", other: "Autre",
+}
+
+const ACTIVITY_TYPE_COLORS: Record<string, string> = {
+  running: "text-orange-500", cycling: "text-blue-500", swimming: "text-cyan-500",
+  walking: "text-green-500", hiking: "text-emerald-600", rowing: "text-indigo-500",
+  elliptical: "text-purple-500", other: "text-gray-500",
+}
+
+function fmtDuration(sec: number): string {
+  const h = Math.floor(sec / 3600)
+  const m = Math.floor((sec % 3600) / 60)
+  if (h > 0) return `${h}h${m > 0 ? String(m).padStart(2, "0") : ""}m`
+  return `${m}min`
+}
+
+function fmtDistance(m: number): string {
+  return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`
 }
 
 const GOAL_LABELS: Record<string, string> = {
@@ -27,12 +44,14 @@ const GOAL_LABELS: Record<string, string> = {
   reeducation: "Rééducation 🩹",
 }
 
+type LastSession =
+  | { kind: "workout"; id: string; name: string; type: string; date: string; exerciseCount: number; totalSets: number }
+  | { kind: "activity"; id: string; name: string; type: string; date: string; durationSec: number | null; distanceM: number | null; calories: number | null; avgHeartRate: number | null }
+
 type DashboardData = {
   recommendation: string | null
-  lastWorkout: { name: string; type: string; date: string } | null
+  lastSession: LastSession | null
   thisWeek: number
-  habitualTypes: string[]
-  missingHabitual: string[]
 }
 
 type UserProfile = {
@@ -46,6 +65,12 @@ type UserProfile = {
   restingHR: number | null
   dailySteps: number | null
   profileComplete: boolean
+}
+
+type NutritionReco = {
+  locked: boolean
+  reco: { calories: number; proteins: number; carbs: number; fats: number; fiber: number; summary: string } | null
+  generatedAt: string | null
 }
 
 function getGreeting() {
@@ -67,12 +92,40 @@ function bmi(weight: number, height: number) {
 
 export default function HomePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [ready, setReady] = useState(false)
   const [firstName, setFirstName] = useState<string | null>(null)
   const [data, setData] = useState<DashboardData | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loadingReco, setLoadingReco] = useState(false)
   const [noSession, setNoSession] = useState(false)
+  const [nutritionReco, setNutritionReco] = useState<NutritionReco | null>(null)
+  const [generatingReco, setGeneratingReco] = useState(false)
+  const [paymentSuccess, setPaymentSuccess] = useState(false)
+
+  // Detect post-payment redirect
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id")
+    if (!sessionId) return
+    // Remove session_id from URL without reload
+    const url = new URL(window.location.href)
+    url.searchParams.delete("session_id")
+    window.history.replaceState({}, "", url.toString())
+    // Verify payment and update plan
+    authFetch("/api/checkout/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId }),
+    }).then(r => r.json()).then(data => {
+      if (data.success) {
+        setPaymentSuccess(true)
+        invalidateCache("/api/plan")
+        invalidateCache("/api/nutrition-reco")
+        setTimeout(() => setPaymentSuccess(false), 6000)
+      }
+    }).catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -85,14 +138,17 @@ export default function HomePage() {
       // Instant display from cache
       const cD = getCached<unknown>("/api/dashboard")
       const cPr = getCached<{ profileComplete?: boolean }>("/api/profile")
+      const cNr = getCached<NutritionReco>("/api/nutrition-reco")
       if (cD) setData(cD as Parameters<typeof setData>[0])
       if (cPr) setProfile(cPr as Parameters<typeof setProfile>[0])
+      if (cNr) setNutritionReco(cNr)
       if (cD && cPr) setReady(true)
 
       Promise.all([
         authFetch("/api/dashboard").then(r => r.json()).catch(() => null),
         authFetch("/api/profile").then(r => r.json()).catch(() => null),
-      ]).then(([dashboard, prof]) => {
+        authFetch("/api/nutrition-reco").then(r => r.json()).catch(() => null),
+      ]).then(([dashboard, prof, nr]) => {
         if (dashboard) { setData(dashboard); setCached("/api/dashboard", dashboard) }
         if (prof) {
           setProfile(prof); setCached("/api/profile", prof)
@@ -101,11 +157,23 @@ export default function HomePage() {
             return
           }
         }
+        if (nr) { setNutritionReco(nr); setCached("/api/nutrition-reco", nr) }
         setReady(true)
       }).catch(() => setReady(true))
         .finally(() => setLoadingReco(false))
     })
   }, [router])
+
+  async function generateNutritionReco() {
+    setGeneratingReco(true)
+    try {
+      const r = await authFetch("/api/nutrition-reco", { method: "POST" })
+      const nr = await r.json()
+      if (nr && !nr.error) { setNutritionReco(nr); setCached("/api/nutrition-reco", nr) }
+    } finally {
+      setGeneratingReco(false)
+    }
+  }
 
   if (!ready) return <LoadingScreen color="#111827" />
 
@@ -121,6 +189,26 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
+
+      {/* ── POST-PAYMENT SUCCESS BANNER ─────────────────────────────── */}
+      {paymentSuccess && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4">
+          <div className="bg-violet-600 text-white rounded-2xl px-5 py-4 shadow-2xl flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-extrabold text-sm">Bienvenue en Premium !</p>
+              <p className="text-xs text-violet-200 font-medium">Toutes les fonctionnalités sont maintenant actives.</p>
+            </div>
+            <button onClick={() => setPaymentSuccess(false)} className="ml-auto text-white/60 hover:text-white">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── HERO HEADER ─────────────────────────────────────────────── */}
       <div className="relative overflow-hidden bg-gray-900 px-4 pt-8 pb-20">
@@ -159,12 +247,45 @@ export default function HomePage() {
             <p className="text-xs text-blue-200 mt-1">séance{(data?.thisWeek ?? 0) > 1 ? "s" : ""}</p>
           </div>
           {/* Dernière séance */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Dernière</p>
-            {data?.lastWorkout ? (
+          <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between min-h-[96px]">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Dernière séance</p>
+            {data?.lastSession ? (
               <>
-                <p className="text-sm font-extrabold text-gray-900 leading-tight">{TYPE_LABELS[data.lastWorkout.type] ?? data.lastWorkout.type}</p>
-                <p className="text-xs text-gray-400 mt-1">{timeAgo(data.lastWorkout.date)}</p>
+                <p className="text-sm font-extrabold text-blue-600 leading-tight truncate">{data.lastSession.name}</p>
+                {data.lastSession.kind === "activity" && (
+                  <p className={`text-[11px] font-bold mt-0.5 ${ACTIVITY_TYPE_COLORS[data.lastSession.type] ?? "text-gray-500"}`}>
+                    {ACTIVITY_TYPE_LABELS[data.lastSession.type] ?? data.lastSession.type}
+                  </p>
+                )}
+                {/* Details */}
+                <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1.5">
+                  {data.lastSession.kind === "workout" ? (
+                    <>
+                      {data.lastSession.exerciseCount > 0 && (
+                        <span className="text-[11px] text-gray-500">{data.lastSession.exerciseCount} exo</span>
+                      )}
+                      {data.lastSession.totalSets > 0 && (
+                        <span className="text-[11px] text-gray-500">{data.lastSession.totalSets} séries</span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {data.lastSession.durationSec && (
+                        <span className="text-[11px] text-gray-500">{fmtDuration(data.lastSession.durationSec)}</span>
+                      )}
+                      {data.lastSession.distanceM && (
+                        <span className="text-[11px] text-gray-500">{fmtDistance(data.lastSession.distanceM)}</span>
+                      )}
+                      {data.lastSession.calories && (
+                        <span className="text-[11px] text-gray-500">{data.lastSession.calories} kcal</span>
+                      )}
+                      {data.lastSession.avgHeartRate && (
+                        <span className="text-[11px] text-gray-500">♥ {data.lastSession.avgHeartRate} bpm</span>
+                      )}
+                    </>
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-300 mt-1.5">{timeAgo(data.lastSession.date)}</p>
               </>
             ) : (
               <p className="text-sm text-gray-400 font-medium mt-1">Aucune encore</p>
@@ -251,20 +372,10 @@ export default function HomePage() {
               </div>
             ) : data?.recommendation ? (
               <p className="text-sm text-gray-300 font-medium leading-relaxed">{data.recommendation}</p>
-            ) : data?.lastWorkout === null ? (
+            ) : data?.lastSession === null ? (
               <p className="text-sm text-gray-400 font-medium">Ajoute tes premières séances pour recevoir des conseils personnalisés.</p>
             ) : (
               <p className="text-sm text-gray-400 font-medium">Continue comme ça, tu gères ta programmation.</p>
-            )}
-
-            {(data?.missingHabitual?.length ?? 0) > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {data!.missingHabitual.map(t => (
-                  <span key={t} className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-violet-900/60 text-violet-300 border border-violet-800">
-                    {TYPE_LABELS[t] ?? t} à faire
-                  </span>
-                ))}
-              </div>
             )}
 
             <a href="/app/coach" className="inline-flex items-center gap-1.5 mt-4 text-xs font-bold text-violet-400 hover:text-violet-300 transition-colors">
@@ -273,72 +384,108 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ── QUICK NAV ───────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* Activités */}
-          <a href="/app/activities" className="relative overflow-hidden bg-blue-600 rounded-2xl p-5 flex flex-col gap-3 hover:bg-blue-500 transition-colors shadow-lg shadow-blue-600/25 group">
-            <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-blue-500/50" />
-            <div className="absolute bottom-2 right-2 opacity-10">
-              <svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+        {/* ── NUTRITION RECO ──────────────────────────────────────── */}
+        {nutritionReco?.locked ? (
+          // Free plan — locked card
+          <div className="relative overflow-hidden bg-white border border-orange-100 rounded-2xl p-5 shadow-sm">
+            <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-orange-400" />
+            <div className="ml-1 flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center shrink-0 mt-0.5">
+                <svg className="w-[18px] h-[18px] text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[11px] font-black text-orange-500 uppercase tracking-widest">Nutrition IA</span>
+                  <span className="text-[10px] font-bold text-orange-400 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">Premium</span>
+                </div>
+                <p className="text-sm font-semibold text-gray-900 leading-snug">Besoins nutritionnels personnalisés</p>
+                <p className="text-xs text-gray-400 mt-1 leading-relaxed">Passe en Premium pour recevoir tes recommandations journalières en calories, protéines, glucides et lipides, calculées par l'IA selon ton profil et tes objectifs.</p>
+                <a href="/app/profil" className="inline-flex items-center gap-1.5 mt-3 text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors">
+                  Passer Premium →
+                </a>
+              </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-sm">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <div className="relative z-10">
-              <p className="text-base font-extrabold text-white">Activités</p>
-              <p className="text-xs text-blue-200 mt-0.5">Enregistrer une séance</p>
-            </div>
-          </a>
+          </div>
+        ) : nutritionReco !== null ? (
+          // Premium — show reco card
+          <div className="relative overflow-hidden bg-white border border-orange-100 rounded-2xl p-5 shadow-sm">
+            <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-orange-400" />
+            <div className="ml-1">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black text-orange-500 uppercase tracking-widest">Nutrition IA</span>
+                  {nutritionReco.generatedAt && (
+                    <span className="text-[10px] text-gray-400">
+                      {new Date(nutritionReco.generatedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={generateNutritionReco}
+                  disabled={generatingReco}
+                  className="flex items-center gap-1.5 text-[11px] font-bold text-orange-500 hover:text-orange-600 transition-colors disabled:opacity-50"
+                >
+                  {generatingReco ? (
+                    <div className="flex gap-0.5">
+                      {[0, 1, 2].map(i => (
+                        <div key={i} className="w-1 h-1 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                      ))}
+                    </div>
+                  ) : (
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  )}
+                  Régénérer
+                </button>
+              </div>
 
-          {/* Nutrition */}
-          <a href="/app/nutrition" className="relative overflow-hidden bg-orange-500 rounded-2xl p-5 flex flex-col gap-3 hover:bg-orange-400 transition-colors shadow-lg shadow-orange-500/25 group">
-            <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-orange-400/50" />
-            <div className="absolute bottom-2 right-2 opacity-10">
-              <svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18M3 9c0-3 2-6 5-6s5 3 5 6H3M17 3v5a2 2 0 002 2v11" />
-              </svg>
+              {nutritionReco.reco ? (
+                <>
+                  {/* Calories — full width */}
+                  <div className="bg-orange-50 rounded-xl p-3 flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-gray-500">Calories</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-black text-orange-600 leading-none">{nutritionReco.reco.calories}</span>
+                      <span className="text-xs font-semibold text-orange-400">kcal</span>
+                    </div>
+                  </div>
+                  {/* Macros — 4 cols */}
+                  <div className="grid grid-cols-4 gap-2 mb-3">
+                    {[
+                      { label: "Protéines", value: nutritionReco.reco.proteins, color: "text-blue-600", bg: "bg-blue-50" },
+                      { label: "Glucides",  value: nutritionReco.reco.carbs,    color: "text-yellow-600", bg: "bg-yellow-50" },
+                      { label: "Lipides",   value: nutritionReco.reco.fats,     color: "text-green-600", bg: "bg-green-50" },
+                      { label: "Fibres",    value: nutritionReco.reco.fiber,    color: "text-purple-600", bg: "bg-purple-50" },
+                    ].map(m => (
+                      <div key={m.label} className={`${m.bg} rounded-xl p-2.5 text-center`}>
+                        <p className={`text-base font-black ${m.color} leading-none`}>{m.value}</p>
+                        <p className="text-[9px] font-semibold text-gray-400 mt-0.5">g</p>
+                        <p className="text-[9px] font-bold text-gray-500 mt-0.5 leading-none">{m.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Summary */}
+                  <p className="text-xs text-gray-500 leading-relaxed italic">{nutritionReco.reco.summary}</p>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-3 py-2">
+                  <p className="text-sm text-gray-500 text-center">Génère tes recommandations nutritionnelles personnalisées</p>
+                  <button
+                    onClick={generateNutritionReco}
+                    disabled={generatingReco}
+                    className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white text-sm font-bold rounded-xl hover:bg-orange-400 transition-colors disabled:opacity-50"
+                  >
+                    {generatingReco ? "Calcul en cours…" : "Calculer mes besoins"}
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-sm">
-              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18M3 9c0-3 2-6 5-6s5 3 5 6H3M17 3v5a2 2 0 002 2v11" />
-              </svg>
-            </div>
-            <div className="relative z-10">
-              <p className="text-base font-extrabold text-white">Nutrition</p>
-              <p className="text-xs text-orange-100 mt-0.5">Analyser un repas</p>
-            </div>
-          </a>
-        </div>
+          </div>
+        ) : null}
 
-        {/* ── BOTTOM SHORTCUTS ────────────────────────────────────── */}
-        <div className="grid grid-cols-2 gap-3">
-          <a href="/app/progress" className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-3 hover:border-red-200 transition-colors group shadow-sm">
-            <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
-              <svg className="w-4.5 h-4.5 text-red-500 w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 20h18M7 20V14m4 6V8m4 12V3" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">Progrès</p>
-              <p className="text-xs text-gray-400">Voir l'évolution</p>
-            </div>
-          </a>
-          <a href="/app/coach" className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-3 hover:border-violet-200 transition-colors group shadow-sm">
-            <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
-              <svg className="w-[18px] h-[18px] text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">Coach</p>
-              <p className="text-xs text-gray-400">Poser une question</p>
-            </div>
-          </a>
-        </div>
 
       </div>
     </div>

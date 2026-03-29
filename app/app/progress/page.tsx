@@ -251,15 +251,17 @@ export default function ProgressPage() {
 
       // Refresh in background
       Promise.all([
-        authFetch("/api/workouts").then(r => r.json()).catch(() => []),
+        authFetch("/api/workouts?limit=100").then(r => r.json()).catch(() => ({ items: [] })),
         authFetch("/api/weight").then(r => r.json()).catch(() => []),
-        authFetch("/api/activities").then(r => r.json()).catch(() => []),
+        authFetch("/api/activities?limit=100").then(r => r.json()).catch(() => ({ items: [] })),
         authFetch("/api/plan").then(r => r.json()).catch(() => ({ plan: "free" })),
       ]).then(([d, weights, acts, p]) => {
-          const hasData = Array.isArray(d) && d.length > 0
-          const workouts: typeof DEMO_WORKOUTS = hasData ? d : []
+          const workoutItems: typeof DEMO_WORKOUTS = Array.isArray(d) ? d : (d?.items ?? [])
+          const hasData = workoutItems.length > 0
+          const workouts: typeof DEMO_WORKOUTS = hasData ? workoutItems : []
           setRawWorkouts(workouts); setCached("/api/workouts", workouts)
-          if (Array.isArray(acts)) { setRawActivities(acts); setCached("/api/activities", acts) }
+          const actItems = Array.isArray(acts) ? acts : (acts?.items ?? [])
+          if (actItems.length >= 0) { setRawActivities(actItems); setCached("/api/activities", actItems) }
           const options = hasData ? computeProgressionByExercise(workouts) : []
           setExerciseOptions(options)
           setSelectedExercise(options[0] ?? null)
@@ -304,57 +306,10 @@ export default function ProgressPage() {
             <p className="text-xs font-medium text-white/60 mb-1">Ton évolution physique</p>
             <h1 className="text-3xl font-bold text-white tracking-tight font-[family-name:var(--font-barlow-condensed)]">Mes progrès</h1>
           </div>
-          <div className="relative">
-            <button
-              onClick={() => setShowEditor(v => !v)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-xs font-bold text-white transition-colors"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              Modifier
-            </button>
-
-            <div
-              className="absolute right-0 top-full mt-2 z-50 bg-white border border-gray-200 rounded-2xl shadow-xl p-3 w-56 pointer-events-none"
-              style={{
-                opacity: showEditor ? 1 : 0,
-                transform: showEditor ? "translateY(0) scale(1)" : "translateY(-8px) scale(0.96)",
-                transition: "opacity 0.18s ease, transform 0.18s ease",
-                pointerEvents: showEditor ? "auto" : "none",
-              }}
-            >
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">Sections affichées</p>
-              {[
-                { key: "activity", label: "Activité" },
-                { key: "weight", label: "Suivi du poids" },
-                { key: "progression", label: "Progression" },
-                { key: "prs", label: "Personal Records" },
-              ].map(s => (
-                <button
-                  key={s.key}
-                  onClick={() => toggleSection(s.key)}
-                  className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
-                >
-                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
-                    visible[s.key] ? "bg-red-600 border-red-600" : "border-gray-300"
-                  }`}>
-                    {visible[s.key] && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700 text-left">{s.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-6 md:px-6 md:py-8">
-        {showEditor && <div className="fixed inset-0 z-40" onClick={() => setShowEditor(false)} />}
 
         {/* Activity chart */}
         {visible.activity && ((() => {

@@ -1,6 +1,7 @@
 import Groq from "groq-sdk"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
+import { isPro } from "@/lib/plans"
 import { NextRequest } from "next/server"
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
@@ -159,6 +160,11 @@ export async function POST(request: NextRequest) {
   try {
     const authUser = await getAuthUser(request)
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
+
+    const user = await prisma.user.findUnique({ where: { email: authUser.email } })
+    if (!isPro(user?.plan ?? "free")) {
+      return Response.json({ error: "L'import CSV est réservé aux membres Premium." }, { status: 403 })
+    }
 
     const preview = new URL(request.url).searchParams.get("preview") === "true"
 

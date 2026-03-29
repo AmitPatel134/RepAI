@@ -7,13 +7,6 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
 export const dynamic = "force-dynamic"
 
-const TYPE_LABELS: Record<string, string> = {
-  fullbody: "Full Body", push: "Push", pull: "Pull", legs: "Legs",
-  upper: "Upper Body", lower: "Lower Body", cardio: "Cardio", hiit: "HIIT",
-  mobility: "Mobilité", crossfit: "CrossFit", force: "Force", dos: "Dos",
-  bras: "Bras", epaules: "Épaules", abdos: "Abdominaux",
-}
-
 export async function GET(request: NextRequest) {
   try {
     const authUser = await getAuthUser(request)
@@ -44,52 +37,50 @@ export async function GET(request: NextRequest) {
     monday.setHours(0, 0, 0, 0)
 
     const thisWeekWorkouts = workouts.filter(w => new Date(w.date) >= monday)
-    const pastWorkouts = workouts.filter(w => new Date(w.date) < monday)
-
-    // Detect habitual types (done in ≥50% of past weeks)
-    const weekMap: Record<string, Set<string>> = {}
-    for (const w of pastWorkouts) {
-      const d = new Date(w.date)
-      const dow = (d.getDay() + 6) % 7
-      const mon = new Date(d)
-      mon.setDate(d.getDate() - dow)
-      const key = mon.toISOString().slice(0, 10)
-      if (!weekMap[key]) weekMap[key] = new Set()
-      weekMap[key].add(w.type)
-    }
-
-    const numWeeks = Object.keys(weekMap).length || 1
-    const typeWeekCount: Record<string, number> = {}
-    for (const types of Object.values(weekMap)) {
-      for (const t of types) {
-        typeWeekCount[t] = (typeWeekCount[t] ?? 0) + 1
-      }
-    }
-
-    const habitualTypes = Object.entries(typeWeekCount)
-      .filter(([, c]) => c / numWeeks >= 0.5)
-      .map(([t]) => t)
-
-    const thisWeekTypes = thisWeekWorkouts.map(w => w.type)
-    const missingHabitual = habitualTypes.filter(t => !thisWeekTypes.includes(t))
     const lastWorkout = workouts[0]
 
-    // Build prompt
-    const habitLines = Object.entries(typeWeekCount)
-      .sort((a, b) => b[1] - a[1])
-      .map(([t, c]) => `- ${TYPE_LABELS[t] ?? t} : ${(c / numWeeks).toFixed(1)}x/semaine`)
-      .join("\n")
+    // Also fetch the most recent activity (cardio/other)
+    const lastActivity = await prisma.activity.findFirst({
+      where: { userId: user.id },
+      orderBy: { date: "desc" },
+    })
 
-    const prompt = `Tu es un coach sportif. Donne un conseil très court (2 phrases max) sur la prochaine séance à faire.
+    // Pick whichever is more recent — workout or activity
+    const lastWorkoutDate = new Date(lastWorkout.date).getTime()
+    const lastActivityDate = lastActivity ? new Date(lastActivity.date).getTime() : 0
+    const totalSets = lastWorkout.exercises.reduce((acc, ex) => acc + ex.sets.length, 0)
 
-Habitudes (${numWeeks} semaine(s)) :
-${habitLines || "- Pas assez de données"}
+    const lastSession = lastActivityDate > lastWorkoutDate && lastActivity
+      ? {
+          kind: "activity" as const,
+          id: lastActivity.id,
+          name: lastActivity.name,
+          type: lastActivity.type,
+          date: lastActivity.date,
+          durationSec: lastActivity.durationSec ?? null,
+          distanceM: lastActivity.distanceM ?? null,
+          calories: lastActivity.calories ?? null,
+          avgHeartRate: lastActivity.avgHeartRate ?? null,
+        }
+      : {
+          kind: "workout" as const,
+          id: lastWorkout.id,
+          name: lastWorkout.name,
+          type: lastWorkout.type,
+          date: lastWorkout.date,
+          exerciseCount: lastWorkout.exercises.length,
+          totalSets,
+        }
 
-Cette semaine : ${thisWeekTypes.map(t => TYPE_LABELS[t] ?? t).join(", ") || "aucune séance"}
-Manquants habituels : ${missingHabitual.map(t => TYPE_LABELS[t] ?? t).join(", ") || "aucun"}
-Dernière séance : ${TYPE_LABELS[lastWorkout.type] ?? lastWorkout.type} le ${new Date(lastWorkout.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+    // Build prompt — frequency-based, no types
+    const recentNames = workouts.slice(0, 5).map(w => `- ${w.name} (${new Date(w.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })})`).join("\n")
+    const prompt = `Tu es un coach sportif. Donne un conseil très court (1-2 phrases max) de motivation ou sur la prochaine séance.
 
-Règle absolue : ne suggère que des types déjà dans ses habitudes. Sois direct, 1-2 phrases, sans markdown.`
+Séances récentes :
+${recentNames || "- Aucune"}
+Cette semaine : ${thisWeekWorkouts.length} séance${thisWeekWorkouts.length > 1 ? "s" : ""}
+
+Sois direct et motivant, sans markdown.`
 
     const completion = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
@@ -105,10 +96,8 @@ Règle absolue : ne suggère que des types déjà dans ses habitudes. Sois direc
 
     return Response.json({
       recommendation,
-      lastWorkout: { name: lastWorkout.name, type: lastWorkout.type, date: lastWorkout.date },
+      lastSession,
       thisWeek: thisWeekWorkouts.length,
-      habitualTypes,
-      missingHabitual,
     })
   } catch {
     return Response.json({ error: "Server error" }, { status: 500 })

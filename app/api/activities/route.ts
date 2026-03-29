@@ -13,13 +13,28 @@ export async function GET(request: NextRequest) {
     const user = await prisma.user.findUnique({ where: { email: authUser.email } })
     if (!user) return Response.json([])
 
-    const activities = await prisma.activity.findMany({
-      where: { userId: user.id },
-      orderBy: { date: "desc" },
-    })
+    // Free plan: only last 7 days of history
+    const dateFilter = !isPro(user.plan ?? "free")
+      ? { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+      : undefined
 
-    return Response.json(activities)
-  } catch {
+    const url = new URL(request.url)
+    const limit  = Math.min(parseInt(url.searchParams.get("limit")  ?? "20"), 100)
+    const offset = Math.max(parseInt(url.searchParams.get("offset") ?? "0"),  0)
+
+    const [activities, total] = await Promise.all([
+      prisma.activity.findMany({
+        where: { userId: user.id, ...(dateFilter ? { date: dateFilter } : {}) },
+        orderBy: { date: "desc" },
+        skip: offset,
+        take: limit,
+      }),
+      prisma.activity.count({ where: { userId: user.id, ...(dateFilter ? { date: dateFilter } : {}) } }),
+    ])
+
+    return Response.json({ items: activities, total, limit, offset })
+  } catch (e) {
+    console.error("[activities GET]", e)
     return Response.json({ error: "Database error" }, { status: 500 })
   }
 }
@@ -85,7 +100,8 @@ export async function POST(request: NextRequest) {
     await prisma.usageEvent.create({ data: { userId: user.id, type: "session_created" } }).catch(() => {})
 
     return Response.json(activity, { status: 201 })
-  } catch {
+  } catch (e) {
+    console.error("[activities POST]", e)
     return Response.json({ error: "Database error" }, { status: 500 })
   }
 }

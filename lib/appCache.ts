@@ -4,7 +4,7 @@
  * TTL: 90 seconds — after that, fresh data is fetched.
  */
 
-const CACHE_TTL = 90_000
+const CACHE_TTL = 5 * 60_000 // 5 minutes
 
 type Entry = { data: unknown; ts: number }
 const cache = new Map<string, Entry>()
@@ -27,19 +27,21 @@ export function invalidateCache(key: string) {
 /** Kick off parallel prefetch for all main pages. Called once from the app layout. */
 export async function prefetchAll() {
   const { authFetch } = await import("@/lib/authFetch")
-  const keys = [
-    "/api/plan",
-    "/api/workouts",
-    "/api/activities",
-    "/api/nutrition",
-    "/api/weight",
-  ]
-  await Promise.allSettled(
-    keys.map(key =>
+  // Paginated endpoints: cache only the first page's items array
+  const paginatedKeys = ["/api/workouts", "/api/activities", "/api/nutrition"]
+  const plainKeys = ["/api/plan", "/api/weight"]
+  await Promise.allSettled([
+    ...paginatedKeys.map(key =>
+      authFetch(`${key}?limit=20`)
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => { if (data !== null) setCached(key, Array.isArray(data) ? data : (data?.items ?? [])) })
+        .catch(() => {})
+    ),
+    ...plainKeys.map(key =>
       authFetch(key)
         .then(r => (r.ok ? r.json() : null))
         .then(data => { if (data !== null) setCached(key, data) })
         .catch(() => {})
-    )
-  )
+    ),
+  ])
 }

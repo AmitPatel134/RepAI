@@ -4,8 +4,8 @@ import { supabase } from "@/lib/supabase"
 import LoadingScreen from "@/components/LoadingScreen"
 import AppLogo from "@/components/AppLogo"
 
-const PREMIUM_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PRICE_ID ?? "price_1TCiSUIRxjgeiG9AzGDGeyDG"
-const PREMIUM_PLUS_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PLUS_PRICE_ID ?? "price_1TCiSUIRxjgeiG9AzGDGeyDG"
+const PREMIUM_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PRICE_ID!
+const PREMIUM_PLUS_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PLUS_PRICE_ID!
 
 const FREE_FEATURES = [
   "5 séances par mois",

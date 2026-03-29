@@ -88,9 +88,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Build profile context
+    function calcAge(bd: Date) {
+      const today = new Date(); let a = today.getFullYear() - bd.getFullYear()
+      const m = today.getMonth() - bd.getMonth()
+      if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) a--
+      return a
+    }
+    const age = user.birthDate ? calcAge(new Date(user.birthDate)) : null
+
     const profileLines: string[] = []
     if (user.sex) profileLines.push(`Sexe : ${user.sex}`)
-    if (user.age) profileLines.push(`Âge : ${user.age} ans`)
+    if (age) profileLines.push(`Âge : ${age} ans`)
     if (user.heightCm) profileLines.push(`Taille : ${user.heightCm} cm`)
     if (user.weightKg) {
       profileLines.push(`Poids : ${user.weightKg} kg`)
@@ -174,7 +182,8 @@ RÈGLES STRICTES :
     })
 
     return Response.json(session)
-  } catch {
+  } catch (e) {
+    console.error("[coach POST]", e)
     return Response.json({ error: "AI error" }, { status: 500 })
   }
 }

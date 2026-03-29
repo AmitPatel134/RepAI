@@ -19,7 +19,6 @@ model User {
   createdAt       DateTime       @default(now())
   // Fitness profile
   birthDate       DateTime?
-  age             Int?
   heightCm        Int?
   weightKg        Float?
   sex             String?        // "homme" | "femme" | "autre"
@@ -27,8 +26,10 @@ model User {
   activityLevel   String?        // "sedentaire" | "leger" | "modere" | "actif" | "tres_actif"
   restingHR       Int?           // fréquence cardiaque au repos
   dailySteps      Int?           // nombre de pas journaliers moyen
-  profileComplete Boolean        @default(false)
-  workouts        Workout[]
+  profileComplete  Boolean        @default(false)
+  nutritionReco    Json?          // { calories, proteins, carbs, fats, fiber, summary }
+  nutritionRecoAt  DateTime?
+  workouts         Workout[]
   coachSessions   CoachSession[]
   activities      Activity[]
   meals           Meal[]
