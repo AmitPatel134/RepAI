@@ -161,8 +161,8 @@ export async function POST(request: NextRequest) {
     const authUser = await getAuthUser(request)
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
-    const user = await prisma.user.findUnique({ where: { email: authUser.email } })
-    if (!isPro(user?.plan ?? "free")) {
+    const existingUser = await prisma.user.findUnique({ where: { email: authUser.email } })
+    if (!isPro(existingUser?.plan ?? "free")) {
       return Response.json({ error: "L'import CSV est réservé aux membres Premium." }, { status: 403 })
     }
 

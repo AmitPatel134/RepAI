@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
@@ -90,7 +90,7 @@ function bmi(weight: number, height: number) {
   return (weight / (h * h)).toFixed(1)
 }
 
-export default function HomePage() {
+function HomePageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [ready, setReady] = useState(false)
@@ -489,5 +489,13 @@ export default function HomePage() {
 
       </div>
     </div>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <Suspense>
+      <HomePageInner />
+    </Suspense>
   )
 }

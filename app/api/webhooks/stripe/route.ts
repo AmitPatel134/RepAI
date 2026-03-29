@@ -61,8 +61,9 @@ export async function POST(request: Request) {
       if (!invoice.customer || invoice.billing_reason === "manual") break
       const email = await getEmailFromCustomer(invoice.customer as string)
       if (!email) break
-      // Retrieve subscription to know the exact plan tier
-      const subId = typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id
+      // Retrieve subscription to know the exact plan tier (Stripe SDK v20: invoice.parent.subscription_details)
+      const subRef = invoice.parent?.subscription_details?.subscription
+      const subId = typeof subRef === "string" ? subRef : subRef?.id
       if (!subId) break
       const sub = await stripe.subscriptions.retrieve(subId)
       await setUserPlan(email, planFromSubscription(sub))
