@@ -150,13 +150,11 @@ function HomePageInner() {
         authFetch("/api/nutrition-reco").then(r => r.json()).catch(() => null),
       ]).then(([dashboard, prof, nr]) => {
         if (dashboard) { setData(dashboard); setCached("/api/dashboard", dashboard) }
-        if (prof) {
-          setProfile(prof); setCached("/api/profile", prof)
-          if (!prof.profileComplete) {
-            router.push("/app/onboarding")
-            return
-          }
+        if (!prof || !prof.profileComplete) {
+          router.push("/app/onboarding")
+          return
         }
+        setProfile(prof); setCached("/api/profile", prof)
         if (nr) { setNutritionReco(nr); setCached("/api/nutrition-reco", nr) }
         setReady(true)
       }).catch(() => setReady(true))
