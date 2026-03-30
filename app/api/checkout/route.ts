@@ -2,7 +2,6 @@ import { getStripe, getPriceToPlan } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
 import { createRateLimiter } from "@/lib/rate-limit"
-import { syncPlanFromStripe } from "@/lib/syncPlan"
 import { NextRequest } from "next/server"
 
 const rateLimit = createRateLimiter({ maxRequests: 5, windowMs: 60_000 })
@@ -64,15 +63,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Update the subscription price immediately (Stripe handles proration)
-    await getStripe().subscriptions.update(subscriptionId, {
+    const updatedSub = await getStripe().subscriptions.update(subscriptionId, {
       items: [{ id: currentItemId, price: priceId }],
       proration_behavior: "always_invoice",
     })
 
-    // Force sync to confirm the new plan from Stripe
-    await syncPlanFromStripe(authUser.email, true)
+    // Read the confirmed price directly from Stripe's response — no race condition
+    const confirmedPriceId = updatedSub.items.data[0]?.price.id
+    const confirmedPlan = getPriceToPlan()[confirmedPriceId] ?? "free"
 
-    return Response.json({ upgraded: true, plan: newPlan })
+    await prisma.user.update({
+      where: { email: authUser.email },
+      data: { plan: confirmedPlan, planSyncedAt: new Date() },
+    })
+
+    return Response.json({ upgraded: true, plan: confirmedPlan })
   }
 
   // ── New subscriber → Stripe Checkout ──────────────────────────────────────
