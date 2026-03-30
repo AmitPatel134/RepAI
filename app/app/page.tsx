@@ -117,7 +117,7 @@ function HomePageInner() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId }),
     }).then(r => r.json()).then(data => {
-      if (data.success) {
+      if (data.ok) {
         setPaymentSuccess(true)
         invalidateCache("/api/plan")
         invalidateCache("/api/nutrition-reco")
