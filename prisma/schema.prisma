@@ -16,6 +16,7 @@ model User {
   company         String?
   plan                 String    @default("free")
   planExpiresAt        DateTime?
+  planSyncedAt         DateTime?
   stripeCustomerId     String?   @unique
   stripeSubscriptionId String?   @unique
   createdAt       DateTime       @default(now())

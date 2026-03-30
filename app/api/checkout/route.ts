@@ -2,6 +2,7 @@ import { getStripe, getPriceToPlan } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
 import { createRateLimiter } from "@/lib/rate-limit"
+import { syncPlanFromStripe } from "@/lib/syncPlan"
 import { NextRequest } from "next/server"
 
 const rateLimit = createRateLimiter({ maxRequests: 5, windowMs: 60_000 })
@@ -68,11 +69,8 @@ export async function POST(request: NextRequest) {
       proration_behavior: "always_invoice",
     })
 
-    // Update DB immediately
-    await prisma.user.update({
-      where: { email: authUser.email },
-      data: { plan: newPlan },
-    })
+    // Force sync to confirm the new plan from Stripe
+    await syncPlanFromStripe(authUser.email, true)
 
     return Response.json({ upgraded: true, plan: newPlan })
   }

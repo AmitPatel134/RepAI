@@ -1,6 +1,7 @@
 import { getStripe, getPriceToPlan } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
+import { syncPlanFromStripe } from "@/lib/syncPlan"
 import { NextRequest } from "next/server"
 
 export const dynamic = "force-dynamic"
@@ -36,8 +37,8 @@ export async function POST(request: NextRequest) {
 
   await prisma.user.upsert({
     where: { email: authUser.email },
-    update: { plan, stripeCustomerId: customerId, stripeSubscriptionId: subscriptionId, planExpiresAt: null },
-    create: { email: authUser.email, plan, stripeCustomerId: customerId, stripeSubscriptionId: subscriptionId },
+    update: { plan, stripeCustomerId: customerId, stripeSubscriptionId: subscriptionId, planExpiresAt: null, planSyncedAt: new Date() },
+    create: { email: authUser.email, plan, stripeCustomerId: customerId, stripeSubscriptionId: subscriptionId, planSyncedAt: new Date() },
   })
 
   return Response.json({ ok: true, plan })

@@ -1,12 +1,16 @@
 import { prisma } from "@/lib/prisma"
 import { isPro, isPremiumPlus } from "@/lib/plans"
 import { getAuthUser } from "@/lib/authServer"
+import { syncPlanFromStripe } from "@/lib/syncPlan"
 
 export const dynamic = "force-dynamic"
 
 export async function GET(request: Request) {
   const authUser = await getAuthUser(request)
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
+
+  // Sync plan from Stripe (max once per hour, silently)
+  await syncPlanFromStripe(authUser.email).catch(() => {})
 
   const user = await prisma.user.findUnique({ where: { email: authUser.email } })
   if (!user) {
