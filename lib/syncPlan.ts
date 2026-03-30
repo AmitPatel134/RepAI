@@ -10,6 +10,9 @@ import { prisma } from "@/lib/prisma"
 export async function syncPlanFromStripe(email: string, force = false): Promise<void> {
   const user = await prisma.user.findUnique({ where: { email } })
 
+  // Skip sync if plan is manually overridden (gifted accounts)
+  if (user?.planOverride) return
+
   const repaiPriceIds = new Set(Object.keys(getPriceToPlan()).filter(Boolean))
   if (repaiPriceIds.size === 0) return // env vars not set, skip
 
