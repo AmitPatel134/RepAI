@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
+import { authFetch } from "@/lib/authFetch"
 import LoadingScreen from "@/components/LoadingScreen"
 import AppLogo from "@/components/AppLogo"
 
@@ -44,13 +45,11 @@ export default function PricingPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        const userEmail = session.user.email ?? null
-        setEmail(userEmail)
-        if (userEmail) {
-          fetch(`/api/plan?email=${encodeURIComponent(userEmail)}`)
-            .then(r => r.json())
-            .then(d => setPlan(d.plan ?? "free"))
-        }
+        setEmail(session.user.email ?? null)
+        authFetch("/api/plan")
+          .then(r => r.json())
+          .then(d => setPlan(d.plan ?? "free"))
+          .catch(() => {})
       }
       setReady(true)
     })
@@ -61,13 +60,16 @@ export default function PricingPage() {
   async function handleSubscribe(priceId: string, tier: string) {
     if (!email) { window.location.href = "/login"; return }
     setLoading(tier)
-    const res = await fetch("/api/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ priceId, email })
-    })
-    const { url } = await res.json()
-    window.location.href = url
+    try {
+      const res = await authFetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priceId }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.url) { setLoading(null); return }
+      window.location.href = data.url
+    } catch { setLoading(null) }
   }
 
   const isCurrent = (p: string) => plan === p || (p === "premium" && plan === "pro")
