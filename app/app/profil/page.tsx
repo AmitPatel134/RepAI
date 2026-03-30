@@ -167,6 +167,11 @@ export default function ProfilPage() {
 
   async function handleSaveFitness(e: React.FormEvent) {
     e.preventDefault()
+    if (birthDate && new Date(birthDate) > new Date()) { showToast("La date de naissance ne peut pas être dans le futur"); return }
+    const h = heightCm ? Number(heightCm) : null
+    const w = weightKg ? Number(weightKg) : null
+    if (h !== null && (h < 50 || h > 300)) { showToast("Taille invalide (50–300 cm)"); return }
+    if (w !== null && (w < 20 || w > 1000)) { showToast("Poids invalide (20–1000 kg)"); return }
     setSavingFitness(true)
     const res = await authFetch("/api/profile", {
       method: "PUT",
@@ -402,8 +407,8 @@ export default function ProfilPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: "Taille", value: heightCm, set: setHeightCm, unit: "cm", min: 100, max: 250 },
-                  { label: "Poids", value: weightKg, set: setWeightKg, unit: "kg", min: 30, max: 300, step: 0.5 },
+                  { label: "Taille", value: heightCm, set: setHeightCm, unit: "cm", min: 50, max: 300 },
+                  { label: "Poids", value: weightKg, set: setWeightKg, unit: "kg", min: 20, max: 1000, step: 0.5 },
                 ].map(f => (
                   <div key={f.label}>
                     <label className="text-xs font-semibold text-gray-400 mb-1 block">{f.label}</label>

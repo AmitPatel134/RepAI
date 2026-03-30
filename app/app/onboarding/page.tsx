@@ -69,6 +69,10 @@ export default function OnboardingPage() {
       setError("Merci de remplir les champs obligatoires.")
       return
     }
+    if (new Date(birthDate) > new Date()) { setError("La date de naissance ne peut pas être dans le futur."); return }
+    const h = Number(heightCm), w = Number(weightKg)
+    if (h < 50 || h > 300) { setError("Taille invalide (50–300 cm)."); return }
+    if (w < 20 || w > 1000) { setError("Poids invalide (20–1000 kg)."); return }
     setSaving(true)
     setError("")
     try {
@@ -150,7 +154,7 @@ export default function OnboardingPage() {
                 <div className="mb-4">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Taille <span className="text-red-400">*</span></label>
                   <div className="relative">
-                    <input type="number" value={heightCm} onChange={e => setHeightCm(e.target.value)} placeholder="Ex : 175" min={100} max={250}
+                    <input type="number" value={heightCm} onChange={e => setHeightCm(e.target.value)} placeholder="Ex : 175" min={50} max={300}
                       className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-violet-400 transition-colors" />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">cm</span>
                   </div>
@@ -160,7 +164,7 @@ export default function OnboardingPage() {
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Poids <span className="text-red-400">*</span></label>
                   <div className="relative">
-                    <input type="number" value={weightKg} onChange={e => setWeightKg(e.target.value)} placeholder="Ex : 72" min={30} max={300} step={0.5}
+                    <input type="number" value={weightKg} onChange={e => setWeightKg(e.target.value)} placeholder="Ex : 72" min={20} max={1000} step={0.5}
                       className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-violet-400 transition-colors" />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">kg</span>
                   </div>

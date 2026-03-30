@@ -61,13 +61,14 @@ export async function PUT(request: NextRequest) {
     const w = weightKg ? Number(weightKg) : null
     const hr = restingHR ? Number(restingHR) : null
     const steps = dailySteps ? Number(dailySteps) : null
-    if (h !== null && (isNaN(h) || h < 50 || h > 300))         return Response.json({ error: "Invalid heightCm" }, { status: 400 })
-    if (w !== null && (isNaN(w) || w < 20 || w > 500))          return Response.json({ error: "Invalid weightKg" }, { status: 400 })
+    if (h !== null && (isNaN(h) || h < 50 || h > 300))           return Response.json({ error: "Invalid heightCm" }, { status: 400 })
+    if (w !== null && (isNaN(w) || w < 20 || w > 1000))          return Response.json({ error: "Invalid weightKg" }, { status: 400 })
     if (hr !== null && (isNaN(hr) || hr < 20 || hr > 250))      return Response.json({ error: "Invalid restingHR" }, { status: 400 })
     if (steps !== null && (isNaN(steps) || steps < 0 || steps > 100000)) return Response.json({ error: "Invalid dailySteps" }, { status: 400 })
 
     const birthDateParsed = birthDate ? new Date(birthDate) : null
     if (birthDateParsed && isNaN(birthDateParsed.getTime())) return Response.json({ error: "Invalid birthDate" }, { status: 400 })
+    if (birthDateParsed && birthDateParsed > new Date()) return Response.json({ error: "birthDate cannot be in the future" }, { status: 400 })
 
     const profileComplete = !!(birthDate && heightCm && weightKg && goal)
 
