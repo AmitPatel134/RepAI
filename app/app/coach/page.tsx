@@ -8,14 +8,14 @@ import { DEMO_WORKOUTS } from "@/lib/demoData"
 
 type Session = { question: string; response: string; createdAt: string }
 
-const LS_KEY = "repai_last_coach"
+function lsKey(email: string) { return `repai_last_coach_${email}` }
 
-function loadStored(): Session | null {
+function loadStored(email: string): Session | null {
   if (typeof window === "undefined") return null
-  try { return JSON.parse(localStorage.getItem(LS_KEY) ?? "null") } catch { return null }
+  try { return JSON.parse(localStorage.getItem(lsKey(email)) ?? "null") } catch { return null }
 }
-function saveStored(s: Session) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(s)) } catch { /* noop */ }
+function saveStored(email: string, s: Session) {
+  try { localStorage.setItem(lsKey(email), JSON.stringify(s)) } catch { /* noop */ }
 }
 
 type ResponseSection = { title: string | null; body: string }
@@ -119,9 +119,6 @@ export default function CoachPage() {
   const [nutritionContext, setNutritionContext] = useState("")
 
   useEffect(() => {
-    const stored = loadStored()
-    if (stored) setLastSession(stored)
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         setIsDemo(true)
@@ -134,6 +131,12 @@ export default function CoachPage() {
         setReady(true)
         return
       }
+
+      const email = session.user.email ?? ""
+
+      // Instant display from localStorage (user-scoped key)
+      const stored = loadStored(email)
+      if (stored) setLastSession(stored)
 
       // Instant display from cache
       const cached = getCached<{
@@ -155,7 +158,7 @@ export default function CoachPage() {
         if (cached.lastSession) {
           const storedTs = stored ? new Date(stored.createdAt).getTime() : 0
           const apiTs = new Date(cached.lastSession.createdAt).getTime()
-          if (apiTs > storedTs) { setLastSession(cached.lastSession); saveStored(cached.lastSession) }
+          if (apiTs > storedTs) { setLastSession(cached.lastSession); saveStored(email, cached.lastSession) }
         }
         setReady(true)
       }
@@ -173,7 +176,7 @@ export default function CoachPage() {
           if (ctx.lastSession) {
             const storedTs = stored ? new Date(stored.createdAt).getTime() : 0
             const apiTs = new Date(ctx.lastSession.createdAt).getTime()
-            if (apiTs > storedTs) { setLastSession(ctx.lastSession); saveStored(ctx.lastSession) }
+            if (apiTs > storedTs) { setLastSession(ctx.lastSession); saveStored(email, ctx.lastSession) }
           }
           setCached("/api/coach/context", ctx)
         })
@@ -211,10 +214,11 @@ En regardant tes séances récentes, voici mes observations :
 
       const s: Session = { question: q, response: demoResponse, createdAt: new Date().toISOString() }
       setLastSession(s)
-      saveStored(s)
       setLoading(false)
       return
     }
+
+    const email = (await supabase.auth.getSession()).data.session?.user.email ?? ""
 
     try {
       const r = await authFetch("/api/coach", {
@@ -230,7 +234,7 @@ En regardant tes séances récentes, voici mes observations :
       const data = await r.json()
       const s: Session = { question: q, response: data.response, createdAt: data.createdAt ?? new Date().toISOString() }
       setLastSession(s)
-      saveStored(s)
+      saveStored(email, s)
       setCoachQuestionsThisWeek(prev => prev + 1)
     } catch {
       const s: Session = { question: q, response: "Désolé, une erreur s'est produite. Vérifiez votre connexion et réessayez.", createdAt: new Date().toISOString() }

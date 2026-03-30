@@ -88,15 +88,19 @@ export default function GenerationPage() {
     setTimeout(() => setToast(null), 2500)
   }
 
-  // Persist config in localStorage
-  useEffect(() => { localStorage.setItem("app_gen_mode", mode) }, [mode])
-  useEffect(() => { if (selectedItem) localStorage.setItem("app_gen_item", selectedItem) }, [selectedItem])
-  useEffect(() => { localStorage.setItem("app_gen_tone", tone) }, [tone])
-  useEffect(() => { localStorage.setItem("app_gen_length", length) }, [length])
+  const [lsPrefix, setLsPrefix] = useState("")
+
+  // Persist config in localStorage (user-scoped)
+  useEffect(() => { if (lsPrefix !== undefined) localStorage.setItem(`app_gen_mode${lsPrefix}`, mode) }, [mode, lsPrefix])
+  useEffect(() => { if (lsPrefix !== undefined && selectedItem) localStorage.setItem(`app_gen_item${lsPrefix}`, selectedItem) }, [selectedItem, lsPrefix])
+  useEffect(() => { if (lsPrefix !== undefined) localStorage.setItem(`app_gen_tone${lsPrefix}`, tone) }, [tone, lsPrefix])
+  useEffect(() => { if (lsPrefix !== undefined) localStorage.setItem(`app_gen_length${lsPrefix}`, length) }, [length, lsPrefix])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { window.location.href = "/login"; return }
+      const prefix = `_${session.user.email}`
+      setLsPrefix(prefix)
       Promise.all([
         authFetch("/api/items").then(r => r.json()),
         authFetch("/api/plan").then(r => r.json()),
@@ -108,13 +112,13 @@ export default function GenerationPage() {
         setGenCount(planData.usage?.generationsThisMonth ?? 0)
         setHistory(Array.isArray(genData) ? genData : [])
         // Restore config from localStorage
-        const savedItem = localStorage.getItem("app_gen_item")
+        const savedItem = localStorage.getItem(`app_gen_item${prefix}`)
         if (savedItem && iList.some((i: { id: string }) => i.id === savedItem)) setSelectedItem(savedItem)
-        const savedMode = localStorage.getItem("app_gen_mode") as GenerationType
+        const savedMode = localStorage.getItem(`app_gen_mode${prefix}`) as GenerationType
         if (savedMode) setMode(savedMode)
-        const savedTone = localStorage.getItem("app_gen_tone") as Tone
+        const savedTone = localStorage.getItem(`app_gen_tone${prefix}`) as Tone
         if (savedTone) setTone(savedTone)
-        const savedLength = localStorage.getItem("app_gen_length") as Length
+        const savedLength = localStorage.getItem(`app_gen_length${prefix}`) as Length
         if (savedLength) setLength(savedLength)
         setReady(true)
       })

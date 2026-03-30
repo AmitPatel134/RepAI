@@ -334,15 +334,21 @@ function ExercisePicker({ onSelect, onClose }: {
   const [mounted, setMounted] = useState(false)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
 
+  const [lsPrefix, setLsPrefix] = useState("")
+
   useEffect(() => {
     searchRef.current?.focus()
-    try {
-      setCustomExercises(JSON.parse(localStorage.getItem("repai_custom_exercises") ?? "[]"))
-    } catch {}
-    try {
-      const stored: string[] = JSON.parse(localStorage.getItem("repai_favorite_exercises") ?? "[]")
-      setFavorites(new Set(stored))
-    } catch {}
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const prefix = session?.user.email ? `_${session.user.email}` : ""
+      setLsPrefix(prefix)
+      try {
+        setCustomExercises(JSON.parse(localStorage.getItem(`repai_custom_exercises${prefix}`) ?? "[]"))
+      } catch {}
+      try {
+        const stored: string[] = JSON.parse(localStorage.getItem(`repai_favorite_exercises${prefix}`) ?? "[]")
+        setFavorites(new Set(stored))
+      } catch {}
+    })
     const t = setTimeout(() => setMounted(true), 10)
     return () => clearTimeout(t)
   }, [])
@@ -353,7 +359,7 @@ function ExercisePicker({ onSelect, onClose }: {
       const next = new Set(prev)
       if (next.has(name)) next.delete(name)
       else next.add(name)
-      localStorage.setItem("repai_favorite_exercises", JSON.stringify([...next]))
+      localStorage.setItem(`repai_favorite_exercises${lsPrefix}`, JSON.stringify([...next]))
       return next
     })
   }
@@ -362,7 +368,7 @@ function ExercisePicker({ onSelect, onClose }: {
     if (!newExName.trim()) return
     const updated = [...customExercises, newExName.trim()]
     setCustomExercises(updated)
-    localStorage.setItem("repai_custom_exercises", JSON.stringify(updated))
+    localStorage.setItem(`repai_custom_exercises${lsPrefix}`, JSON.stringify(updated))
     onSelect(newExName.trim())
   }
 
@@ -370,7 +376,7 @@ function ExercisePicker({ onSelect, onClose }: {
     e.stopPropagation()
     const updated = customExercises.filter(ex => ex !== name)
     setCustomExercises(updated)
-    localStorage.setItem("repai_custom_exercises", JSON.stringify(updated))
+    localStorage.setItem(`repai_custom_exercises${lsPrefix}`, JSON.stringify(updated))
   }
 
   function onDragStart(e: React.TouchEvent) {
