@@ -315,50 +315,28 @@ export default function ProfilPage() {
       <div className="max-w-xl mx-auto px-4 py-5 flex flex-col gap-3">
 
         {/* Plan */}
-        <AccordionSection title={`Plan actuel — ${planLabel(plan)}`} open={openSection === "plan"} onToggle={() => toggleSection("plan")}>
-          {/* Current plan badge */}
-          <div className={`relative overflow-hidden p-5 rounded-xl border mb-4 ${isPaid(plan) ? "bg-violet-700 text-white border-violet-700" : "bg-gray-50 border-gray-200"}`}>
-            {isPaid(plan) && (
-              <>
-                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-violet-600/50" />
-                <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-violet-800/50" />
-              </>
-            )}
-            <div className="relative z-10 flex items-center justify-between">
-              <div>
-                <p className={`text-xs font-bold uppercase tracking-widest mb-1 ${isPaid(plan) ? "text-violet-200" : "text-gray-400"}`}>Plan actuel</p>
-                <p className={`text-xl font-extrabold ${isPaid(plan) ? "text-white" : "text-gray-900"}`}>{planLabel(plan)}</p>
-              </div>
-              <span className={`text-2xl font-extrabold ${isPaid(plan) ? "text-violet-200" : "text-gray-200"}`}>
-                {plan === "premium_plus" ? "24,99€" : isPaid(plan) ? "14,99€" : "0€"}
-              </span>
-            </div>
-            {isPaid(plan) && (
-              <div className="relative z-10 mt-4">
-                <button onClick={handleBillingPortal} disabled={billingLoading}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white font-bold rounded-xl text-sm transition-colors disabled:opacity-50">
-                  {billingLoading ? "Chargement…" : "Gérer l'abonnement →"}
-                </button>
-              </div>
-            )}
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-0.5">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Plan actuel</p>
+            <p className={`text-lg font-extrabold ${isPaid(plan) ? "text-violet-600" : "text-gray-900"}`}>
+              {planLabel(plan)}
+            </p>
+            <p className={`text-sm font-bold ${isPaid(plan) ? "text-violet-500" : "text-gray-300"}`}>
+              {plan === "premium_plus" ? "24,99€/mois" : isPaid(plan) ? "14,99€/mois" : "Gratuit"}
+            </p>
           </div>
-
-          {/* Upgrade CTA — only shown on free plan */}
-          {!isPaid(plan) && (
-            <a
-              href="/pricing"
-              className="flex items-center justify-between px-4 py-3.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl transition-colors"
-            >
-              <div>
-                <p className="text-sm font-bold">Passer à Premium</p>
-                <p className="text-xs text-violet-200 font-medium">À partir de 14,99€/mois</p>
-              </div>
-              <svg className="w-5 h-5 text-violet-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
+          {isPaid(plan) ? (
+            <button onClick={handleBillingPortal} disabled={billingLoading}
+              className="shrink-0 px-4 py-2 border-2 border-violet-200 text-violet-600 font-bold text-sm rounded-xl hover:border-violet-400 hover:bg-violet-50 transition-colors disabled:opacity-50">
+              {billingLoading ? "Chargement…" : "Gérer →"}
+            </button>
+          ) : (
+            <a href="/pricing"
+              className="shrink-0 px-4 py-2 bg-violet-600 text-white font-bold text-sm rounded-xl hover:bg-violet-500 transition-colors">
+              Upgrader →
             </a>
           )}
-        </AccordionSection>
+        </div>
 
         {/* Fitness */}
         <AccordionSection title="Profil fitness" open={openSection === "fitness"} onToggle={() => toggleSection("fitness")}>
