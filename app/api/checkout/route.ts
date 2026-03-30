@@ -1,4 +1,4 @@
-import { getStripe, PRICE_TO_PLAN } from "@/lib/stripe"
+import { getStripe, getPriceToPlan } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
 import { createRateLimiter } from "@/lib/rate-limit"
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "priceId is required" }, { status: 400 })
   }
 
-  if (!PRICE_TO_PLAN[priceId]) {
+  if (!getPriceToPlan()[priceId]) {
     return Response.json({ error: "Invalid price" }, { status: 400 })
   }
 

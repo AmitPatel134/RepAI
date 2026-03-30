@@ -12,7 +12,9 @@ export function getStripe(): Stripe {
   return _stripe
 }
 
-export const PRICE_TO_PLAN: Record<string, string> = {
-  [process.env.NEXT_PUBLIC_PREMIUM_PRICE_ID ?? ""]:      "premium",
-  [process.env.NEXT_PUBLIC_PREMIUM_PLUS_PRICE_ID ?? ""]: "premium_plus",
+export function getPriceToPlan(): Record<string, string> {
+  return {
+    [process.env.NEXT_PUBLIC_PREMIUM_PRICE_ID ?? ""]:      "premium",
+    [process.env.NEXT_PUBLIC_PREMIUM_PLUS_PRICE_ID ?? ""]: "premium_plus",
+  }
 }

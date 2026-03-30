@@ -1,4 +1,4 @@
-import { getStripe, PRICE_TO_PLAN } from "@/lib/stripe"
+import { getStripe, getPriceToPlan } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 import { NextRequest } from "next/server"
 import Stripe from "stripe"
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         // Get the plan from the subscription's price
         const sub = await getStripe().subscriptions.retrieve(subscriptionId)
         const priceId = sub.items.data[0]?.price.id
-        const plan = PRICE_TO_PLAN[priceId] ?? "premium"
+        const plan = getPriceToPlan()[priceId] ?? "premium"
 
         await prisma.user.upsert({
           where: { email },
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         if (!email) break
 
         const priceId = sub.items.data[0]?.price.id
-        const plan = PRICE_TO_PLAN[priceId] ?? "premium"
+        const plan = getPriceToPlan()[priceId] ?? "premium"
 
         if (sub.status === "active" || sub.status === "trialing") {
           await prisma.user.update({
