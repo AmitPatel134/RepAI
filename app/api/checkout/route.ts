@@ -20,18 +20,43 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "priceId is required" }, { status: 400 })
   }
 
-  if (!getPriceToPlan()[priceId]) {
+  const newPlan = getPriceToPlan()[priceId]
+  if (!newPlan) {
     return Response.json({ error: "Invalid price" }, { status: 400 })
   }
 
   const user = await prisma.user.findUnique({ where: { email: authUser.email } })
 
-  // If user already has an active Stripe subscription, send to billing portal instead
+  // ── User already has an active subscription → upgrade/downgrade directly ──
   if (user?.stripeSubscriptionId) {
-    return Response.json({ redirectToBillingPortal: true })
+    const sub = await getStripe().subscriptions.retrieve(user.stripeSubscriptionId)
+    const currentItemId = sub.items.data[0]?.id
+
+    if (!currentItemId) {
+      return Response.json({ error: "Subscription item not found" }, { status: 500 })
+    }
+
+    // Same plan → nothing to do
+    if (sub.items.data[0]?.price.id === priceId) {
+      return Response.json({ alreadyCurrent: true, plan: newPlan })
+    }
+
+    // Update the subscription price immediately (Stripe handles proration)
+    await getStripe().subscriptions.update(user.stripeSubscriptionId, {
+      items: [{ id: currentItemId, price: priceId }],
+      proration_behavior: "always_invoice",
+    })
+
+    // Update DB immediately
+    await prisma.user.update({
+      where: { email: authUser.email },
+      data: { plan: newPlan },
+    })
+
+    return Response.json({ upgraded: true, plan: newPlan })
   }
 
-  // Reuse existing Stripe customer if available
+  // ── New subscriber → Stripe Checkout ──────────────────────────────────────
   const customer = user?.stripeCustomerId
     ? { customer: user.stripeCustomerId }
     : { customer_email: authUser.email }

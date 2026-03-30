@@ -64,26 +64,21 @@ export default function PricingPage() {
     if (!email) { window.location.href = "/login"; return }
     setLoading(tier)
     try {
-      // If already subscribed, go to billing portal to upgrade/downgrade
-      if (isSubscribed) {
-        const res = await authFetch("/api/billing-portal", { method: "POST" })
-        const data = await res.json()
-        if (data.url) { window.location.href = data.url; return }
-        setLoading(null)
-        return
-      }
-      // New subscription via Stripe Checkout
       const res = await authFetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ priceId }),
       })
       const data = await res.json()
-      if (data.redirectToBillingPortal) {
-        const portalRes = await authFetch("/api/billing-portal", { method: "POST" })
-        const portalData = await portalRes.json()
-        if (portalData.url) { window.location.href = portalData.url; return }
+      // Upgrade/downgrade applied instantly
+      if (data.upgraded) {
+        setPlan(data.plan)
+        setLoading(null)
+        return
       }
+      // Already on this plan
+      if (data.alreadyCurrent) { setLoading(null); return }
+      // New subscription → Stripe Checkout page
       if (data.url) { window.location.href = data.url; return }
       setLoading(null)
     } catch { setLoading(null) }
