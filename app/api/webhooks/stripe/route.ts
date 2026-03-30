@@ -1,97 +1,133 @@
-import { stripe } from "@/lib/stripe"
+import { getStripe, PRICE_TO_PLAN } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
+import { NextRequest } from "next/server"
 import Stripe from "stripe"
 
-const PRICE_TO_PLAN: Record<string, string> = {
-  [process.env.NEXT_PUBLIC_PREMIUM_PRICE_ID!]:      "premium",
-  [process.env.NEXT_PUBLIC_PREMIUM_PLUS_PRICE_ID!]: "premium_plus",
-}
+export const dynamic = "force-dynamic"
 
-async function getEmailFromCustomer(customerId: string): Promise<string | null> {
-  const customer = await stripe.customers.retrieve(customerId)
-  if (customer.deleted) return null
-  return (customer as Stripe.Customer).email
-}
-
-async function setUserPlan(email: string, plan: string) {
-  await prisma.user.updateMany({ where: { email }, data: { plan } })
-}
-
-async function clearSubscription(email: string) {
-  await prisma.user.updateMany({ where: { email }, data: { plan: "free", planExpiresAt: null } })
-}
-
-// Derive plan tier from subscription line items
-function planFromSubscription(sub: Stripe.Subscription): string {
-  const priceId = sub.items.data[0]?.price?.id
-  return (priceId && PRICE_TO_PLAN[priceId]) ?? "premium"
-}
-
-export async function POST(request: Request) {
+// Must read raw body for Stripe signature verification
+export async function POST(request: NextRequest) {
   const body = await request.text()
   const sig = request.headers.get("stripe-signature")
 
-  if (!sig) return Response.json({ error: "Missing signature" }, { status: 400 })
+  if (!sig) return Response.json({ error: "No signature" }, { status: 400 })
 
   let event: Stripe.Event
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
-  } catch {
+    event = getStripe().webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
+  } catch (err) {
+    console.error("[stripe webhook] Invalid signature:", err)
     return Response.json({ error: "Invalid signature" }, { status: 400 })
   }
 
-  switch (event.type) {
+  try {
+    switch (event.type) {
 
-    // Initial checkout succeeded → set correct plan from metadata or priceId
-    case "checkout.session.completed": {
-      const session = event.data.object as Stripe.Checkout.Session
-      const email =
-        session.customer_email ??
-        (session.customer ? await getEmailFromCustomer(session.customer as string) : null)
-      if (!email) break
-      // Use metadata set at session creation; fall back to "premium"
-      const plan = session.metadata?.plan ?? "premium"
-      await setUserPlan(email, plan)
-      break
-    }
+      // ── New subscription created via Checkout ──────────────────────────
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session
+        if (session.mode !== "subscription") break
 
-    // Subscription renewal succeeded → keep correct plan tier
-    case "invoice.payment_succeeded": {
-      const invoice = event.data.object as Stripe.Invoice
-      if (!invoice.customer || invoice.billing_reason === "manual") break
-      const email = await getEmailFromCustomer(invoice.customer as string)
-      if (!email) break
-      // Retrieve subscription to know the exact plan tier (Stripe SDK v20: invoice.parent.subscription_details)
-      const subRef = invoice.parent?.subscription_details?.subscription
-      const subId = typeof subRef === "string" ? subRef : subRef?.id
-      if (!subId) break
-      const sub = await stripe.subscriptions.retrieve(subId)
-      await setUserPlan(email, planFromSubscription(sub))
-      break
-    }
+        const email = session.metadata?.userEmail ?? session.customer_email
+        if (!email) break
 
-    // Subscription status changed (active ↔ past_due / canceled / paused)
-    case "customer.subscription.updated": {
-      const sub = event.data.object as Stripe.Subscription
-      const email = await getEmailFromCustomer(sub.customer as string)
-      if (!email) break
-      if (["active", "trialing"].includes(sub.status)) {
-        await setUserPlan(email, planFromSubscription(sub))
-      } else if (["canceled", "unpaid", "paused"].includes(sub.status)) {
-        await clearSubscription(email)
+        const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id
+        const subscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id
+        if (!customerId || !subscriptionId) break
+
+        // Get the plan from the subscription's price
+        const sub = await getStripe().subscriptions.retrieve(subscriptionId)
+        const priceId = sub.items.data[0]?.price.id
+        const plan = PRICE_TO_PLAN[priceId] ?? "premium"
+
+        await prisma.user.upsert({
+          where: { email },
+          update: {
+            plan,
+            stripeCustomerId: customerId,
+            stripeSubscriptionId: subscriptionId,
+            planExpiresAt: null,
+          },
+          create: {
+            email,
+            plan,
+            stripeCustomerId: customerId,
+            stripeSubscriptionId: subscriptionId,
+          },
+        })
+        console.log(`[stripe] checkout.session.completed → ${email} → ${plan}`)
+        break
       }
-      break
-    }
 
-    // Subscription deleted (after cancel_at_period_end)
-    case "customer.subscription.deleted": {
-      const sub = event.data.object as Stripe.Subscription
-      const email = await getEmailFromCustomer(sub.customer as string)
-      if (email) await clearSubscription(email)
-      break
-    }
+      // ── Subscription changed (upgrade / downgrade / renewal) ────────────
+      case "customer.subscription.updated": {
+        const sub = event.data.object as Stripe.Subscription
+        const email = await emailFromCustomer(sub.customer)
+        if (!email) break
 
+        const priceId = sub.items.data[0]?.price.id
+        const plan = PRICE_TO_PLAN[priceId] ?? "premium"
+
+        if (sub.status === "active" || sub.status === "trialing") {
+          await prisma.user.update({
+            where: { email },
+            data: {
+              plan,
+              stripeSubscriptionId: sub.id,
+              planExpiresAt: null,
+            },
+          })
+          console.log(`[stripe] subscription.updated → ${email} → ${plan} (${sub.status})`)
+        } else if (["canceled", "unpaid", "paused"].includes(sub.status)) {
+          await clearSubscription(email)
+          console.log(`[stripe] subscription.updated → ${email} → free (${sub.status})`)
+        }
+        break
+      }
+
+      // ── Subscription cancelled / expired ────────────────────────────────
+      case "customer.subscription.deleted": {
+        const sub = event.data.object as Stripe.Subscription
+        const email = await emailFromCustomer(sub.customer)
+        if (!email) break
+
+        await clearSubscription(email)
+        console.log(`[stripe] subscription.deleted → ${email} → free`)
+        break
+      }
+
+    }
+  } catch (err) {
+    console.error("[stripe webhook] Handler error:", err)
+    return Response.json({ error: "Handler error" }, { status: 500 })
   }
 
   return Response.json({ received: true })
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+async function emailFromCustomer(customer: string | Stripe.Customer | Stripe.DeletedCustomer | null): Promise<string | null> {
+  if (!customer) return null
+  const customerId = typeof customer === "string" ? customer : customer.id
+
+  // Look up in our DB first (fastest)
+  const user = await prisma.user.findUnique({ where: { stripeCustomerId: customerId } })
+  if (user?.email) return user.email
+
+  // Fallback: fetch from Stripe
+  const c = await getStripe().customers.retrieve(customerId)
+  if (c.deleted) return null
+  return (c as Stripe.Customer).email ?? null
+}
+
+async function clearSubscription(email: string) {
+  await prisma.user.update({
+    where: { email },
+    data: {
+      plan: "free",
+      stripeSubscriptionId: null,
+      planExpiresAt: null,
+    },
+  })
 }

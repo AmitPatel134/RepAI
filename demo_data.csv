@@ -1,0 +1,226 @@
+# SÉANCES DE MUSCULATION
+date,name,type,exName,exNotes,isUnilateral,setOrder,reps,weight,repsRight,weightRight,rpe,notes
+2026-03-02,Push — Poitrine & Épaules,push,Développé couché,,non,1,8,80,,,,Bonne séance — montée en charge progressive
+2026-03-02,Push — Poitrine & Épaules,push,Développé couché,,non,2,8,80,,,,
+2026-03-02,Push — Poitrine & Épaules,push,Développé couché,,non,3,6,82.5,,,,
+2026-03-02,Push — Poitrine & Épaules,push,Développé militaire,,non,1,10,50,,,,
+2026-03-02,Push — Poitrine & Épaules,push,Développé militaire,,non,2,10,50,,,,
+2026-03-02,Push — Poitrine & Épaules,push,Développé militaire,,non,3,8,50,,,,
+2026-03-02,Push — Poitrine & Épaules,push,Élévations latérales,,non,1,15,12,,,,
+2026-03-02,Push — Poitrine & Épaules,push,Élévations latérales,,non,2,15,12,,,,
+2026-03-02,Push — Poitrine & Épaules,push,Élévations latérales,,non,3,12,12,,,,
+2026-03-02,Push — Poitrine & Épaules,push,Dips,,non,1,12,0,,,,
+2026-03-02,Push — Poitrine & Épaules,push,Dips,,non,2,10,0,,,,
+2026-03-02,Push — Poitrine & Épaules,push,Dips,,non,3,10,0,,,,
+2026-03-04,Pull — Dos & Biceps,pull,Tractions pronation,,non,1,8,0,,,,
+2026-03-04,Pull — Dos & Biceps,pull,Tractions pronation,,non,2,8,0,,,,
+2026-03-04,Pull — Dos & Biceps,pull,Tractions pronation,,non,3,6,0,,,,
+2026-03-04,Pull — Dos & Biceps,pull,Tractions pronation,,non,4,6,0,,,,
+2026-03-04,Pull — Dos & Biceps,pull,Rowing barre,,non,1,10,80,,,,
+2026-03-04,Pull — Dos & Biceps,pull,Rowing barre,,non,2,10,80,,,,
+2026-03-04,Pull — Dos & Biceps,pull,Rowing barre,,non,3,8,80,,,,
+2026-03-04,Pull — Dos & Biceps,pull,Tirage poitrine,,non,1,12,55,,,,
+2026-03-04,Pull — Dos & Biceps,pull,Tirage poitrine,,non,2,12,55,,,,
+2026-03-04,Pull — Dos & Biceps,pull,Tirage poitrine,,non,3,10,57.5,,,,
+2026-03-04,Pull — Dos & Biceps,pull,Curl biceps barre,,non,1,12,30,,,,
+2026-03-04,Pull — Dos & Biceps,pull,Curl biceps barre,,non,2,12,30,,,,
+2026-03-04,Pull — Dos & Biceps,pull,Curl biceps barre,,non,3,10,32,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Squat barre,,non,1,8,100,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Squat barre,,non,2,8,100,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Squat barre,,non,3,6,105,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Squat barre,,non,4,6,105,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Leg press,,non,1,12,150,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Leg press,,non,2,12,150,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Leg press,,non,3,10,160,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Curl ischio allongé,,non,1,12,40,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Curl ischio allongé,,non,2,12,40,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Curl ischio allongé,,non,3,10,45,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Mollets debout,,non,1,20,80,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Mollets debout,,non,2,20,80,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Mollets debout,,non,3,20,80,,,,
+2026-03-07,Jambes — Squat & Ischio,legs,Mollets debout,,non,4,20,80,,,,
+2026-03-09,Push — Incliné & Triceps,push,Développé incliné haltères,,non,1,10,28,,,,
+2026-03-09,Push — Incliné & Triceps,push,Développé incliné haltères,,non,2,10,28,,,,
+2026-03-09,Push — Incliné & Triceps,push,Développé incliné haltères,,non,3,8,30,,,,
+2026-03-09,Push — Incliné & Triceps,push,Oiseau,,non,1,12,14,,,,
+2026-03-09,Push — Incliné & Triceps,push,Oiseau,,non,2,12,14,,,,
+2026-03-09,Push — Incliné & Triceps,push,Oiseau,,non,3,10,14,,,,
+2026-03-09,Push — Incliné & Triceps,push,Triceps poulie haute,,non,1,15,30,,,,
+2026-03-09,Push — Incliné & Triceps,push,Triceps poulie haute,,non,2,15,32,,,,
+2026-03-09,Push — Incliné & Triceps,push,Triceps poulie haute,,non,3,12,32,,,,
+2026-03-09,Push — Incliné & Triceps,push,Triceps poulie haute,,non,4,12,32,,,,
+2026-03-09,Push — Incliné & Triceps,push,Développé militaire haltères,,non,1,10,22,,,,
+2026-03-09,Push — Incliné & Triceps,push,Développé militaire haltères,,non,2,10,22,,,,
+2026-03-09,Push — Incliné & Triceps,push,Développé militaire haltères,,non,3,8,24,,,,
+2026-03-11,Pull — Rowing & Curl,pull,Rowing haltère,Appui sur banc,oui,1,12,32,12,32,,
+2026-03-11,Pull — Rowing & Curl,pull,Rowing haltère,Appui sur banc,oui,2,12,32,12,32,,
+2026-03-11,Pull — Rowing & Curl,pull,Rowing haltère,Appui sur banc,oui,3,10,34,10,34,,
+2026-03-11,Pull — Rowing & Curl,pull,Tractions supination,,non,1,8,0,,,,
+2026-03-11,Pull — Rowing & Curl,pull,Tractions supination,,non,2,8,0,,,,
+2026-03-11,Pull — Rowing & Curl,pull,Tractions supination,,non,3,7,0,,,,
+2026-03-11,Pull — Rowing & Curl,pull,Curl marteau,,non,1,12,18,,,,
+2026-03-11,Pull — Rowing & Curl,pull,Curl marteau,,non,2,12,18,,,,
+2026-03-11,Pull — Rowing & Curl,pull,Curl marteau,,non,3,10,20,,,,
+2026-03-11,Pull — Rowing & Curl,pull,Face pull,,non,1,20,25,,,,
+2026-03-11,Pull — Rowing & Curl,pull,Face pull,,non,2,20,25,,,,
+2026-03-11,Pull — Rowing & Curl,pull,Face pull,,non,3,20,27,,,,
+2026-03-14,Jambes — Fentes & Quadriceps,legs,Fentes marchées,,oui,1,12,20,12,20,,
+2026-03-14,Jambes — Fentes & Quadriceps,legs,Fentes marchées,,oui,2,12,20,12,20,,
+2026-03-14,Jambes — Fentes & Quadriceps,legs,Fentes marchées,,oui,3,10,22,10,22,,
+2026-03-14,Jambes — Fentes & Quadriceps,legs,Extension quadriceps,,non,1,15,50,,,,
+2026-03-14,Jambes — Fentes & Quadriceps,legs,Extension quadriceps,,non,2,15,50,,,,
+2026-03-14,Jambes — Fentes & Quadriceps,legs,Extension quadriceps,,non,3,12,55,,,,
+2026-03-14,Jambes — Fentes & Quadriceps,legs,Extension quadriceps,,non,4,12,55,,,,
+2026-03-14,Jambes — Fentes & Quadriceps,legs,Romanian deadlift,,non,1,10,80,,,,
+2026-03-14,Jambes — Fentes & Quadriceps,legs,Romanian deadlift,,non,2,10,80,,,,
+2026-03-14,Jambes — Fentes & Quadriceps,legs,Romanian deadlift,,non,3,8,85,,,,
+2026-03-14,Jambes — Fentes & Quadriceps,legs,Hip thrust,,non,1,15,80,,,,
+2026-03-14,Jambes — Fentes & Quadriceps,legs,Hip thrust,,non,2,15,80,,,,
+2026-03-14,Jambes — Fentes & Quadriceps,legs,Hip thrust,,non,3,12,90,,,,
+2026-03-16,Push — Poitrine & Épaules,push,Développé couché,,non,1,8,82.5,,,,Progression — +2.5 kg sur le couché
+2026-03-16,Push — Poitrine & Épaules,push,Développé couché,,non,2,8,82.5,,,,
+2026-03-16,Push — Poitrine & Épaules,push,Développé couché,,non,3,6,85,,,,
+2026-03-16,Push — Poitrine & Épaules,push,Développé militaire,,non,1,10,52.5,,,,
+2026-03-16,Push — Poitrine & Épaules,push,Développé militaire,,non,2,10,52.5,,,,
+2026-03-16,Push — Poitrine & Épaules,push,Développé militaire,,non,3,8,52.5,,,,
+2026-03-16,Push — Poitrine & Épaules,push,Élévations latérales,,non,1,15,14,,,,
+2026-03-16,Push — Poitrine & Épaules,push,Élévations latérales,,non,2,15,14,,,,
+2026-03-16,Push — Poitrine & Épaules,push,Élévations latérales,,non,3,12,14,,,,
+2026-03-16,Push — Poitrine & Épaules,push,Dips,,non,1,12,5,,,,Lest ajouté
+2026-03-16,Push — Poitrine & Épaules,push,Dips,,non,2,10,5,,,,
+2026-03-16,Push — Poitrine & Épaules,push,Dips,,non,3,10,5,,,,
+2026-03-18,Pull — Dos & Biceps,pull,Tractions pronation,,non,1,8,5,,,,Lestage démarré
+2026-03-18,Pull — Dos & Biceps,pull,Tractions pronation,,non,2,8,5,,,,
+2026-03-18,Pull — Dos & Biceps,pull,Tractions pronation,,non,3,6,5,,,,
+2026-03-18,Pull — Dos & Biceps,pull,Tractions pronation,,non,4,6,5,,,,
+2026-03-18,Pull — Dos & Biceps,pull,Rowing barre,,non,1,10,82.5,,,,
+2026-03-18,Pull — Dos & Biceps,pull,Rowing barre,,non,2,10,82.5,,,,
+2026-03-18,Pull — Dos & Biceps,pull,Rowing barre,,non,3,8,82.5,,,,
+2026-03-18,Pull — Dos & Biceps,pull,Tirage poitrine,,non,1,12,57.5,,,,
+2026-03-18,Pull — Dos & Biceps,pull,Tirage poitrine,,non,2,12,57.5,,,,
+2026-03-18,Pull — Dos & Biceps,pull,Tirage poitrine,,non,3,10,60,,,,
+2026-03-18,Pull — Dos & Biceps,pull,Curl biceps barre,,non,1,12,32,,,,
+2026-03-18,Pull — Dos & Biceps,pull,Curl biceps barre,,non,2,12,32,,,,
+2026-03-18,Pull — Dos & Biceps,pull,Curl biceps barre,,non,3,10,34,,,,
+2026-03-21,Jambes — Squat & Ischio,legs,Squat barre,,non,1,8,102.5,,,,Nouveau PR — 107.5 kg !
+2026-03-21,Jambes — Squat & Ischio,legs,Squat barre,,non,2,8,102.5,,,,
+2026-03-21,Jambes — Squat & Ischio,legs,Squat barre,,non,3,6,107.5,,,,
+2026-03-21,Jambes — Squat & Ischio,legs,Squat barre,,non,4,6,107.5,,,,
+2026-03-21,Jambes — Squat & Ischio,legs,Leg press,,non,1,12,160,,,,
+2026-03-21,Jambes — Squat & Ischio,legs,Leg press,,non,2,12,160,,,,
+2026-03-21,Jambes — Squat & Ischio,legs,Leg press,,non,3,10,170,,,,
+2026-03-21,Jambes — Squat & Ischio,legs,Curl ischio allongé,,non,1,12,42.5,,,,
+2026-03-21,Jambes — Squat & Ischio,legs,Curl ischio allongé,,non,2,12,42.5,,,,
+2026-03-21,Jambes — Squat & Ischio,legs,Curl ischio allongé,,non,3,10,47.5,,,,
+2026-03-21,Jambes — Squat & Ischio,legs,Mollets debout,,non,1,20,80,,,,
+2026-03-21,Jambes — Squat & Ischio,legs,Mollets debout,,non,2,20,80,,,,
+2026-03-21,Jambes — Squat & Ischio,legs,Mollets debout,,non,3,20,85,,,,
+2026-03-21,Jambes — Squat & Ischio,legs,Mollets debout,,non,4,20,85,,,,
+2026-03-23,Push — Incliné & Triceps,push,Développé incliné haltères,,non,1,10,30,,,,
+2026-03-23,Push — Incliné & Triceps,push,Développé incliné haltères,,non,2,10,30,,,,
+2026-03-23,Push — Incliné & Triceps,push,Développé incliné haltères,,non,3,8,32,,,,
+2026-03-23,Push — Incliné & Triceps,push,Oiseau,,non,1,12,16,,,,
+2026-03-23,Push — Incliné & Triceps,push,Oiseau,,non,2,12,16,,,,
+2026-03-23,Push — Incliné & Triceps,push,Oiseau,,non,3,10,16,,,,
+2026-03-23,Push — Incliné & Triceps,push,Triceps poulie haute,,non,1,15,32,,,,
+2026-03-23,Push — Incliné & Triceps,push,Triceps poulie haute,,non,2,15,34,,,,
+2026-03-23,Push — Incliné & Triceps,push,Triceps poulie haute,,non,3,12,34,,,,
+2026-03-23,Push — Incliné & Triceps,push,Triceps poulie haute,,non,4,12,34,,,,
+2026-03-23,Push — Incliné & Triceps,push,Développé militaire haltères,,non,1,10,24,,,,
+2026-03-23,Push — Incliné & Triceps,push,Développé militaire haltères,,non,2,10,24,,,,
+2026-03-23,Push — Incliné & Triceps,push,Développé militaire haltères,,non,3,8,26,,,,
+2026-03-25,Pull — Rowing & Curl,pull,Rowing haltère,Appui sur banc,oui,1,12,34,12,34,,
+2026-03-25,Pull — Rowing & Curl,pull,Rowing haltère,Appui sur banc,oui,2,12,34,12,34,,
+2026-03-25,Pull — Rowing & Curl,pull,Rowing haltère,Appui sur banc,oui,3,10,36,10,36,,
+2026-03-25,Pull — Rowing & Curl,pull,Tractions supination,,non,1,9,0,,,,
+2026-03-25,Pull — Rowing & Curl,pull,Tractions supination,,non,2,9,0,,,,
+2026-03-25,Pull — Rowing & Curl,pull,Tractions supination,,non,3,7,0,,,,
+2026-03-25,Pull — Rowing & Curl,pull,Curl marteau,,non,1,12,20,,,,
+2026-03-25,Pull — Rowing & Curl,pull,Curl marteau,,non,2,12,20,,,,
+2026-03-25,Pull — Rowing & Curl,pull,Curl marteau,,non,3,10,22,,,,
+2026-03-25,Pull — Rowing & Curl,pull,Face pull,,non,1,20,27,,,,
+2026-03-25,Pull — Rowing & Curl,pull,Face pull,,non,2,20,27,,,,
+2026-03-25,Pull — Rowing & Curl,pull,Face pull,,non,3,20,29,,,,
+2026-03-28,Jambes — Fentes & Quadriceps,legs,Fentes marchées,,oui,1,12,22,12,22,,
+2026-03-28,Jambes — Fentes & Quadriceps,legs,Fentes marchées,,oui,2,12,22,12,22,,
+2026-03-28,Jambes — Fentes & Quadriceps,legs,Fentes marchées,,oui,3,10,24,10,24,,
+2026-03-28,Jambes — Fentes & Quadriceps,legs,Extension quadriceps,,non,1,15,52.5,,,,
+2026-03-28,Jambes — Fentes & Quadriceps,legs,Extension quadriceps,,non,2,15,52.5,,,,
+2026-03-28,Jambes — Fentes & Quadriceps,legs,Extension quadriceps,,non,3,12,57.5,,,,
+2026-03-28,Jambes — Fentes & Quadriceps,legs,Extension quadriceps,,non,4,12,57.5,,,,
+2026-03-28,Jambes — Fentes & Quadriceps,legs,Romanian deadlift,,non,1,10,82.5,,,,
+2026-03-28,Jambes — Fentes & Quadriceps,legs,Romanian deadlift,,non,2,10,82.5,,,,
+2026-03-28,Jambes — Fentes & Quadriceps,legs,Romanian deadlift,,non,3,8,87.5,,,,
+2026-03-28,Jambes — Fentes & Quadriceps,legs,Hip thrust,,non,1,15,85,,,,
+2026-03-28,Jambes — Fentes & Quadriceps,legs,Hip thrust,,non,2,15,85,,,,
+2026-03-28,Jambes — Fentes & Quadriceps,legs,Hip thrust,,non,3,12,95,,,,
+
+# ACTIVITÉS CARDIO & AUTRES
+date,type,name,duration,distanceM,avgHR,calories,pace,avgSpeedKmh,elevationM,notes
+2026-03-05,running,Sortie cardio léger,40min,6000,145,380,6'40",,,28,Récupération active
+2026-03-08,cycling,Sortie vélo endurance,75min,24000,148,520,,19.2,180,Belle sortie dominicale
+2026-03-10,running,Footing matinal,45min,7000,148,420,6'26",,,0,Avant le travail
+2026-03-13,swimming,Natation endurance,50min,1800,155,450,,,,0,Bassin 25m — bon cardio
+2026-03-17,cycling,Vélo route,90min,28000,150,640,,18.7,320,Col inclus — bonne sortie
+2026-03-20,running,Sortie tempo,50min,8500,162,520,5'53",,,0,Allure soutenue — bien géré
+2026-03-24,running,Footing récupération,35min,5000,138,310,7'00",,,20,Jambes lourdes post-push
+2026-03-27,running,Sortie longue,65min,11000,152,680,5'55",,,45,Meilleur 10km depuis 2 mois !
+
+# NUTRITION
+date,name,calories,proteins,carbs,fats,fiber,notes
+2026-03-02,Petit-déjeuner — Flocons & Whey,620,42,88,12,8,Flocons d'avoine + whey vanille + banane
+2026-03-02,Déjeuner — Riz & Poulet,750,58,95,14,6,Riz basmati + blanc de poulet + brocolis vapeur
+2026-03-02,Collation — Yaourt & Fruits secs,380,24,40,14,3,
+2026-03-02,Dîner — Saumon & Patate douce,680,52,65,20,9,Saumon + patate douce + épinards sautés
+2026-03-04,Petit-déjeuner — Omelette & Pain,580,38,62,18,4,Omelette 4 oeufs + 2 tranches pain complet
+2026-03-04,Déjeuner — Pasta Bolognaise,820,55,98,22,7,Pâtes complètes + boeuf haché + sauce tomate maison
+2026-03-04,Dîner — Thon & Riz,620,56,72,10,8,Thon en boîte + riz + haricots verts
+2026-03-07,Petit-déjeuner — Flocons protéinés,590,40,80,10,7,Flocons + lait demi-écrémé + caséine
+2026-03-07,Déjeuner — Poulet & Quinoa,710,62,72,16,9,Escalope de poulet + quinoa + épinards
+2026-03-07,Collation pré-séance,340,10,42,16,4,Banane + beurre de cacahuète — 45 min avant entraînement
+2026-03-07,Dîner — Boeuf & Riz,780,60,78,24,6,Boeuf haché 5% + riz basmati + courgettes grillées
+2026-03-09,Petit-déjeuner — Pancakes protéinés,650,44,84,14,5,Flocons d'avoine mixés + oeufs + whey + sirop d'érable
+2026-03-09,Déjeuner — Dinde & Légumes,720,60,82,14,7,Blanc de dinde + riz + légumes vapeur variés
+2026-03-09,Dîner — Saumon & Pâtes,740,56,78,20,6,Saumon grillé + pâtes complètes + asperges
+2026-03-11,Petit-déjeuner — Bowl Myrtilles,580,40,76,10,8,Flocons + whey + myrtilles fraîches
+2026-03-11,Déjeuner — Wrap Poulet,680,48,72,22,8,Wrap complet + poulet + crudités + houmous
+2026-03-11,Dîner — Crevettes & Riz,620,52,70,12,5,Crevettes sautées + riz jasmin + bok choy
+2026-03-14,Petit-déjeuner — Granola & Banane,620,24,96,16,8,Granola maison + lait entier + banane
+2026-03-14,Déjeuner — Steak & Patates,820,65,72,28,6,Steak 200g + pommes de terre vapeur + salade verte
+2026-03-14,Collation post-séance,420,36,28,20,3,Shake whey + noix de cajou
+2026-03-14,Dîner — Poulet & Naan,780,58,84,22,5,Poulet tikka + naan + raita
+2026-03-16,Petit-déjeuner — Bowl Açaï,560,20,86,18,10,Bowl açaï + granola + fruits frais + graines de chia
+2026-03-16,Déjeuner — Riz & Poulet,740,60,84,16,8,Blanc de poulet + riz + brocolis + huile d'olive
+2026-03-16,Dîner — Truite & Lentilles,680,58,62,20,12,Truite arc-en-ciel + lentilles corail + courgettes
+2026-03-18,Petit-déjeuner — Omelette Avocat,640,42,48,28,6,Omelette 4 oeufs + avocat + 2 tranches pain levain
+2026-03-18,Déjeuner — Pasta Pesto Thon,760,52,88,20,5,Pâtes + thon + sauce pesto maison
+2026-03-18,Dîner — Crevettes & Quinoa,660,56,70,14,9,Crevettes + quinoa + légumes grillés
+2026-03-21,Petit-déjeuner — Flocons & Caséine,600,44,72,16,8,Flocons + caséine chocolat + fruits secs
+2026-03-21,Déjeuner — Boeuf & Haricots,800,62,88,22,10,Boeuf + riz basmati + haricots rouges
+2026-03-21,Collation post-séance,480,42,44,18,3,Shake whey + pain + beurre de cacahuète — post squat lourd
+2026-03-21,Dîner — Saumon & Patate douce,700,54,68,22,10,Saumon + patate douce + épinards
+2026-03-23,Petit-déjeuner — Flocons & Beurre d'amande,680,46,88,18,9,Flocons + whey + banane + beurre d'amande
+2026-03-23,Déjeuner — Dinde & Riz,740,62,84,14,7,Escalope de dinde + riz + légumes vapeur
+2026-03-23,Dîner — Maquereau & Patate douce,700,56,68,20,10,Maquereau grillé + patate douce + brocolis
+2026-03-25,Petit-déjeuner — Pancakes Avoine,660,38,86,16,6,Pancakes flocons + 3 oeufs + sirop d'érable
+2026-03-25,Déjeuner — Salade Niçoise & Quinoa,680,52,62,26,8,Thon + oeufs + quinoa + légumes variés + olives
+2026-03-25,Dîner — Poulet Rôti & Riz,720,64,72,16,8,Cuisse de poulet + riz + haricots verts
+2026-03-28,Petit-déjeuner — Oatmeal Whey,650,44,88,12,8,Flocons + whey vanille + banane + miel
+2026-03-28,Déjeuner — Pasta Bolognaise,840,58,98,26,6,Pâtes + boeuf haché + sauce tomate + parmesan
+2026-03-28,Collation pré-séance,380,28,44,12,4,Barre protéinée + banane — avant legs day
+2026-03-28,Dîner — Truite & Poireau,660,56,64,18,7,Truite fumée + riz basmati + poireau grillé
+
+# SUIVI DU POIDS
+date,weightKg
+2026-03-02,79.2
+2026-03-05,79.0
+2026-03-07,79.4
+2026-03-09,79.5
+2026-03-12,79.3
+2026-03-14,79.7
+2026-03-16,79.8
+2026-03-19,79.6
+2026-03-21,80.1
+2026-03-23,80.2
+2026-03-26,80.0
+2026-03-28,80.5

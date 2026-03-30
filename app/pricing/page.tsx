@@ -5,9 +5,6 @@ import { authFetch } from "@/lib/authFetch"
 import LoadingScreen from "@/components/LoadingScreen"
 import AppLogo from "@/components/AppLogo"
 
-const PREMIUM_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PRICE_ID!
-const PREMIUM_PLUS_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PLUS_PRICE_ID!
-
 const FREE_FEATURES = [
   "5 séances par mois",
   "5 repas par mois",
@@ -36,6 +33,9 @@ const PREMIUM_PLUS_FEATURES = [
   "Analyse récupération",
 ]
 
+const PREMIUM_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PRICE_ID!
+const PREMIUM_PLUS_PRICE_ID = process.env.NEXT_PUBLIC_PREMIUM_PLUS_PRICE_ID!
+
 export default function PricingPage() {
   const [email, setEmail] = useState<string | null>(null)
   const [plan, setPlan] = useState<string | null>(null)
@@ -57,22 +57,48 @@ export default function PricingPage() {
 
   if (!ready) return <LoadingScreen />
 
+  const isSubscribed = plan === "premium" || plan === "premium_plus" || plan === "pro"
+  const isCurrent = (p: string) => plan === p || (p === "premium" && plan === "pro")
+
   async function handleSubscribe(priceId: string, tier: string) {
     if (!email) { window.location.href = "/login"; return }
     setLoading(tier)
     try {
+      // If already subscribed, go to billing portal to upgrade/downgrade
+      if (isSubscribed) {
+        const res = await authFetch("/api/billing-portal", { method: "POST" })
+        const data = await res.json()
+        if (data.url) { window.location.href = data.url; return }
+        setLoading(null)
+        return
+      }
+      // New subscription via Stripe Checkout
       const res = await authFetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ priceId }),
       })
       const data = await res.json()
-      if (!res.ok || !data.url) { setLoading(null); return }
-      window.location.href = data.url
+      if (data.redirectToBillingPortal) {
+        const portalRes = await authFetch("/api/billing-portal", { method: "POST" })
+        const portalData = await portalRes.json()
+        if (portalData.url) { window.location.href = portalData.url; return }
+      }
+      if (data.url) { window.location.href = data.url; return }
+      setLoading(null)
     } catch { setLoading(null) }
   }
 
-  const isCurrent = (p: string) => plan === p || (p === "premium" && plan === "pro")
+  async function handleManage() {
+    if (!email) { window.location.href = "/login"; return }
+    setLoading("manage")
+    try {
+      const res = await authFetch("/api/billing-portal", { method: "POST" })
+      const data = await res.json()
+      if (data.url) { window.location.href = data.url; return }
+    } catch { /* ignore */ }
+    setLoading(null)
+  }
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -151,14 +177,19 @@ export default function PricingPage() {
               ))}
             </ul>
             {isCurrent("premium") ? (
-              <div className="text-center py-3 bg-gray-100 rounded-xl text-sm font-bold text-gray-500">Plan actuel</div>
+              <div className="flex flex-col gap-2">
+                <div className="text-center py-3 bg-gray-100 rounded-xl text-sm font-bold text-gray-500">Plan actuel</div>
+                <button onClick={handleManage} disabled={loading === "manage"} className="text-center py-2 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50">
+                  {loading === "manage" ? "Chargement…" : "Gérer mon abonnement →"}
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => handleSubscribe(PREMIUM_PRICE_ID, "premium")}
                 disabled={loading === "premium"}
                 className="py-3 bg-gray-900 text-white font-bold rounded-xl text-sm hover:bg-gray-700 transition-colors disabled:opacity-50"
               >
-                {loading === "premium" ? "Chargement…" : email ? "S'abonner →" : "Se connecter →"}
+                {loading === "premium" ? "Chargement…" : email ? (isSubscribed ? "Changer de plan →" : "S'abonner →") : "Se connecter →"}
               </button>
             )}
           </div>
@@ -184,14 +215,19 @@ export default function PricingPage() {
               ))}
             </ul>
             {isCurrent("premium_plus") ? (
-              <div className="relative z-10 text-center py-3 bg-violet-600 rounded-xl text-sm font-bold text-white">Plan actuel</div>
+              <div className="relative z-10 flex flex-col gap-2">
+                <div className="text-center py-3 bg-violet-600 rounded-xl text-sm font-bold text-white">Plan actuel</div>
+                <button onClick={handleManage} disabled={loading === "manage"} className="text-center py-2 text-xs font-bold text-violet-300 hover:text-white transition-colors disabled:opacity-50">
+                  {loading === "manage" ? "Chargement…" : "Gérer mon abonnement →"}
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => handleSubscribe(PREMIUM_PLUS_PRICE_ID, "premium_plus")}
                 disabled={loading === "premium_plus"}
                 className="relative z-10 py-3 bg-white text-violet-700 font-bold rounded-xl text-sm hover:bg-violet-50 transition-colors disabled:opacity-50"
               >
-                {loading === "premium_plus" ? "Chargement…" : email ? "S'abonner →" : "Se connecter →"}
+                {loading === "premium_plus" ? "Chargement…" : email ? (isSubscribed ? "Changer de plan →" : "S'abonner →") : "Se connecter →"}
               </button>
             )}
           </div>

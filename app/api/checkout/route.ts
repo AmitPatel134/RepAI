@@ -1,15 +1,10 @@
-import { stripe } from "@/lib/stripe"
-import { createRateLimiter } from "@/lib/rate-limit"
+import { getStripe, PRICE_TO_PLAN } from "@/lib/stripe"
+import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
+import { createRateLimiter } from "@/lib/rate-limit"
 import { NextRequest } from "next/server"
 
 const rateLimit = createRateLimiter({ maxRequests: 5, windowMs: 60_000 })
-
-// Maps each allowed priceId to the plan it grants
-const PRICE_TO_PLAN: Record<string, string> = {
-  [process.env.NEXT_PUBLIC_PREMIUM_PRICE_ID!]:      "premium",
-  [process.env.NEXT_PUBLIC_PREMIUM_PLUS_PRICE_ID!]: "premium_plus",
-}
 
 export async function POST(request: NextRequest) {
   const limited = rateLimit(request)
@@ -25,19 +20,32 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "priceId is required" }, { status: 400 })
   }
 
-  const planTier = PRICE_TO_PLAN[priceId]
-  if (!planTier) {
+  if (!PRICE_TO_PLAN[priceId]) {
     return Response.json({ error: "Invalid price" }, { status: 400 })
   }
 
-  const session = await stripe.checkout.sessions.create({
+  const user = await prisma.user.findUnique({ where: { email: authUser.email } })
+
+  // If user already has an active Stripe subscription, send to billing portal instead
+  if (user?.stripeSubscriptionId) {
+    return Response.json({ redirectToBillingPortal: true })
+  }
+
+  // Reuse existing Stripe customer if available
+  const customer = user?.stripeCustomerId
+    ? { customer: user.stripeCustomerId }
+    : { customer_email: authUser.email }
+
+  const session = await getStripe().checkout.sessions.create({
     mode: "subscription",
     payment_method_types: ["card"],
     line_items: [{ price: priceId, quantity: 1 }],
-    customer_email: authUser.email,
-    metadata: { plan: planTier },
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/app?session_id={CHECKOUT_SESSION_ID}`,
+    ...customer,
+    metadata: { userEmail: authUser.email },
+    subscription_data: { metadata: { userEmail: authUser.email } },
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/app?checkout=success`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
+    allow_promotion_codes: true,
   })
 
   return Response.json({ url: session.url })

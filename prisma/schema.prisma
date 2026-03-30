@@ -14,8 +14,10 @@ model User {
   name            String?
   telephone       String?
   company         String?
-  plan            String         @default("free")
-  planExpiresAt   DateTime?
+  plan                 String    @default("free")
+  planExpiresAt        DateTime?
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
   createdAt       DateTime       @default(now())
   // Fitness profile
   birthDate       DateTime?
