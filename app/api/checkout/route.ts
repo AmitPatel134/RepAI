@@ -28,8 +28,29 @@ export async function POST(request: NextRequest) {
   const user = await prisma.user.findUnique({ where: { email: authUser.email } })
 
   // ── User already has an active subscription → upgrade/downgrade directly ──
-  if (user?.stripeSubscriptionId) {
-    const sub = await getStripe().subscriptions.retrieve(user.stripeSubscriptionId)
+  let subscriptionId = user?.stripeSubscriptionId ?? null
+
+  // If not stored in DB, search Stripe for an active RepAI subscription
+  if (!subscriptionId && user?.plan && user.plan !== "free") {
+    const repaiPriceIds = new Set(Object.keys(getPriceToPlan()).filter(Boolean))
+    const customers = await getStripe().customers.list({ email: authUser.email, limit: 10 })
+    for (const customer of customers.data) {
+      const subs = await getStripe().subscriptions.list({ customer: customer.id, status: "active", limit: 5 })
+      const repaiSub = subs.data.find(s => s.items.data.some(i => repaiPriceIds.has(i.price.id)))
+      if (repaiSub) {
+        subscriptionId = repaiSub.id
+        // Save for next time
+        await prisma.user.update({
+          where: { email: authUser.email },
+          data: { stripeCustomerId: customer.id, stripeSubscriptionId: repaiSub.id },
+        })
+        break
+      }
+    }
+  }
+
+  if (subscriptionId) {
+    const sub = await getStripe().subscriptions.retrieve(subscriptionId)
     const currentItemId = sub.items.data[0]?.id
 
     if (!currentItemId) {
@@ -42,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update the subscription price immediately (Stripe handles proration)
-    await getStripe().subscriptions.update(user.stripeSubscriptionId, {
+    await getStripe().subscriptions.update(subscriptionId, {
       items: [{ id: currentItemId, price: priceId }],
       proration_behavior: "always_invoice",
     })

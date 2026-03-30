@@ -74,6 +74,7 @@ export default function PricingPage() {
       if (data.upgraded) {
         setPlan(data.plan)
         setLoading(null)
+        window.location.reload()
         return
       }
       // Already on this plan
