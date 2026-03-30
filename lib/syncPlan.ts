@@ -1,23 +1,14 @@
 import { getStripe, getPriceToPlan } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 
-const SYNC_INTERVAL_MS = 60 * 60 * 1000 // 1 heure
-
 /**
  * Sync the user's plan from Stripe.
- * - Skips if last sync was less than 1 hour ago (unless forced)
  * - Finds active RepAI subscriptions by email
  * - Updates plan, stripeCustomerId, stripeSubscriptionId in DB
  * - Falls back to "free" if no active subscription found
  */
 export async function syncPlanFromStripe(email: string, force = false): Promise<void> {
   const user = await prisma.user.findUnique({ where: { email } })
-
-  // Skip if synced recently
-  if (!force && user?.planSyncedAt) {
-    const age = Date.now() - new Date(user.planSyncedAt).getTime()
-    if (age < SYNC_INTERVAL_MS) return
-  }
 
   const repaiPriceIds = new Set(Object.keys(getPriceToPlan()).filter(Boolean))
   if (repaiPriceIds.size === 0) return // env vars not set, skip
