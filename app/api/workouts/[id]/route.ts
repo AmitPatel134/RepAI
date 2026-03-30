@@ -65,12 +65,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
               notes: ex.notes || null,
               order: ei,
               sets: {
-                create: ex.sets.map((s: { reps?: number; weight?: number; rpe?: number; repsRight?: number; weightRight?: number }, si: number) => ({
+                create: ex.sets.map((s: { reps?: number; weight?: number; rpe?: number; repsRight?: number; weightRight?: number; isDropSet?: boolean; weightMin?: number }, si: number) => ({
                   reps: s.reps || null,
                   weight: s.weight || null,
                   rpe: s.rpe || null,
                   repsRight: s.repsRight || null,
                   weightRight: s.weightRight || null,
+                  isDropSet: s.isDropSet ?? false,
+                  weightMin: s.weightMin || null,
                   order: si,
                 })),
               },

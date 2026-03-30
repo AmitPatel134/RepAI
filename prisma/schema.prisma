@@ -116,6 +116,8 @@ model Set {
   weight      Float?
   repsRight   Int?
   weightRight Float?
+  isDropSet   Boolean  @default(false)
+  weightMin   Float?
   duration    Int?
   rpe         Float?
   notes       String?

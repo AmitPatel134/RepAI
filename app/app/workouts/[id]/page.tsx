@@ -63,6 +63,12 @@ const EXERCISE_DB: ExerciseEntry[] = [
   // DOS — Isolation
   { name: "Pull-over haltère", primary_muscle: "dos", secondary_muscles: ["pectoraux"], type: "isolation", movement: "pull", equipment: "haltères", difficulty: "intermédiaire", subcategory: "Isolation" },
   { name: "Shrug barre", primary_muscle: "dos", secondary_muscles: ["trapèzes"], type: "isolation", movement: "pull", equipment: "barre", difficulty: "débutant", subcategory: "Isolation" },
+  { name: "Shrug haltères", primary_muscle: "dos", secondary_muscles: ["trapèzes"], type: "isolation", movement: "pull", equipment: "haltères", difficulty: "débutant", subcategory: "Isolation" },
+  { name: "Shrug machine", primary_muscle: "dos", secondary_muscles: ["trapèzes"], type: "isolation", movement: "pull", equipment: "machine", difficulty: "débutant", subcategory: "Isolation" },
+  // DOS — Machine
+  { name: "Rowing machine assis", primary_muscle: "dos", secondary_muscles: ["biceps"], type: "polyarticulaire", movement: "pull", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Pull-over machine", primary_muscle: "dos", secondary_muscles: ["pectoraux"], type: "isolation", movement: "pull", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Tirage vertical prise neutre machine", primary_muscle: "dos", secondary_muscles: ["biceps"], type: "polyarticulaire", movement: "pull", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
   // DOS — Poids du corps
   { name: "Inverted row", primary_muscle: "dos", secondary_muscles: ["biceps"], type: "polyarticulaire", movement: "pull", equipment: "poids du corps", difficulty: "débutant", subcategory: "Poids du corps" },
   { name: "Face pull", primary_muscle: "dos", secondary_muscles: ["épaules"], type: "isolation", movement: "pull", equipment: "poulie", difficulty: "intermédiaire", subcategory: "Poids du corps" },
@@ -100,7 +106,13 @@ const EXERCISE_DB: ExerciseEntry[] = [
   // ISCHIOS/FESSIERS — Machine
   { name: "Leg curl couché", primary_muscle: "ischios", secondary_muscles: [], type: "isolation", movement: "legs", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
   { name: "Leg curl assis", primary_muscle: "ischios", secondary_muscles: [], type: "isolation", movement: "legs", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Leg curl debout unilatéral", primary_muscle: "ischios", secondary_muscles: [], type: "isolation", movement: "legs", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Hip abduction machine", primary_muscle: "fessiers", secondary_muscles: ["abducteurs"], type: "isolation", movement: "legs", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Hip adduction machine", primary_muscle: "fessiers", secondary_muscles: ["adducteurs"], type: "isolation", movement: "legs", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
   { name: "Cable kickback fessiers", primary_muscle: "fessiers", secondary_muscles: ["ischios"], type: "isolation", movement: "legs", equipment: "poulie", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Calf raise machine debout", primary_muscle: "mollets", secondary_muscles: [], type: "isolation", movement: "legs", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Calf raise machine assis", primary_muscle: "mollets", secondary_muscles: [], type: "isolation", movement: "legs", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Calf raise presse", primary_muscle: "mollets", secondary_muscles: [], type: "isolation", movement: "legs", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
   // ISCHIOS/FESSIERS — Poids du corps
   { name: "Good morning", primary_muscle: "ischios", secondary_muscles: ["dos", "fessiers"], type: "polyarticulaire", movement: "legs", equipment: "barre", difficulty: "intermédiaire", subcategory: "Poids du corps" },
   { name: "Nordic curl", primary_muscle: "ischios", secondary_muscles: [], type: "isolation", movement: "legs", equipment: "poids du corps", difficulty: "avancé", subcategory: "Poids du corps" },
@@ -120,6 +132,11 @@ const EXERCISE_DB: ExerciseEntry[] = [
   { name: "Rotation externe haltère", primary_muscle: "épaules", secondary_muscles: [], type: "isolation", movement: "pull", equipment: "haltères", difficulty: "débutant", subcategory: "Rotation" },
   { name: "Rotation interne poulie", primary_muscle: "épaules", secondary_muscles: [], type: "isolation", movement: "pull", equipment: "poulie", difficulty: "débutant", subcategory: "Rotation" },
   { name: "Band pull-apart", primary_muscle: "épaules", secondary_muscles: ["dos"], type: "isolation", movement: "pull", equipment: "élastique", difficulty: "débutant", subcategory: "Rotation" },
+  // ÉPAULES — Machine
+  { name: "Rear deltoid machine", primary_muscle: "épaules", secondary_muscles: ["dos"], type: "isolation", movement: "pull", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Oiseau machine (pec deck inverse)", primary_muscle: "épaules", secondary_muscles: ["dos"], type: "isolation", movement: "pull", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Élévations latérales machine", primary_muscle: "épaules", secondary_muscles: [], type: "isolation", movement: "push", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Élévations latérales poulie basse", primary_muscle: "épaules", secondary_muscles: [], type: "isolation", movement: "push", equipment: "poulie", difficulty: "débutant", subcategory: "Machine" },
 
   // BICEPS — Barre
   { name: "Curl barre droite", primary_muscle: "biceps", secondary_muscles: [], type: "isolation", movement: "pull", equipment: "barre", difficulty: "débutant", subcategory: "Barre" },
@@ -136,6 +153,10 @@ const EXERCISE_DB: ExerciseEntry[] = [
   { name: "Curl poulie basse", primary_muscle: "biceps", secondary_muscles: [], type: "isolation", movement: "pull", equipment: "poulie", difficulty: "débutant", subcategory: "Poulie" },
   { name: "Curl câble unilatéral", primary_muscle: "biceps", secondary_muscles: [], type: "isolation", movement: "pull", equipment: "poulie", difficulty: "débutant", subcategory: "Poulie" },
   { name: "Curl corde poulie", primary_muscle: "biceps", secondary_muscles: ["avant-bras"], type: "isolation", movement: "pull", equipment: "poulie", difficulty: "débutant", subcategory: "Poulie" },
+  // BICEPS — Machine
+  { name: "Curl machine", primary_muscle: "biceps", secondary_muscles: [], type: "isolation", movement: "pull", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Curl Larry Scott machine", primary_muscle: "biceps", secondary_muscles: [], type: "isolation", movement: "pull", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Curl Preacher barre EZ", primary_muscle: "biceps", secondary_muscles: [], type: "isolation", movement: "pull", equipment: "barre", difficulty: "débutant", subcategory: "Machine" },
 
   // TRICEPS — Barre
   { name: "Barre au front", primary_muscle: "triceps", secondary_muscles: [], type: "isolation", movement: "push", equipment: "barre", difficulty: "intermédiaire", subcategory: "Barre" },
@@ -149,6 +170,9 @@ const EXERCISE_DB: ExerciseEntry[] = [
   { name: "Extension triceps barre droite", primary_muscle: "triceps", secondary_muscles: [], type: "isolation", movement: "push", equipment: "poulie", difficulty: "débutant", subcategory: "Poulie" },
   { name: "Extension triceps barre V", primary_muscle: "triceps", secondary_muscles: [], type: "isolation", movement: "push", equipment: "poulie", difficulty: "débutant", subcategory: "Poulie" },
   { name: "Extension overhead poulie", primary_muscle: "triceps", secondary_muscles: [], type: "isolation", movement: "push", equipment: "poulie", difficulty: "intermédiaire", subcategory: "Poulie" },
+  // TRICEPS — Machine
+  { name: "Extension triceps machine", primary_muscle: "triceps", secondary_muscles: [], type: "isolation", movement: "push", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
+  { name: "Dips machine assistée", primary_muscle: "triceps", secondary_muscles: ["pectoraux", "épaules"], type: "polyarticulaire", movement: "push", equipment: "machine", difficulty: "débutant", subcategory: "Machine" },
   // TRICEPS — Poids du corps
   { name: "Dips triceps", primary_muscle: "triceps", secondary_muscles: ["pectoraux", "épaules"], type: "polyarticulaire", movement: "push", equipment: "poids du corps", difficulty: "intermédiaire", subcategory: "Poids du corps" },
   { name: "Dips banc", primary_muscle: "triceps", secondary_muscles: ["épaules"], type: "polyarticulaire", movement: "push", equipment: "poids du corps", difficulty: "débutant", subcategory: "Poids du corps" },
@@ -219,7 +243,7 @@ const DIFFICULTY_STAR_COLORS = {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type SetData = { id?: string; reps: number | ""; weight: number | ""; rpe: number | ""; repsRight: number | ""; weightRight: number | "" }
+type SetData = { id?: string; reps: number | ""; weight: number | ""; rpe: number | ""; repsRight: number | ""; weightRight: number | ""; isDropSet: boolean; weightMin: number | "" }
 type ExerciseData = { id?: string; name: string; isUnilateral: boolean; exNotes: string; sets: SetData[] }
 type WorkoutDetail = {
   id: string
@@ -671,13 +695,15 @@ export default function WorkoutDetailPage() {
             name: ex.name,
             isUnilateral: ex.isUnilateral ?? false,
             exNotes: ex.notes ?? "",
-            sets: (ex.sets as unknown as { id?: string; reps: number | null; weight: number | null; rpe: number | null; repsRight?: number | null; weightRight?: number | null }[]).map(s => ({
+            sets: (ex.sets as unknown as { id?: string; reps: number | null; weight: number | null; rpe: number | null; repsRight?: number | null; weightRight?: number | null; isDropSet?: boolean; weightMin?: number | null }[]).map(s => ({
               id: s.id,
               reps: s.reps ?? "",
               weight: s.weight ?? "",
               rpe: s.rpe ?? "",
               repsRight: s.repsRight ?? "",
               weightRight: s.weightRight ?? "",
+              isDropSet: s.isDropSet ?? false,
+              weightMin: s.weightMin ?? "",
             })),
           }))
         )
@@ -712,7 +738,7 @@ export default function WorkoutDetailPage() {
       setUpgradeMsg("Limite de 3 exercices avec le plan Gratuit. Passez Pro pour des exercices illimités.")
       return
     }
-    setExercises(prev => [...prev, { name, isUnilateral: false, exNotes: "", sets: [{ reps: "", weight: "", rpe: "", repsRight: "", weightRight: "" }] }])
+    setExercises(prev => [...prev, { name, isUnilateral: false, exNotes: "", sets: [{ reps: "", weight: "", rpe: "", repsRight: "", weightRight: "", isDropSet: false, weightMin: "" }] }])
     setShowPicker(false)
     if (!editMode) setEditMode(true)
   }
@@ -723,7 +749,7 @@ export default function WorkoutDetailPage() {
 
   function addSet(exIdx: number) {
     setExercises(prev => prev.map((ex, i) =>
-      i === exIdx ? { ...ex, sets: [...ex.sets, { reps: "", weight: "", rpe: "", repsRight: "", weightRight: "" }] } : ex
+      i === exIdx ? { ...ex, sets: [...ex.sets, { reps: "", weight: "", rpe: "", repsRight: "", weightRight: "", isDropSet: false, weightMin: "" }] } : ex
     ))
   }
 
@@ -733,9 +759,15 @@ export default function WorkoutDetailPage() {
     ))
   }
 
-  function updateSet(exIdx: number, setIdx: number, field: "reps" | "weight" | "rpe" | "repsRight" | "weightRight", value: string) {
+  function updateSet(exIdx: number, setIdx: number, field: "reps" | "weight" | "rpe" | "repsRight" | "weightRight" | "weightMin", value: string) {
     setExercises(prev => prev.map((ex, i) =>
       i === exIdx ? { ...ex, sets: ex.sets.map((s, j) => j === setIdx ? { ...s, [field]: value === "" ? "" : Number(value) } : s) } : ex
+    ))
+  }
+
+  function toggleDropSet(exIdx: number, setIdx: number) {
+    setExercises(prev => prev.map((ex, i) =>
+      i === exIdx ? { ...ex, sets: ex.sets.map((s, j) => j === setIdx ? { ...s, isDropSet: !s.isDropSet, weightMin: "" } : s) } : ex
     ))
   }
 
@@ -769,6 +801,8 @@ export default function WorkoutDetailPage() {
               rpe: s.rpe === "" ? null : Number(s.rpe),
               repsRight: s.repsRight === "" ? null : Number(s.repsRight),
               weightRight: s.weightRight === "" ? null : Number(s.weightRight),
+              isDropSet: s.isDropSet ?? false,
+              weightMin: s.weightMin === "" ? null : Number(s.weightMin),
             })),
           })),
         }),
@@ -928,48 +962,61 @@ export default function WorkoutDetailPage() {
 
                 {/* Sets */}
                 {ex.isUnilateral ? (
-                  <>
-                    <div className="px-3 pb-1 flex items-center gap-1">
-                      <span className="w-5 shrink-0" />
-                      <span className="flex-1 text-[9px] text-violet-500 font-bold text-center uppercase tracking-wide">G Reps</span>
-                      <span className="flex-1 text-[9px] text-violet-500 font-bold text-center uppercase tracking-wide">G Kg</span>
-                      <span className="w-3 shrink-0 text-center text-gray-200 text-[10px]">|</span>
-                      <span className="flex-1 text-[9px] text-blue-500 font-bold text-center uppercase tracking-wide">D Reps</span>
-                      <span className="flex-1 text-[9px] text-blue-500 font-bold text-center uppercase tracking-wide">D Kg</span>
-                      <span className="w-5 shrink-0" />
-                    </div>
-                    <div className="px-3 flex flex-col gap-1 pb-2">
-                      {ex.sets.map((s, setIdx) => (
-                        <div key={setIdx} className="flex items-center gap-1">
+                  // ── Mode Unilatéral — 2 lignes par série ─────────────────
+                  <div className="px-3 flex flex-col gap-2 pb-2">
+                    {ex.sets.map((s, setIdx) => (
+                      <div key={setIdx} className="flex flex-col gap-1">
+                        {/* Ligne Gauche */}
+                        <div className="flex items-center gap-1.5">
                           <span className="w-5 text-xs text-gray-400 font-bold text-center shrink-0">{setIdx + 1}</span>
-                          <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0} className="flex-1 bg-violet-50/50 border border-violet-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none text-center" />
-                          <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5} className="flex-1 bg-violet-50/50 border border-violet-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none text-center" />
-                          <span className="w-3 shrink-0 text-center text-gray-200 text-sm font-bold">|</span>
-                          <input type="number" inputMode="numeric" value={s.repsRight} onChange={e => updateSet(exIdx, setIdx, "repsRight", e.target.value)} placeholder="8" min={0} className="flex-1 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none text-center" />
-                          <input type="number" inputMode="decimal" value={s.weightRight} onChange={e => updateSet(exIdx, setIdx, "weightRight", e.target.value)} placeholder="0" min={0} step={0.5} className="flex-1 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none text-center" />
+                          <span className="text-[9px] font-bold text-violet-500 uppercase tracking-wide w-4 shrink-0">G</span>
+                          <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="Reps" min={0} className="flex-1 bg-violet-50/60 border border-violet-200 rounded-xl px-2 py-1.5 text-sm font-semibold outline-none text-center" />
+                          <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="Kg" min={0} step={0.5} className="flex-1 bg-violet-50/60 border border-violet-200 rounded-xl px-2 py-1.5 text-sm font-semibold outline-none text-center" />
+                        </div>
+                        {/* Ligne Droite */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-5 shrink-0" />
+                          <span className="text-[9px] font-bold text-blue-500 uppercase tracking-wide w-4 shrink-0">D</span>
+                          <input type="number" inputMode="numeric" value={s.repsRight} onChange={e => updateSet(exIdx, setIdx, "repsRight", e.target.value)} placeholder="Reps" min={0} className="flex-1 bg-blue-50/60 border border-blue-200 rounded-xl px-2 py-1.5 text-sm font-semibold outline-none text-center" />
+                          <input type="number" inputMode="decimal" value={s.weightRight} onChange={e => updateSet(exIdx, setIdx, "weightRight", e.target.value)} placeholder="Kg" min={0} step={0.5} className="flex-1 bg-blue-50/60 border border-blue-200 rounded-xl px-2 py-1.5 text-sm font-semibold outline-none text-center" />
                           <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1} className="w-5 shrink-0 flex items-center justify-center text-gray-300 hover:text-red-400 disabled:opacity-20">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
                           </button>
                         </div>
-                      ))}
-                    </div>
-                  </>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
+                  // ── Mode Standard + Dégressif ─────────────────────────────
                   <>
                     <div className="grid grid-cols-12 gap-1 px-3 pb-1">
                       <p className="col-span-1 text-[10px] text-gray-400 font-bold text-center">#</p>
-                      <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Reps</p>
-                      <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Kg</p>
+                      <p className="col-span-3 text-[10px] text-gray-400 font-bold text-center">Reps</p>
+                      <p className="col-span-5 text-[10px] text-gray-400 font-bold text-center">Kg</p>
                       <p className="col-span-2 text-[10px] text-gray-400 font-bold text-center">RPE</p>
                       <p className="col-span-1" />
                     </div>
                     <div className="px-3 flex flex-col gap-1 pb-2">
                       {ex.sets.map((s, setIdx) => (
                         <div key={setIdx} className="grid grid-cols-12 gap-1 items-center">
-                          <p className="col-span-1 text-xs text-gray-400 font-bold text-center">{setIdx + 1}</p>
-                          <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0} className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
-                          <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5} className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-2 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
-                          <input type="number" inputMode="decimal" value={s.rpe} onChange={e => updateSet(exIdx, setIdx, "rpe", e.target.value)} placeholder="8" min={1} max={10} step={0.5} className="col-span-2 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                          {/* # + drop set toggle */}
+                          <button onClick={() => toggleDropSet(exIdx, setIdx)} className={`col-span-1 w-5 h-5 mx-auto rounded-full text-[9px] font-extrabold flex items-center justify-center transition-colors ${s.isDropSet ? "bg-orange-100 text-orange-500 border border-orange-300" : "text-gray-400"}`} title="Dégressif">
+                            {s.isDropSet ? "↓" : setIdx + 1}
+                          </button>
+                          <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0} className="col-span-3 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                          {s.isDropSet ? (
+                            // Drop set: max → min
+                            <>
+                              <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="Max" min={0} step={0.5} className="col-span-2 bg-orange-50/60 border border-orange-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none text-center" />
+                              <span className="col-span-1 text-center text-gray-300 text-xs font-bold">→</span>
+                              <input type="number" inputMode="decimal" value={s.weightMin} onChange={e => updateSet(exIdx, setIdx, "weightMin", e.target.value)} placeholder="Min" min={0} step={0.5} className="col-span-2 bg-orange-50/60 border border-orange-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none text-center" />
+                            </>
+                          ) : (
+                            <>
+                              <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5} className="col-span-3 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                              <input type="number" inputMode="decimal" value={s.rpe} onChange={e => updateSet(exIdx, setIdx, "rpe", e.target.value)} placeholder="RPE" min={1} max={10} step={0.5} className="col-span-2 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                            </>
+                          )}
                           <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1} className="col-span-1 flex items-center justify-center text-gray-300 hover:text-red-400 disabled:opacity-20">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
                           </button>
@@ -1004,16 +1051,35 @@ export default function WorkoutDetailPage() {
                 <div className="px-3 pb-3">
                   {ex.sets.map((s, si) => (
                     <div key={si} className="flex items-center gap-2.5 py-1.5 border-t border-gray-100 first:border-t-0">
-                      <span className="w-4 h-4 rounded-full bg-gray-100 text-[9px] font-bold text-gray-400 flex items-center justify-center shrink-0">{si + 1}</span>
-                      <div className="flex items-center gap-0 flex-1">
-                        <span className="inline-block w-[4.5rem] text-xs font-bold text-gray-900 tabular-nums shrink-0">
-                          {s.reps !== "" ? `${s.reps} reps` : "—"}
-                        </span>
-                        <span className="inline-block w-[4rem] text-xs font-bold text-gray-900 tabular-nums shrink-0">
-                          {s.weight !== "" ? `${s.weight} kg` : ""}
-                        </span>
-                        {s.rpe !== "" && (
-                          <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">RPE {s.rpe}</span>
+                      <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center shrink-0 ${s.isDropSet ? "bg-orange-100 text-orange-500" : "bg-gray-100 text-gray-400"}`}>
+                        {s.isDropSet ? "↓" : si + 1}
+                      </span>
+                      <div className="flex items-center gap-1.5 flex-1 flex-wrap">
+                        {ex.isUnilateral ? (
+                          <>
+                            <span className="text-xs font-bold text-gray-900 tabular-nums">
+                              {s.reps !== "" ? `G ${s.reps}r` : "—"}{s.weight !== "" ? ` · ${s.weight}kg` : ""}
+                            </span>
+                            {(s.repsRight !== "" || s.weightRight !== "") && (
+                              <span className="text-xs font-bold text-gray-500 tabular-nums">
+                                / D {s.repsRight !== "" ? `${s.repsRight}r` : "—"}{s.weightRight !== "" ? ` · ${s.weightRight}kg` : ""}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <span className="inline-block w-[4rem] text-xs font-bold text-gray-900 tabular-nums shrink-0">
+                              {s.reps !== "" ? `${s.reps} reps` : "—"}
+                            </span>
+                            <span className="text-xs font-bold text-gray-900 tabular-nums shrink-0">
+                              {s.isDropSet && s.weight !== "" && s.weightMin !== ""
+                                ? `${s.weight}→${s.weightMin} kg`
+                                : s.weight !== "" ? `${s.weight} kg` : ""}
+                            </span>
+                            {!s.isDropSet && s.rpe !== "" && (
+                              <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">RPE {s.rpe}</span>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
