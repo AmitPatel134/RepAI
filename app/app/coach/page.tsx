@@ -47,6 +47,7 @@ function escapeHtml(s: string) {
 function renderBody(text: string) {
   return escapeHtml(text)
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/^\* (.*$)/gm, "<li class='ml-4 list-disc text-gray-600 mb-0.5'>$1</li>")
     .replace(/^- (.*$)/gm, "<li class='ml-4 list-disc text-gray-600 mb-0.5'>$1</li>")
     .replace(/^\d+\. (.*$)/gm, "<li class='ml-4 list-decimal text-gray-600 mb-0.5'>$1</li>")
     .replace(/\n\n/g, "<br/>")
@@ -65,22 +66,22 @@ function AccordionSection({ title, body, defaultOpen }: { title: string; body: s
   }, [open])
 
   return (
-    <div className="border-b border-gray-100 last:border-0">
+    <div className="rounded-xl border border-violet-200 overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between py-3 text-left"
+        className="w-full flex items-center justify-between px-4 py-3 bg-violet-100 hover:bg-violet-200 transition-colors text-left"
       >
-        <p className="text-sm font-bold text-violet-600">{title}</p>
+        <p className="text-sm font-bold text-violet-900">{title}</p>
         <svg
-          className={`w-3.5 h-3.5 text-violet-400 transition-transform duration-300 shrink-0 ml-2 ${open ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 text-violet-700 transition-transform duration-300 shrink-0 ml-2 ${open ? "rotate-180" : ""}`}
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
       <div style={{ height, overflow: "hidden", transition: "height 0.28s ease" }}>
-        <div ref={contentRef} className="pb-3">
+        <div ref={contentRef} className="px-4 py-3 bg-white">
           <div
             className="text-sm text-gray-700 font-medium leading-relaxed"
             dangerouslySetInnerHTML={{ __html: renderBody(body) }}
@@ -311,12 +312,12 @@ En regardant tes séances récentes, voici mes observations :
               overflow: "hidden",
             }}
           >
-            <div className="px-4 pb-4 flex flex-wrap gap-2">
+            <div className="px-4 pb-4 flex flex-col gap-2">
               {QUICK_QUESTIONS.map(q => (
                 <button
                   key={q}
                   onClick={() => { setQuestion(q); setQuickOpen(false) }}
-                  className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs font-semibold text-gray-600 hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50 hover:shadow-sm transition-all"
+                  className="w-full px-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs font-semibold text-gray-600 hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50 hover:shadow-sm transition-all text-center"
                 >
                   {q}
                 </button>
@@ -388,52 +389,20 @@ En regardant tes séances récentes, voici mes observations :
         {/* Last session */}
         {!loading && lastSession && (() => {
           const sections = parseResponseSections(lastSession.response)
-          const hasSections = sections.some(s => s.title)
           return (
-            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col gap-3">
               {/* Question */}
-              <div className="px-5 py-4 border-b border-gray-100 flex items-start gap-3">
-                <div className="w-7 h-7 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 mt-0.5">
-                  <svg className="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900 leading-relaxed">{lastSession.question}</p>
-                  <p className="text-xs text-gray-400 mt-1">{formatDate(lastSession.createdAt)}</p>
-                </div>
+              <div className="text-center">
+                <p className="text-sm font-semibold text-gray-900 leading-relaxed">{lastSession.question}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{formatDate(lastSession.createdAt)}</p>
               </div>
-              {/* Response */}
-              <div className="px-5 py-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-6 h-6 rounded-lg bg-violet-600 flex items-center justify-center shrink-0">
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                  </div>
-                  <p className="text-xs font-bold text-violet-600 uppercase tracking-widest">Réponse du coach</p>
-                </div>
-                {hasSections ? (
-                  <div>
-                    {sections.map((s, i) =>
-                      s.title ? (
-                        <AccordionSection key={i} title={s.title} body={s.body} defaultOpen={true} />
-                      ) : (
-                        <div
-                          key={i}
-                          className="text-sm text-gray-700 font-medium leading-relaxed mb-3"
-                          dangerouslySetInnerHTML={{ __html: renderBody(s.body) }}
-                        />
-                      )
-                    )}
-                  </div>
-                ) : (
-                  <div
-                    className="text-sm text-gray-700 font-medium leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: renderBody(lastSession.response) }}
-                  />
-                )}
-              </div>
+              {/* Accordion sections */}
+              {sections.filter(s => s.title).map((s, i) => (
+                <AccordionSection key={i} title={s.title!} body={s.body} defaultOpen={true} />
+              ))}
+              {!sections.some(s => s.title) && (
+                <div className="text-sm text-gray-700 font-medium leading-relaxed px-1" dangerouslySetInnerHTML={{ __html: renderBody(lastSession.response) }} />
+              )}
             </div>
           )
         })()}

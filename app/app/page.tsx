@@ -465,8 +465,6 @@ function HomePageInner() {
                       </div>
                     ))}
                   </div>
-                  {/* Summary */}
-                  <p className="text-xs text-gray-500 leading-relaxed italic">{nutritionReco.reco.summary}</p>
                 </>
               ) : (
                 <div className="flex flex-col items-center gap-3 py-2">
