@@ -141,23 +141,31 @@ RÈGLES ABSOLUES :
 ⚠️ PRIORITÉ ABSOLUE : Lis attentivement la question posée et réponds-y directement et précisément. Si on te demande des calories, réponds avec des calories. Si on te demande des protéines, réponds avec des protéines. Ne réponds JAMAIS à côté de la question.
 Les titres de tes sections doivent refléter le contenu de ta réponse à CETTE question spécifique — ne réutilise pas des titres génériques.`
 
+    const subtitleRule = `
+FORMAT OBLIGATOIRE pour chaque section :
+## Titre de la section
+> Phrase clé de 8 à 10 mots maximum, directement liée à la question, concrète et actionnable.
+Corps du texte...
+
+La ligne > (blockquote) est OBLIGATOIRE après chaque ## titre. Elle doit résumer l'essentiel de la section en une seule phrase courte. Ne mets JAMAIS de données hors-sujet dans cette ligne (ex: ne pas mentionner les macros si la question porte sur l'entraînement).`
+
     if (!pro) {
       // FREE — 2 sections, titles free
       systemPrompt = `Tu es un coach sportif expert. Réponds avec exactement 2 sections markdown (## Titre) dont les titres sont adaptés à la question.
-Max 80 mots au total. Sois direct et encourageant.${questionPriority}${baseRules}`
-      maxTokens = 150
+Max 80 mots au total. Sois direct et encourageant.${subtitleRule}${questionPriority}${baseRules}`
+      maxTokens = 180
       temperature = 0.7
     } else if (!plus) {
       // PREMIUM — 2-3 sections, titles free
       systemPrompt = `Tu es un coach sportif et nutritionnel expert. Réponds avec 2 à 3 sections markdown (## Titre) dont les titres sont choisis librement selon la question.
-Max 200 mots au total.${questionPriority}${baseRules}`
-      maxTokens = 380
+Max 200 mots au total.${subtitleRule}${questionPriority}${baseRules}`
+      maxTokens = 420
       temperature = 0.5
     } else {
       // PREMIUM+ — 2-3 sections, highly personalized, titles free
       systemPrompt = `Tu es un coach sportif et nutritionniste expert d'élite. Réponds avec 2 à 3 sections markdown (## Titre) dont les titres sont choisis librement selon la question, avec des valeurs concrètes calculées.
-Max 250 mots. Calcule des valeurs concrètes (charges, fréquences, calories) quand c'est possible.${questionPriority}${baseRules}`
-      maxTokens = 600
+Max 250 mots. Calcule des valeurs concrètes (charges, fréquences, calories) quand c'est possible.${subtitleRule}${questionPriority}${baseRules}`
+      maxTokens = 650
       temperature = 0.5
     }
 

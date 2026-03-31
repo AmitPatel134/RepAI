@@ -18,20 +18,25 @@ function saveStored(email: string, s: Session) {
   try { localStorage.setItem(lsKey(email), JSON.stringify(s)) } catch { /* noop */ }
 }
 
-type ResponseSection = { title: string | null; body: string }
+type ResponseSection = { title: string | null; subtitle: string | null; body: string }
 
 function parseResponseSections(text: string): ResponseSection[] {
   const lines = text.split("\n")
   const sections: ResponseSection[] = []
-  let current: ResponseSection = { title: null, body: "" }
+  let current: ResponseSection = { title: null, subtitle: null, body: "" }
 
   for (const line of lines) {
     const h2 = line.match(/^##\s+(.+)$/)
     const h3 = line.match(/^###\s+(.+)$/)
     const heading = h2?.[1] ?? h3?.[1]
+    const blockquote = line.match(/^>\s*(.+)$/)
+
     if (heading) {
       if (current.body.trim() || current.title) sections.push(current)
-      current = { title: heading, body: "" }
+      current = { title: heading, subtitle: null, body: "" }
+    } else if (blockquote && current.title && !current.subtitle) {
+      // First blockquote after a heading = subtitle
+      current.subtitle = blockquote[1].trim()
     } else {
       current.body += (current.body ? "\n" : "") + line
     }
@@ -54,7 +59,7 @@ function renderBody(text: string) {
     .replace(/\n/g, "<br/>")
 }
 
-function AccordionSection({ title, body }: { title: string; body: string }) {
+function AccordionSection({ title, subtitle, body }: { title: string; subtitle: string | null; body: string }) {
   const [open, setOpen] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState("0px")
@@ -65,20 +70,6 @@ function AccordionSection({ title, body }: { title: string; body: string }) {
     }
   }, [open])
 
-  // Keywords: extract bold text (**...**) as chips
-  const keywords = (body.match(/\*\*(.*?)\*\*/g) ?? [])
-    .map(m => m.replace(/\*\*/g, "").trim())
-    .filter(k => k.length > 0 && k.length < 48)
-    .slice(0, 4)
-
-  // Fallback: first non-bullet sentence
-  const preview = body
-    .split("\n")
-    .map(l => l.trim())
-    .find(l => l && !l.startsWith("-") && !l.startsWith("*") && !l.startsWith("#"))
-    ?.replace(/\*\*(.*?)\*\*/g, "$1")
-    .slice(0, 95) ?? ""
-
   return (
     <div className="rounded-xl border border-violet-200 overflow-hidden">
       <button
@@ -88,17 +79,8 @@ function AccordionSection({ title, body }: { title: string; body: string }) {
       >
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-violet-900 leading-snug">{title}</p>
-          {!open && keywords.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {keywords.map(k => (
-                <span key={k} className="text-[10px] font-bold bg-violet-200/80 text-violet-800 px-2 py-0.5 rounded-full leading-none">
-                  {k}
-                </span>
-              ))}
-            </div>
-          )}
-          {!open && keywords.length === 0 && preview && (
-            <p className="text-xs text-violet-700/70 mt-1 leading-snug line-clamp-2">{preview}</p>
+          {!open && subtitle && (
+            <p className="text-xs text-violet-700/75 mt-1 leading-snug">{subtitle}</p>
           )}
         </div>
         <svg
@@ -426,7 +408,7 @@ En regardant tes séances récentes, voici mes observations :
               </div>
               {/* Accordion sections */}
               {sections.filter(s => s.title).map((s, i) => (
-                <AccordionSection key={i} title={s.title!} body={s.body} />
+                <AccordionSection key={i} title={s.title!} subtitle={s.subtitle} body={s.body} />
               ))}
               {!sections.some(s => s.title) && (
                 <div className="text-sm text-gray-700 font-medium leading-relaxed px-1" dangerouslySetInnerHTML={{ __html: renderBody(lastSession.response) }} />
