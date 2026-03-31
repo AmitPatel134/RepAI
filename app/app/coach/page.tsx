@@ -80,7 +80,7 @@ function AccordionSection({ index, title, subtitle, body, defaultOpen }: { index
   }, [open])
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+    <div>
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
@@ -104,7 +104,7 @@ function AccordionSection({ index, title, subtitle, body, defaultOpen }: { index
       </button>
       <div style={{ height, overflow: "hidden", transition: "height 0.28s ease" }}>
         <div ref={contentRef} className="px-4 pb-4 pt-0">
-          <div className="h-px bg-gray-100 mb-3" />
+          <div className="h-px bg-gray-100 mb-3 mx-0" />
           <div
             className="text-sm text-gray-700 font-medium leading-relaxed"
             dangerouslySetInnerHTML={{ __html: renderBody(body) }}
@@ -414,16 +414,21 @@ En regardant tes séances récentes, voici mes observations :
         {!loading && lastSession && (() => {
           const sections = parseResponseSections(lastSession.response)
           return (
-            <div className="flex flex-col gap-3">
-              {/* Question */}
-              <p className="text-xs font-semibold text-gray-500 text-center">{lastSession.question} · <span className="font-normal">{formatDate(lastSession.createdAt)}</span></p>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              {/* Question header */}
+              <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+                <p className="text-sm font-bold text-gray-900 leading-snug">{lastSession.question}</p>
+                <p className="text-[11px] text-gray-400 mt-1 font-medium">{formatDate(lastSession.createdAt)}</p>
+              </div>
               {/* Sections */}
-              {sections.filter(s => s.title).map((s, i) => (
-                <AccordionSection key={i} index={i} title={s.title!} subtitle={s.subtitle} body={s.body} defaultOpen={s.defaultOpen} />
-              ))}
-              {!sections.some(s => s.title) && (
-                <div className="bg-white rounded-2xl shadow-lg p-4 text-sm text-gray-700 font-medium leading-relaxed" dangerouslySetInnerHTML={{ __html: renderBody(lastSession.response) }} />
-              )}
+              <div className="flex flex-col divide-y divide-gray-100">
+                {sections.filter(s => s.title).map((s, i) => (
+                  <AccordionSection key={i} index={i} title={s.title!} subtitle={s.subtitle} body={s.body} defaultOpen={s.defaultOpen} />
+                ))}
+                {!sections.some(s => s.title) && (
+                  <div className="p-4 text-sm text-gray-700 font-medium leading-relaxed" dangerouslySetInnerHTML={{ __html: renderBody(lastSession.response) }} />
+                )}
+              </div>
             </div>
           )
         })()}
