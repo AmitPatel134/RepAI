@@ -183,6 +183,7 @@ export default function LandingPage() {
     let resumeTimer: ReturnType<typeof setTimeout>
 
     halfW = inner.scrollWidth / 2
+    const innerEl = inner
 
     function tick(ts: number) {
       const dt = lastTs ? Math.min((ts - lastTs) / 1000, 0.05) : 0
@@ -191,7 +192,7 @@ export default function LandingPage() {
       // wrap
       if (x < -halfW) x += halfW
       if (x > 0) x -= halfW
-      inner.style.transform = `translateX(${x}px)`
+      innerEl.style.transform = `translateX(${x}px)`
       raf = requestAnimationFrame(tick)
     }
 
