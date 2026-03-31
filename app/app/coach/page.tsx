@@ -18,12 +18,12 @@ function saveStored(email: string, s: Session) {
   try { localStorage.setItem(lsKey(email), JSON.stringify(s)) } catch { /* noop */ }
 }
 
-type ResponseSection = { title: string | null; subtitle: string | null; body: string }
+type ResponseSection = { title: string | null; subtitle: string | null; defaultOpen: boolean; body: string }
 
 function parseResponseSections(text: string): ResponseSection[] {
   const lines = text.split("\n")
   const sections: ResponseSection[] = []
-  let current: ResponseSection = { title: null, subtitle: null, body: "" }
+  let current: ResponseSection = { title: null, subtitle: null, defaultOpen: true, body: "" }
 
   for (const line of lines) {
     const h2 = line.match(/^##\s+(.+)$/)
@@ -33,10 +33,19 @@ function parseResponseSections(text: string): ResponseSection[] {
 
     if (heading) {
       if (current.body.trim() || current.title) sections.push(current)
-      current = { title: heading, subtitle: null, body: "" }
-    } else if (blockquote && current.title && !current.subtitle) {
-      // First blockquote after a heading = subtitle
-      current.subtitle = blockquote[1].trim()
+      current = { title: heading, subtitle: null, defaultOpen: true, body: "" }
+    } else if (blockquote && current.title && current.subtitle === null) {
+      const content = blockquote[1].trim()
+      if (content.toLowerCase().startsWith("false")) {
+        // No useful subtitle — open by default
+        current.defaultOpen = true
+        current.subtitle = null
+      } else {
+        // "true | phrase" or just "phrase"
+        const phrase = content.replace(/^true\s*[|:]\s*/i, "").trim()
+        current.subtitle = phrase || null
+        current.defaultOpen = false
+      }
     } else {
       current.body += (current.body ? "\n" : "") + line
     }
@@ -59,10 +68,10 @@ function renderBody(text: string) {
     .replace(/\n/g, "<br/>")
 }
 
-function AccordionSection({ title, subtitle, body }: { title: string; subtitle: string | null; body: string }) {
-  const [open, setOpen] = useState(false)
+function AccordionSection({ title, subtitle, body, defaultOpen }: { title: string; subtitle: string | null; body: string; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
   const contentRef = useRef<HTMLDivElement>(null)
-  const [height, setHeight] = useState("0px")
+  const [height, setHeight] = useState(defaultOpen ? "auto" : "0px")
 
   useEffect(() => {
     if (contentRef.current) {
@@ -408,7 +417,7 @@ En regardant tes séances récentes, voici mes observations :
               </div>
               {/* Accordion sections */}
               {sections.filter(s => s.title).map((s, i) => (
-                <AccordionSection key={i} title={s.title!} subtitle={s.subtitle} body={s.body} />
+                <AccordionSection key={i} title={s.title!} subtitle={s.subtitle} body={s.body} defaultOpen={s.defaultOpen} />
               ))}
               {!sections.some(s => s.title) && (
                 <div className="text-sm text-gray-700 font-medium leading-relaxed px-1" dangerouslySetInnerHTML={{ __html: renderBody(lastSession.response) }} />

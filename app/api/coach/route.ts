@@ -144,10 +144,19 @@ Les titres de tes sections doivent refléter le contenu de ta réponse à CETTE 
     const subtitleRule = `
 FORMAT OBLIGATOIRE pour chaque section :
 ## Titre de la section
-> Phrase clé de 8 à 10 mots maximum, directement liée à la question, concrète et actionnable.
+> true | Phrase clé de 8 à 10 mots, concrète et directement liée à la question.
 Corps du texte...
 
-La ligne > (blockquote) est OBLIGATOIRE après chaque ## titre. Elle doit résumer l'essentiel de la section en une seule phrase courte. Ne mets JAMAIS de données hors-sujet dans cette ligne (ex: ne pas mentionner les macros si la question porte sur l'entraînement).`
+OU si résumer en 10 mots n'apporte rien d'utile (ex: section introductive, explication pure sans chiffre clé) :
+## Titre de la section
+> false
+Corps du texte...
+
+RÈGLES :
+- La ligne > est OBLIGATOIRE après chaque ## titre, toujours au format "> true | phrase" ou "> false".
+- "true" uniquement si la phrase apporte une info concrète et utile (chiffre, action, recommandation clé).
+- "false" si la section est trop nuancée ou introductive pour se résumer en 10 mots.
+- Ne jamais mettre de données hors-sujet dans la phrase (ex: pas de macros si la question porte sur l'entraînement).`
 
     if (!pro) {
       // FREE — 2 sections, titles free
