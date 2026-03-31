@@ -416,7 +416,7 @@ En regardant tes séances récentes, voici mes observations :
           return (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               {/* Question header */}
-              <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+              <div className="px-4 pt-4 pb-3 border-b border-gray-100 text-center">
                 <p className="text-sm font-bold text-gray-900 leading-snug">{lastSession.question}</p>
                 <p className="text-[11px] text-gray-400 mt-1 font-medium">{formatDate(lastSession.createdAt)}</p>
               </div>
