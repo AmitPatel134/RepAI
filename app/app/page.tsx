@@ -441,31 +441,49 @@ function HomePageInner() {
               </div>
 
               {nutritionReco.reco ? (
-                <>
-                  {/* Calories — full width */}
-                  <div className="bg-orange-50 rounded-xl p-3 flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-gray-500">Calories</span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-black text-orange-600 leading-none">{nutritionReco.reco.calories}</span>
-                      <span className="text-xs font-semibold text-orange-400">kcal</span>
+                (() => {
+                  const r = nutritionReco.reco!
+                  const incomplete = !r.calories || !r.proteins || !r.carbs || !r.fats
+                  if (incomplete) return (
+                    <div className="flex flex-col items-center gap-2 py-3">
+                      <p className="text-xs text-red-500 font-semibold text-center">Une valeur est manquante. Réessaie.</p>
+                      <button
+                        onClick={generateNutritionReco}
+                        disabled={generatingReco}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 text-white text-xs font-bold rounded-xl hover:bg-orange-400 transition-colors disabled:opacity-50"
+                      >
+                        {generatingReco ? "Calcul…" : "Réessayer"}
+                      </button>
                     </div>
-                  </div>
-                  {/* Macros — 4 cols */}
-                  <div className="grid grid-cols-4 gap-2 mb-3">
-                    {[
-                      { label: "Protéines", value: nutritionReco.reco.proteins, color: "text-blue-600", bg: "bg-blue-50" },
-                      { label: "Glucides",  value: nutritionReco.reco.carbs,    color: "text-yellow-600", bg: "bg-yellow-50" },
-                      { label: "Lipides",   value: nutritionReco.reco.fats,     color: "text-green-600", bg: "bg-green-50" },
-                      { label: "Fibres",    value: nutritionReco.reco.fiber,    color: "text-purple-600", bg: "bg-purple-50" },
-                    ].map(m => (
-                      <div key={m.label} className={`${m.bg} rounded-xl p-2.5 text-center`}>
-                        <p className={`text-base font-black ${m.color} leading-none`}>{m.value}</p>
-                        <p className="text-[9px] font-semibold text-gray-400 mt-0.5">g</p>
-                        <p className="text-[9px] font-bold text-gray-500 mt-0.5 leading-none">{m.label}</p>
+                  )
+                  return (
+                    <>
+                      {/* Calories — full width */}
+                      <div className="bg-orange-50 rounded-xl p-3 flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-gray-500">Calories</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl font-black text-orange-600 leading-none">{r.calories}</span>
+                          <span className="text-xs font-semibold text-orange-400">kcal</span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </>
+                      {/* Macros — 4 cols */}
+                      <div className="grid grid-cols-4 gap-2 mb-3">
+                        {[
+                          { label: "Protéines", value: r.proteins, color: "text-blue-600",   bg: "bg-blue-50" },
+                          { label: "Glucides",  value: r.carbs,    color: "text-yellow-600", bg: "bg-yellow-50" },
+                          { label: "Lipides",   value: r.fats,     color: "text-green-600",  bg: "bg-green-50" },
+                          { label: "Fibres",    value: r.fiber,    color: "text-purple-600", bg: "bg-purple-50" },
+                        ].map(m => (
+                          <div key={m.label} className={`${m.bg} rounded-xl p-2.5 text-center`}>
+                            <p className={`text-base font-black ${m.color} leading-none`}>{m.value}</p>
+                            <p className="text-[9px] font-semibold text-gray-400 mt-0.5">g</p>
+                            <p className="text-[9px] font-bold text-gray-500 mt-0.5 leading-none">{m.label}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )
+                })()
               ) : (
                 <div className="flex flex-col items-center gap-3 py-2">
                   <p className="text-sm text-gray-500 text-center">Génère tes recommandations nutritionnelles personnalisées</p>

@@ -107,39 +107,43 @@ Règles de calcul :
 - Fibres : environ 14g par 1000 kcal
 - summary : 1 phrase en français expliquant les valeurs, sans citer les chiffres`
 
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        { role: "system", content: "Tu es un calculateur nutritionnel précis. Tu réponds uniquement avec du JSON valide, rien d'autre." },
-        { role: "user", content: prompt },
-      ],
-      max_tokens: 200,
-      temperature: 0,
-    })
+    type RecoPayload = { calories: number; proteins: number; carbs: number; fats: number; fiber: number; summary: string }
 
-    const raw = completion.choices[0]?.message?.content?.trim() ?? ""
+    let reco: RecoPayload | null = null
 
-    // Extract JSON even if the model adds surrounding text
-    const match = raw.match(/\{[\s\S]*\}/)
-    if (!match) throw new Error("No JSON in AI response: " + raw)
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: "Tu es un calculateur nutritionnel précis. Tu réponds uniquement avec du JSON valide, rien d'autre." },
+          { role: "user", content: prompt },
+        ],
+        max_tokens: 200,
+        temperature: 0,
+      })
 
-    const parsed = JSON.parse(match[0]) as {
-      calories: number
-      proteins: number
-      carbs: number
-      fats: number
-      fiber: number
-      summary: string
+      const raw = completion.choices[0]?.message?.content?.trim() ?? ""
+      const match = raw.match(/\{[\s\S]*\}/)
+      if (!match) continue
+
+      let parsed: Partial<RecoPayload>
+      try { parsed = JSON.parse(match[0]) } catch { continue }
+
+      const { calories, proteins, carbs, fats, fiber, summary } = parsed
+      if (!calories || !proteins || !carbs || !fats) continue
+
+      reco = {
+        calories: Math.round(calories),
+        proteins: Math.round(proteins),
+        carbs:    Math.round(carbs),
+        fats:     Math.round(fats),
+        fiber:    Math.round(fiber ?? Math.round((calories / 1000) * 14)),
+        summary:  summary ?? "",
+      }
+      break
     }
 
-    const reco = {
-      calories: Math.round(parsed.calories),
-      proteins: Math.round(parsed.proteins),
-      carbs:    Math.round(parsed.carbs),
-      fats:     Math.round(parsed.fats),
-      fiber:    Math.round(parsed.fiber),
-      summary:  parsed.summary ?? "",
-    }
+    if (!reco) return Response.json({ error: "incomplete_reco" }, { status: 500 })
 
     const now = new Date()
     await prisma.user.update({
