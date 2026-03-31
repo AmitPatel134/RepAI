@@ -415,13 +415,6 @@ En regardant tes séances récentes, voici mes observations :
           const sections = parseResponseSections(lastSession.response)
           return (
             <div className="flex flex-col gap-3">
-              {/* Question bubble */}
-              <div className="flex justify-center">
-                <div className="bg-white border border-gray-100 rounded-2xl px-4 py-3 max-w-sm text-center shadow-sm">
-                  <p className="text-sm font-semibold text-gray-800 leading-snug">{lastSession.question}</p>
-                  <p className="text-[10px] text-gray-400 mt-1">{formatDate(lastSession.createdAt)}</p>
-                </div>
-              </div>
               {/* Sections */}
               {sections.filter(s => s.title).map((s, i) => (
                 <AccordionSection key={i} index={i} title={s.title!} subtitle={s.subtitle} body={s.body} defaultOpen={s.defaultOpen} />
