@@ -109,26 +109,41 @@ export async function POST(request: NextRequest) {
     }
     const calories = Math.round(tdee + (CALORIE_DELTA[goal] ?? 0))
 
-    // Macro ratios — % of calories, by goal
-    // proteins (4 kcal/g), carbs (4 kcal/g), fats (9 kcal/g)
-    const MACRO_RATIOS: Record<string, [number, number, number]> = {
-      // goal              [protein%, carb%, fat%]
-      prise_de_masse:     [0.30, 0.45, 0.25],
-      force_max:          [0.35, 0.40, 0.25],
-      perte_de_poids:     [0.40, 0.35, 0.25],
-      performance_cardio: [0.20, 0.55, 0.25],
-      endurance:          [0.20, 0.55, 0.25],
-      competition:        [0.30, 0.45, 0.25],
-      sante_cardiaque:    [0.25, 0.45, 0.30],
-      bien_etre:          [0.25, 0.45, 0.30],
-      maintien:           [0.25, 0.45, 0.30],
-      flexibilite:        [0.25, 0.45, 0.30],
-      reeducation:        [0.30, 0.40, 0.30],
+    // Macros — evidence-based g/kg body weight (not % of calories)
+    // Protein 4 kcal/g, carbs 4 kcal/g, fats 9 kcal/g
+    const PROTEIN_PER_KG: Record<string, number> = {
+      prise_de_masse:     2.0,  // hypertrophy sweet spot
+      force_max:          2.0,
+      perte_de_poids:     2.2,  // higher to preserve muscle in deficit
+      performance_cardio: 1.6,
+      endurance:          1.6,
+      competition:        2.0,
+      sante_cardiaque:    1.4,
+      bien_etre:          1.5,
+      maintien:           1.6,
+      flexibilite:        1.4,
+      reeducation:        1.8,
     }
-    const [pPct, cPct, fPct] = MACRO_RATIOS[goal] ?? [0.25, 0.45, 0.30]
-    const proteins = Math.round((calories * pPct) / 4)
-    const carbs    = Math.round((calories * cPct) / 4)
-    const fats     = Math.round((calories * fPct) / 9)
+    const FAT_PER_KG: Record<string, number> = {
+      prise_de_masse:     1.0,
+      force_max:          1.0,
+      perte_de_poids:     0.8,  // minimum for hormonal health
+      performance_cardio: 1.0,
+      endurance:          0.9,
+      competition:        1.0,
+      sante_cardiaque:    1.1,  // slightly higher healthy fats
+      bien_etre:          1.0,
+      maintien:           1.0,
+      flexibilite:        1.0,
+      reeducation:        1.0,
+    }
+
+    // Cap protein at 35% of calories to avoid extreme values in large deficits
+    const proteinTarget = Math.round(weight * (PROTEIN_PER_KG[goal] ?? 1.6))
+    const proteins = Math.min(proteinTarget, Math.round((calories * 0.35) / 4))
+    const fats     = Math.round(weight * (FAT_PER_KG[goal] ?? 1.0))
+    // Carbs fill the remaining calories
+    const carbs    = Math.max(50, Math.round((calories - proteins * 4 - fats * 9) / 4))
     const fiber    = Math.round(calories / 1000 * 14)   // ~14g per 1000 kcal
 
     // ── 2. AI for summary only ───────────────────────────────────────────────
