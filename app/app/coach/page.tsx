@@ -68,7 +68,7 @@ function renderBody(text: string) {
     .replace(/\n/g, "<br/>")
 }
 
-function AccordionSection({ title, subtitle, body, defaultOpen }: { title: string; subtitle: string | null; body: string; defaultOpen: boolean }) {
+function AccordionSection({ index, title, subtitle, body, defaultOpen }: { index: number; title: string; subtitle: string | null; body: string; defaultOpen: boolean }) {
   const [open, setOpen] = useState(defaultOpen)
   const contentRef = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState(defaultOpen ? "auto" : "0px")
@@ -80,27 +80,31 @@ function AccordionSection({ title, subtitle, body, defaultOpen }: { title: strin
   }, [open])
 
   return (
-    <div className="rounded-xl border border-violet-200 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-start justify-between px-4 py-3 bg-violet-100 hover:bg-violet-200 transition-colors text-left gap-3"
+        className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50/80 transition-colors"
       >
+        <span className="w-7 h-7 rounded-xl bg-violet-600 text-white text-xs font-black flex items-center justify-center shrink-0 shadow-md shadow-violet-300/40">
+          {index + 1}
+        </span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-violet-900 leading-snug">{title}</p>
+          <p className="text-sm font-bold text-gray-900 leading-snug">{title}</p>
           {!open && subtitle && (
-            <p className="text-xs text-violet-700/75 mt-1 leading-snug">{subtitle}</p>
+            <p className="text-xs text-gray-500 mt-0.5 leading-snug">{subtitle}</p>
           )}
         </div>
         <svg
-          className={`w-3.5 h-3.5 text-violet-700 transition-transform duration-300 shrink-0 mt-0.5 ${open ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-300 shrink-0 ${open ? "rotate-180" : ""}`}
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
       <div style={{ height, overflow: "hidden", transition: "height 0.28s ease" }}>
-        <div ref={contentRef} className="px-4 py-3 bg-white">
+        <div ref={contentRef} className="px-4 pb-4 pt-0">
+          <div className="h-px bg-gray-100 mb-3" />
           <div
             className="text-sm text-gray-700 font-medium leading-relaxed"
             dangerouslySetInnerHTML={{ __html: renderBody(body) }}
@@ -267,7 +271,7 @@ En regardant tes séances récentes, voici mes observations :
   if (!ready) return <LoadingScreen color="#7c3aed" />
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
+    <div className="min-h-screen bg-gray-950 text-white pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
       {isDemo && (
         <div className="bg-violet-700 px-6 py-2 flex items-center justify-between shrink-0">
           <p className="text-xs font-semibold text-violet-100">
@@ -307,100 +311,82 @@ En regardant tes séances récentes, voici mes observations :
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto w-full px-4 py-6 md:px-6 md:py-8 flex flex-col gap-6">
+      <div className="max-w-3xl mx-auto w-full px-4 py-6 md:px-6 md:py-8 flex flex-col gap-5">
 
-        {/* Quick questions */}
-        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-          <button
-            onClick={() => setQuickOpen(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-colors"
-          >
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Questions rapides</span>
-            <svg
-              className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${quickOpen ? "rotate-180" : ""}`}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div
-            style={{
-              maxHeight: quickOpen ? "500px" : "0px",
-              opacity: quickOpen ? 1 : 0,
-              transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease",
-              overflow: "hidden",
-            }}
-          >
-            <div className="px-4 pb-4 flex flex-col gap-2">
-              {QUICK_QUESTIONS.map(q => (
-                <button
-                  key={q}
-                  onClick={() => { setQuestion(q); setQuickOpen(false) }}
-                  className="w-full px-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs font-semibold text-gray-600 hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50 hover:shadow-sm transition-all text-center"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
+        {/* Quick questions — horizontal chips */}
+        <div>
+          <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-2.5 px-0.5">Questions rapides</p>
+          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+            {QUICK_QUESTIONS.map(q => (
+              <button
+                key={q}
+                onClick={() => setQuestion(q)}
+                className="shrink-0 px-3.5 py-2 bg-white/6 border border-white/10 rounded-full text-xs font-semibold text-gray-400 hover:bg-violet-600/20 hover:text-violet-300 hover:border-violet-500/40 transition-all whitespace-nowrap"
+              >
+                {q}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Ask input */}
-        {/* Plan tier indicator */}
-        {!isDemo && plan !== "free" && (
-          <div className="flex items-center gap-2 mb-1">
-            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${plan === "premium_plus" ? "bg-violet-100 text-violet-700" : "bg-gray-100 text-gray-600"}`}>
-              {plan === "premium_plus" ? "IA Premium+" : "IA Premium"}
-            </span>
-            <span className="text-[10px] text-gray-400 font-medium">
-              {plan === "premium_plus" ? "Analyse croisée · Détection de patterns" : "Conseils personnalisés · Données complètes"}
-            </span>
-          </div>
-        )}
-        <div className="flex flex-col sm:flex-row gap-2">
+        {/* Input card */}
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-xl">
+          {!isDemo && plan !== "free" && (
+            <div className="flex items-center gap-2 mb-3">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${plan === "premium_plus" ? "bg-violet-600/20 text-violet-400 border-violet-500/30" : "bg-white/8 text-gray-400 border-white/10"}`}>
+                {plan === "premium_plus" ? "Premium+" : "Premium"}
+              </span>
+              <span className="text-[10px] text-gray-600">
+                {plan === "premium_plus" ? "Analyse croisée · Patterns" : "Conseils personnalisés"}
+              </span>
+            </div>
+          )}
           <textarea
             value={question}
             onChange={e => setQuestion(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAsk() } }}
-            placeholder={weeklyLimitReached ? "Limite hebdomadaire atteinte — passez Pro pour des questions illimitées" : "Posez votre question au coach…"}
+            placeholder={weeklyLimitReached ? "Limite hebdomadaire atteinte — passez Pro" : "Pose ta question au coach…"}
             rows={3}
             disabled={weeklyLimitReached}
-            className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 font-medium outline-none focus:border-violet-400 transition-colors resize-none disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full bg-transparent text-white text-sm placeholder-gray-600 font-medium outline-none resize-none disabled:opacity-50"
           />
-          <button
-            onClick={handleAsk}
-            disabled={!question.trim() || loading || weeklyLimitReached}
-            className="sm:self-end px-5 py-3 bg-violet-600 hover:bg-violet-500 rounded-2xl font-bold text-sm text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            )}
-            {loading ? "Analyse…" : "Demander"}
-          </button>
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-800">
+            <span className="text-[10px] text-gray-700">Entrée pour envoyer</span>
+            <button
+              onClick={handleAsk}
+              disabled={!question.trim() || loading || weeklyLimitReached}
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-xl font-bold text-xs text-white transition-colors disabled:opacity-40 shadow-lg shadow-violet-900/40"
+            >
+              {loading ? (
+                <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              )}
+              {loading ? "Analyse…" : "Demander"}
+            </button>
+          </div>
         </div>
 
         {/* Loading */}
         {loading && (
-          <div className="bg-violet-50 border border-violet-200 rounded-2xl p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-7 h-7 rounded-xl bg-violet-600 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 text-white animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-              </div>
-              <p className="text-xs font-bold text-violet-600">Coach analyse vos données…</p>
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-900/50">
+              <svg className="w-5 h-5 text-white animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
             </div>
-            <div className="flex gap-1">
-              {[0, 1, 2].map(i => (
-                <div key={i} className="w-2 h-2 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-              ))}
+            <div className="flex-1">
+              <p className="text-sm font-bold text-white mb-2">Analyse en cours…</p>
+              <div className="flex gap-1.5">
+                {[0, 1, 2, 3].map(i => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-bounce" style={{ animationDelay: `${i * 0.12}s` }} />
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -409,18 +395,20 @@ En regardant tes séances récentes, voici mes observations :
         {!loading && lastSession && (() => {
           const sections = parseResponseSections(lastSession.response)
           return (
-            <div className="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col gap-3">
-              {/* Question */}
-              <div className="text-center">
-                <p className="text-sm font-semibold text-gray-900 leading-relaxed">{lastSession.question}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{formatDate(lastSession.createdAt)}</p>
+            <div className="flex flex-col gap-3">
+              {/* Question bubble */}
+              <div className="flex justify-center">
+                <div className="bg-white/8 border border-white/10 rounded-2xl px-4 py-3 max-w-sm text-center">
+                  <p className="text-sm font-semibold text-white leading-snug">{lastSession.question}</p>
+                  <p className="text-[10px] text-gray-600 mt-1">{formatDate(lastSession.createdAt)}</p>
+                </div>
               </div>
-              {/* Accordion sections */}
+              {/* Sections */}
               {sections.filter(s => s.title).map((s, i) => (
-                <AccordionSection key={i} title={s.title!} subtitle={s.subtitle} body={s.body} defaultOpen={s.defaultOpen} />
+                <AccordionSection key={i} index={i} title={s.title!} subtitle={s.subtitle} body={s.body} defaultOpen={s.defaultOpen} />
               ))}
               {!sections.some(s => s.title) && (
-                <div className="text-sm text-gray-700 font-medium leading-relaxed px-1" dangerouslySetInnerHTML={{ __html: renderBody(lastSession.response) }} />
+                <div className="bg-white rounded-2xl shadow-lg p-4 text-sm text-gray-700 font-medium leading-relaxed" dangerouslySetInnerHTML={{ __html: renderBody(lastSession.response) }} />
               )}
             </div>
           )
@@ -428,10 +416,14 @@ En regardant tes séances récentes, voici mes observations :
 
         {/* Empty state */}
         {!loading && !lastSession && (
-          <div className="text-center py-12">
-            <p className="text-4xl mb-4">🤖</p>
-            <p className="text-gray-700 font-semibold mb-2">Posez votre première question</p>
-            <p className="text-gray-400 text-sm">Le coach analysera vos données sportives et alimentaires pour vous répondre</p>
+          <div className="text-center py-14">
+            <div className="w-14 h-14 rounded-2xl bg-violet-600/20 border border-violet-500/20 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <p className="text-white font-semibold mb-1">Pose ta première question</p>
+            <p className="text-gray-600 text-sm">Le coach analysera tes données pour te répondre</p>
           </div>
         )}
       </div>
