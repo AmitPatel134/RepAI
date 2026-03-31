@@ -54,10 +54,10 @@ function renderBody(text: string) {
     .replace(/\n/g, "<br/>")
 }
 
-function AccordionSection({ title, body, defaultOpen }: { title: string; body: string; defaultOpen: boolean }) {
-  const [open, setOpen] = useState(defaultOpen)
+function AccordionSection({ title, body }: { title: string; body: string }) {
+  const [open, setOpen] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
-  const [height, setHeight] = useState(defaultOpen ? "auto" : "0px")
+  const [height, setHeight] = useState("0px")
 
   useEffect(() => {
     if (contentRef.current) {
@@ -65,16 +65,44 @@ function AccordionSection({ title, body, defaultOpen }: { title: string; body: s
     }
   }, [open])
 
+  // Keywords: extract bold text (**...**) as chips
+  const keywords = (body.match(/\*\*(.*?)\*\*/g) ?? [])
+    .map(m => m.replace(/\*\*/g, "").trim())
+    .filter(k => k.length > 0 && k.length < 48)
+    .slice(0, 4)
+
+  // Fallback: first non-bullet sentence
+  const preview = body
+    .split("\n")
+    .map(l => l.trim())
+    .find(l => l && !l.startsWith("-") && !l.startsWith("*") && !l.startsWith("#"))
+    ?.replace(/\*\*(.*?)\*\*/g, "$1")
+    .slice(0, 95) ?? ""
+
   return (
     <div className="rounded-xl border border-violet-200 overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-violet-100 hover:bg-violet-200 transition-colors text-left"
+        className="w-full flex items-start justify-between px-4 py-3 bg-violet-100 hover:bg-violet-200 transition-colors text-left gap-3"
       >
-        <p className="text-sm font-bold text-violet-900">{title}</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-violet-900 leading-snug">{title}</p>
+          {!open && keywords.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {keywords.map(k => (
+                <span key={k} className="text-[10px] font-bold bg-violet-200/80 text-violet-800 px-2 py-0.5 rounded-full leading-none">
+                  {k}
+                </span>
+              ))}
+            </div>
+          )}
+          {!open && keywords.length === 0 && preview && (
+            <p className="text-xs text-violet-700/70 mt-1 leading-snug line-clamp-2">{preview}</p>
+          )}
+        </div>
         <svg
-          className={`w-3.5 h-3.5 text-violet-700 transition-transform duration-300 shrink-0 ml-2 ${open ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 text-violet-700 transition-transform duration-300 shrink-0 mt-0.5 ${open ? "rotate-180" : ""}`}
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -398,7 +426,7 @@ En regardant tes séances récentes, voici mes observations :
               </div>
               {/* Accordion sections */}
               {sections.filter(s => s.title).map((s, i) => (
-                <AccordionSection key={i} title={s.title!} body={s.body} defaultOpen={true} />
+                <AccordionSection key={i} title={s.title!} body={s.body} />
               ))}
               {!sections.some(s => s.title) && (
                 <div className="text-sm text-gray-700 font-medium leading-relaxed px-1" dangerouslySetInnerHTML={{ __html: renderBody(lastSession.response) }} />
