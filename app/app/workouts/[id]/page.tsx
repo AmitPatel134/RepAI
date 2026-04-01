@@ -828,8 +828,30 @@ export default function WorkoutDetailPage() {
     }
   }
 
-  if (!ready) return <LoadingScreen color="#2563eb" />
-  if (!workout) return null
+  if (!workout) return (
+    <div className="min-h-screen bg-gray-100 text-gray-900">
+      {/* Header skeleton */}
+      <div className="sticky top-3 z-40 px-3 md:px-4 pt-3">
+        <div className="bg-blue-600/85 backdrop-blur-xl rounded-2xl shadow-lg shadow-blue-900/20 px-4 pt-3.5 pb-3.5">
+          <div className="flex items-center gap-2">
+            <button onClick={() => router.push("/app/activities")} className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <div className="flex-1 min-w-0">
+              <div className="h-2.5 bg-white/20 rounded-lg animate-pulse w-16 mb-1.5" />
+              <div className="h-5 bg-white/20 rounded-lg animate-pulse w-44" />
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Exercises skeleton */}
+      <div className="flex flex-col gap-2.5 pt-5 px-3 pb-8">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-28 bg-gray-200 rounded-2xl animate-pulse" />
+        ))}
+      </div>
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900">

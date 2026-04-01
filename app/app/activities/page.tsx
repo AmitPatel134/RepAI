@@ -690,7 +690,7 @@ export default function ActivitiesPage() {
           </div>
 
           {/* Free plan usage */}
-          {!isDemo && plan === "free" && (
+          {!loading && !isDemo && plan === "free" && (
             <div className="flex items-center justify-between mt-3">
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
