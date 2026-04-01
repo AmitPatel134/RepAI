@@ -830,17 +830,40 @@ export default function WorkoutDetailPage() {
 
   if (!workout) return (
     <div className="min-h-screen bg-gray-100 text-gray-900">
+      {upgradeMsg && <UpgradeModal message={upgradeMsg} onClose={() => setUpgradeMsg(null)} />}
+      {showPicker && <ExercisePicker onSelect={handleSelectExercise} onClose={() => setShowPicker(false)} />}
+      {showDeleteConfirm && (
+        <div data-modal="" className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="modal-enter bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <p className="text-base font-extrabold text-gray-900 mb-2 text-center">Supprimer la séance ?</p>
+            <p className="text-sm text-gray-400 text-center mb-6">Cette action est irréversible.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-3 border border-gray-200 rounded-2xl text-sm font-bold text-gray-600">Annuler</button>
+              <button onClick={handleDelete} disabled={deleting} className="flex-1 py-3 bg-red-500 rounded-2xl text-sm font-bold text-white disabled:opacity-50">{deleting ? "..." : "Confirmer"}</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header skeleton */}
       <div className="sticky top-3 z-40 px-3 md:px-4 pt-3">
         <div className="bg-blue-600/85 backdrop-blur-xl rounded-2xl shadow-lg shadow-blue-900/20 px-4 pt-3.5 pb-3.5">
           <div className="flex items-center gap-2">
-            <button onClick={() => router.push("/app/activities")} className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0">
+            <button onClick={() => router.push("/app/activities")} className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 hover:bg-white/30 transition-colors">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             </button>
             <div className="flex-1 min-w-0">
               <div className="h-2.5 bg-white/20 rounded-lg animate-pulse w-16 mb-1.5" />
               <div className="h-5 bg-white/20 rounded-lg animate-pulse w-44" />
             </div>
+            <button onClick={() => setShowDeleteConfirm(true)} className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 hover:bg-red-500/60 transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </button>
+            <button onClick={() => { originalExercises.current = JSON.parse(JSON.stringify(exercises)); setShowPicker(true) }} className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 hover:bg-white/30 transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+            </button>
+            <button onClick={enterEditMode} className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 hover:bg-white/30 transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            </button>
           </div>
         </div>
       </div>
