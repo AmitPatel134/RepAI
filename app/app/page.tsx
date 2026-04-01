@@ -173,8 +173,6 @@ function HomePageInner() {
     }
   }
 
-  if (!ready) return <LoadingScreen color="#111827" />
-
   if (noSession) {
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-6 text-center gap-6">
@@ -236,6 +234,12 @@ function HomePageInner() {
       <div className="max-w-2xl mx-auto px-4 flex flex-col gap-4">
 
         {/* ── STATS — pulled up over hero ─────────────────────────── */}
+        {!ready ? (
+          <div className="grid grid-cols-2 gap-3 -mt-10 relative z-10">
+            <div className="h-24 bg-gray-800/40 rounded-2xl animate-pulse" />
+            <div className="h-24 bg-gray-800/40 rounded-2xl animate-pulse" />
+          </div>
+        ) : (
         <div className="grid grid-cols-2 gap-3 -mt-10 relative z-10">
           {/* Séances cette semaine */}
           <div className="relative overflow-hidden bg-blue-600 rounded-2xl p-4 shadow-lg shadow-blue-600/30">
@@ -290,9 +294,12 @@ function HomePageInner() {
             )}
           </div>
         </div>
+        )}
 
         {/* ── PROFILE CARD ────────────────────────────────────────── */}
-        {profile?.profileComplete ? (
+        {!ready ? (
+          <div className="h-32 bg-gray-800/40 rounded-2xl animate-pulse" />
+        ) : profile?.profileComplete ? (
           <a href="/app/profil" className="relative overflow-hidden bg-white border border-gray-100 rounded-2xl px-4 py-3.5 flex items-center gap-3 hover:border-violet-200 transition-colors group shadow-sm">
             <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-violet-500" />
             <div className="flex-1 min-w-0 ml-1">
@@ -340,6 +347,9 @@ function HomePageInner() {
         )}
 
         {/* ── AI COACH CARD ────────────────────────────────────────── */}
+        {!ready ? (
+          <div className="h-40 bg-gray-800/40 rounded-2xl animate-pulse" />
+        ) : (
         <div className="relative overflow-hidden bg-gray-900 rounded-2xl p-5">
           {/* Pattern */}
           <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, rgba(139,92,246,0.12) 1px, transparent 1px)', backgroundSize: '18px 18px' }} />
@@ -381,9 +391,12 @@ function HomePageInner() {
             </a>
           </div>
         </div>
+        )}
 
         {/* ── NUTRITION RECO ──────────────────────────────────────── */}
-        {nutritionReco?.locked ? (
+        {!ready ? (
+          <div className="h-40 bg-gray-800/40 rounded-2xl animate-pulse" />
+        ) : nutritionReco?.locked ? (
           // Free plan — locked card
           <div className="relative overflow-hidden bg-white border border-orange-100 rounded-2xl p-5 shadow-sm">
             <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-orange-400" />

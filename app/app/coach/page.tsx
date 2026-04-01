@@ -268,8 +268,6 @@ En regardant tes séances récentes, voici mes observations :
     }
   }
 
-  if (!ready) return <LoadingScreen color="#7c3aed" />
-
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
       {isDemo && (
@@ -289,7 +287,7 @@ En regardant tes séances récentes, voici mes observations :
           <p className="text-xs font-medium text-white/60 mb-1">Entraîneur IA personnalisé</p>
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-3xl font-bold text-white tracking-tight font-[family-name:var(--font-barlow-condensed)]">Coach IA</h1>
-            {!isDemo && plan === "free" && (
+            {ready && !isDemo && plan === "free" && (
               <div className="flex flex-col items-end gap-0.5">
                 <div className="flex items-center gap-2">
                   <div className="flex gap-1">
@@ -410,8 +408,17 @@ En regardant tes séances récentes, voici mes observations :
           </div>
         )}
 
+        {/* Last session / Empty state / Skeleton */}
+        {!ready && (
+          <div className="flex flex-col gap-3">
+            <div className="h-10 bg-gray-200 rounded-2xl animate-pulse" />
+            <div className="h-12 bg-gray-200 rounded-2xl animate-pulse" />
+            <div className="h-12 bg-gray-200 rounded-2xl animate-pulse" />
+          </div>
+        )}
+
         {/* Last session */}
-        {!loading && lastSession && (() => {
+        {ready && !loading && lastSession && (() => {
           const sections = parseResponseSections(lastSession.response)
           return (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -434,7 +441,7 @@ En regardant tes séances récentes, voici mes observations :
         })()}
 
         {/* Empty state */}
-        {!loading && !lastSession && (
+        {ready && !loading && !lastSession && (
           <div className="text-center py-12">
             <p className="text-4xl mb-4">🤖</p>
             <p className="text-gray-700 font-semibold mb-2">Posez votre première question</p>

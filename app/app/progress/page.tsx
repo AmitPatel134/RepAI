@@ -284,8 +284,6 @@ export default function ProgressPage() {
     return () => clearTimeout(t)
   }, [ready, monthOffset, rawWorkouts])
 
-  if (!ready) return <LoadingScreen color="#dc2626" />
-
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
       {isDemo && (
@@ -311,8 +309,19 @@ export default function ProgressPage() {
 
       <div className="max-w-5xl mx-auto px-4 py-6 md:px-6 md:py-8">
 
+        {/* Skeleton while loading */}
+        {!ready && (
+          <div className="flex flex-col gap-4">
+            <div className="h-24 bg-gray-200 rounded-2xl animate-pulse" />
+            <div className="h-32 bg-gray-200 rounded-2xl animate-pulse" />
+            <div className="h-8 bg-gray-200 rounded-2xl animate-pulse" />
+            <div className="h-8 bg-gray-200 rounded-2xl animate-pulse" />
+            <div className="h-8 bg-gray-200 rounded-2xl animate-pulse" />
+          </div>
+        )}
+
         {/* Activity chart */}
-        {visible.activity && ((() => {
+        {ready && visible.activity && ((() => {
           const historyLimitDate = plan === "free" ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) : null
           const visibleWorkouts = historyLimitDate
             ? rawWorkouts.filter(w => new Date(w.date) >= historyLimitDate)
@@ -427,7 +436,7 @@ export default function ProgressPage() {
         )}
 
         {/* Progression chart */}
-        {visible.progression && (
+        {ready && visible.progression && (
           <div className="bg-white border border-gray-200 rounded-3xl mb-3 md:mb-4 overflow-hidden">
             <div className="h-1 bg-gradient-to-r from-red-600 via-red-500 to-rose-400" />
             <div className="p-4 md:p-6">
@@ -523,7 +532,7 @@ export default function ProgressPage() {
         )}
 
         {/* Weight tracking */}
-        {visible.weight && !isDemo && (() => {
+        {ready && visible.weight && !isDemo && (() => {
           const chartData = weightEntries.map(e => ({
             date: new Date(e.recordedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }),
             weight: e.weightKg,
@@ -619,7 +628,7 @@ export default function ProgressPage() {
         })()}
 
         {/* Personal Records */}
-        {visible.prs && (
+        {ready && visible.prs && (
           <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden">
             <div className="h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-400" />
             <div className="p-4 md:p-6">

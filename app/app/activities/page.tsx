@@ -638,12 +638,10 @@ export default function ActivitiesPage() {
     }
   }
 
-  if (loading) return <LoadingScreen color="#2563eb" />
-
   const isEmpty = unified.length === 0
 
   return (
-    <div className={`${isEmpty ? "h-screen overflow-hidden" : "min-h-screen"} bg-gray-100 text-gray-900`}>
+    <div className={`${(isEmpty && !loading) ? "h-screen overflow-hidden" : "min-h-screen"} bg-gray-100 text-gray-900`}>
 
       {/* Demo banner */}
       {isDemo && (
@@ -710,7 +708,13 @@ export default function ActivitiesPage() {
 
       {/* List */}
       <div className="pt-4 md:pb-8 pb-[calc(5rem+env(safe-area-inset-bottom))]">
-        {unified.length === 0 ? (
+        {loading ? (
+          <div className="max-w-3xl mx-auto px-4 pt-4 flex flex-col gap-3">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-16 bg-gray-200 rounded-2xl animate-pulse" />
+            ))}
+          </div>
+        ) : unified.length === 0 ? (
           <div className="flex flex-col items-center py-20 px-4">
             <div className="relative mb-8">
               <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-xl shadow-blue-200">

@@ -338,13 +338,11 @@ export default function NutritionPage() {
     }
   }
 
-  if (loading) return <LoadingScreen color="#f97316" />
-
   const mealLimit = 5
   const mealLimitReached = plan === "free" && mealsThisMonth >= mealLimit
 
   return (
-    <div className={`${meals.length === 0 ? "h-screen overflow-hidden" : "min-h-screen"} bg-gray-100 text-gray-900`}>
+    <div className={`${(meals.length === 0 && !loading) ? "h-screen overflow-hidden" : "min-h-screen"} bg-gray-100 text-gray-900`}>
 
       {/* Demo banner */}
       {isDemo && (
@@ -440,7 +438,14 @@ export default function NutritionPage() {
 
       {/* List */}
       <div className="pt-4 md:pb-8 pb-[calc(5rem+env(safe-area-inset-bottom))]">
-        {meals.length === 0 ? (
+        {loading ? (
+          <div className="max-w-3xl mx-auto px-4 pt-4 flex flex-col gap-3">
+            <div className="h-20 bg-gray-200 rounded-2xl animate-pulse" />
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-16 bg-gray-200 rounded-2xl animate-pulse" />
+            ))}
+          </div>
+        ) : meals.length === 0 ? (
           <div className="flex flex-col items-center py-20 px-4">
             <div className="relative mb-8">
               <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-xl shadow-orange-200">
