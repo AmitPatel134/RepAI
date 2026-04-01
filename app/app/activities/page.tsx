@@ -767,8 +767,17 @@ export default function ActivitiesPage() {
 
             {/* Empty state for months without data */}
             {currentMonth && currentMonth.days.length === 0 && (
-              <div className="text-center py-12 px-4">
+              <div className="text-center py-12 px-4 flex flex-col items-center gap-4">
                 <p className="text-gray-400 text-sm">Aucune activité enregistrée ce mois</p>
+                <button
+                  onClick={handleAdd}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-2xl hover:bg-blue-500 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Ajouter une séance
+                </button>
               </div>
             )}
 
@@ -835,7 +844,7 @@ export default function ActivitiesPage() {
             </div>
 
             {/* Load more button */}
-            {(hasMoreWorkouts || hasMoreActivities) && (
+            {(hasMoreWorkouts || hasMoreActivities) && currentMonth && currentMonth.days.length > 0 && (
               <div className="flex justify-center pt-2 pb-4 px-4">
                 <button
                   onClick={async () => {
