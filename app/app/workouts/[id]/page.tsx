@@ -967,30 +967,32 @@ export default function WorkoutDetailPage() {
                     <div className="grid grid-cols-12 gap-1 px-3 pb-1">
                       <p className="col-span-1 text-[10px] text-gray-400 font-bold text-center">#</p>
                       <p className="col-span-1 text-[10px] text-gray-400 font-bold text-center" />
-                      <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Reps</p>
-                      <p className="col-span-5 text-[10px] text-gray-400 font-bold text-center">Kg</p>
+                      <p className="col-span-3 text-[10px] text-gray-400 font-bold text-center">Reps</p>
+                      <p className="col-span-3 text-[10px] text-gray-400 font-bold text-center">Kg</p>
+                      <p className="col-span-2 text-[10px] text-gray-400 font-bold text-center">RPE</p>
                       <p className="col-span-1" />
                     </div>
                     <div className="px-3 flex flex-col gap-1 pb-2">
                       {ex.sets.map((s, setIdx) => (
-                        <div key={setIdx} className="flex flex-col gap-1">
+                        <div key={setIdx} className="flex flex-col gap-0.5">
                           {/* Ligne Gauche */}
                           <div className="grid grid-cols-12 gap-1 items-center">
                             <span className="col-span-1 text-[10px] text-gray-400 font-bold text-center">{setIdx + 1}</span>
                             <span className="col-span-1 text-[9px] font-bold text-gray-400 text-center">G</span>
-                            <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0} className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
-                            <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5} className="col-span-5 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
-                            <div className="col-span-1" />
+                            <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0} className="col-span-3 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                            <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5} className="col-span-3 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                            <input type="number" inputMode="decimal" value={s.rpe} onChange={e => updateSet(exIdx, setIdx, "rpe", e.target.value)} placeholder="RPE" min={1} max={10} step={0.5} className="col-span-2 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                            <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1} className="col-span-1 flex items-center justify-center text-red-400 hover:text-red-500 disabled:opacity-20">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
+                            </button>
                           </div>
                           {/* Ligne Droite */}
                           <div className="grid grid-cols-12 gap-1 items-center">
                             <span className="col-span-1" />
                             <span className="col-span-1 text-[9px] font-bold text-gray-400 text-center">D</span>
-                            <input type="number" inputMode="numeric" value={s.repsRight} onChange={e => updateSet(exIdx, setIdx, "repsRight", e.target.value)} placeholder="8" min={0} className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
-                            <input type="number" inputMode="decimal" value={s.weightRight} onChange={e => updateSet(exIdx, setIdx, "weightRight", e.target.value)} placeholder="0" min={0} step={0.5} className="col-span-5 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
-                            <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1} className="col-span-1 flex items-center justify-center text-gray-300 hover:text-red-400 disabled:opacity-20">
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
-                            </button>
+                            <input type="number" inputMode="numeric" value={s.repsRight} onChange={e => updateSet(exIdx, setIdx, "repsRight", e.target.value)} placeholder="8" min={0} className="col-span-3 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                            <input type="number" inputMode="decimal" value={s.weightRight} onChange={e => updateSet(exIdx, setIdx, "weightRight", e.target.value)} placeholder="0" min={0} step={0.5} className="col-span-3 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                            <span className="col-span-3" />
                           </div>
                         </div>
                       ))}
@@ -1002,7 +1004,7 @@ export default function WorkoutDetailPage() {
                     <div className="grid grid-cols-12 gap-1 px-3 pb-1">
                       <p className="col-span-1 text-[10px] text-gray-400 font-bold text-center">#</p>
                       <p className="col-span-3 text-[10px] text-gray-400 font-bold text-center">Reps</p>
-                      <p className="col-span-5 text-[10px] text-gray-400 font-bold text-center">Kg</p>
+                      <p className="col-span-3 text-[10px] text-gray-400 font-bold text-center">Kg</p>
                       <p className="col-span-2 text-[10px] text-gray-400 font-bold text-center">RPE</p>
                       <p className="col-span-1" />
                     </div>
@@ -1027,7 +1029,7 @@ export default function WorkoutDetailPage() {
                               <input type="number" inputMode="decimal" value={s.rpe} onChange={e => updateSet(exIdx, setIdx, "rpe", e.target.value)} placeholder="RPE" min={1} max={10} step={0.5} className="col-span-2 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
                             </>
                           )}
-                          <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1} className="col-span-1 flex items-center justify-center text-gray-300 hover:text-red-400 disabled:opacity-20">
+                          <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1} className="col-span-1 flex items-center justify-center text-red-400 hover:text-red-500 disabled:opacity-20">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
                           </button>
                         </div>
