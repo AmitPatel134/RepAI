@@ -963,29 +963,39 @@ export default function WorkoutDetailPage() {
                 {/* Sets */}
                 {ex.isUnilateral ? (
                   // ── Mode Unilatéral — 2 lignes par série ─────────────────
-                  <div className="px-3 flex flex-col gap-2 pb-2">
-                    {ex.sets.map((s, setIdx) => (
-                      <div key={setIdx} className="flex flex-col gap-1">
-                        {/* Ligne Gauche */}
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-5 text-xs text-gray-400 font-bold text-center shrink-0">{setIdx + 1}</span>
-                          <span className="text-[9px] font-bold text-violet-500 uppercase tracking-wide w-4 shrink-0">G</span>
-                          <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="Reps" min={0} className="flex-1 bg-violet-50/60 border border-violet-200 rounded-xl px-2 py-1.5 text-sm font-semibold outline-none text-center" />
-                          <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="Kg" min={0} step={0.5} className="flex-1 bg-violet-50/60 border border-violet-200 rounded-xl px-2 py-1.5 text-sm font-semibold outline-none text-center" />
+                  <>
+                    <div className="grid grid-cols-12 gap-1 px-3 pb-1">
+                      <p className="col-span-1 text-[10px] text-gray-400 font-bold text-center">#</p>
+                      <p className="col-span-1 text-[10px] text-gray-400 font-bold text-center" />
+                      <p className="col-span-4 text-[10px] text-gray-400 font-bold text-center">Reps</p>
+                      <p className="col-span-5 text-[10px] text-gray-400 font-bold text-center">Kg</p>
+                      <p className="col-span-1" />
+                    </div>
+                    <div className="px-3 flex flex-col gap-1 pb-2">
+                      {ex.sets.map((s, setIdx) => (
+                        <div key={setIdx} className="flex flex-col gap-1">
+                          {/* Ligne Gauche */}
+                          <div className="grid grid-cols-12 gap-1 items-center">
+                            <span className="col-span-1 text-[10px] text-gray-400 font-bold text-center">{setIdx + 1}</span>
+                            <span className="col-span-1 text-[9px] font-bold text-gray-400 text-center">G</span>
+                            <input type="number" inputMode="numeric" value={s.reps} onChange={e => updateSet(exIdx, setIdx, "reps", e.target.value)} placeholder="8" min={0} className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                            <input type="number" inputMode="decimal" value={s.weight} onChange={e => updateSet(exIdx, setIdx, "weight", e.target.value)} placeholder="0" min={0} step={0.5} className="col-span-5 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                            <div className="col-span-1" />
+                          </div>
+                          {/* Ligne Droite */}
+                          <div className="grid grid-cols-12 gap-1 items-center">
+                            <span className="col-span-1" />
+                            <span className="col-span-1 text-[9px] font-bold text-gray-400 text-center">D</span>
+                            <input type="number" inputMode="numeric" value={s.repsRight} onChange={e => updateSet(exIdx, setIdx, "repsRight", e.target.value)} placeholder="8" min={0} className="col-span-4 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                            <input type="number" inputMode="decimal" value={s.weightRight} onChange={e => updateSet(exIdx, setIdx, "weightRight", e.target.value)} placeholder="0" min={0} step={0.5} className="col-span-5 bg-blue-50/50 border border-blue-200 rounded-xl px-1 py-1.5 text-sm font-semibold outline-none focus:border-blue-500 text-center" />
+                            <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1} className="col-span-1 flex items-center justify-center text-gray-300 hover:text-red-400 disabled:opacity-20">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
+                            </button>
+                          </div>
                         </div>
-                        {/* Ligne Droite */}
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-5 shrink-0" />
-                          <span className="text-[9px] font-bold text-blue-500 uppercase tracking-wide w-4 shrink-0">D</span>
-                          <input type="number" inputMode="numeric" value={s.repsRight} onChange={e => updateSet(exIdx, setIdx, "repsRight", e.target.value)} placeholder="Reps" min={0} className="flex-1 bg-blue-50/60 border border-blue-200 rounded-xl px-2 py-1.5 text-sm font-semibold outline-none text-center" />
-                          <input type="number" inputMode="decimal" value={s.weightRight} onChange={e => updateSet(exIdx, setIdx, "weightRight", e.target.value)} placeholder="Kg" min={0} step={0.5} className="flex-1 bg-blue-50/60 border border-blue-200 rounded-xl px-2 py-1.5 text-sm font-semibold outline-none text-center" />
-                          <button onClick={() => removeSet(exIdx, setIdx)} disabled={ex.sets.length <= 1} className="w-5 shrink-0 flex items-center justify-center text-gray-300 hover:text-red-400 disabled:opacity-20">
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   // ── Mode Standard + Dégressif ─────────────────────────────
                   <>
