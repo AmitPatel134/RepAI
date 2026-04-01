@@ -501,8 +501,18 @@ export default function NutritionPage() {
             </div>
 
             {currentMonth && currentMonth.days.length === 0 && (
-              <div className="text-center py-12 px-4">
+              <div className="text-center py-12 px-4 flex flex-col items-center gap-4">
                 <p className="text-gray-400 text-sm">Aucun repas enregistré ce mois</p>
+                <button
+                  onClick={() => !isDemo && !mealLimitReached && fileInputRef.current?.click()}
+                  disabled={mealLimitReached}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white text-sm font-bold rounded-2xl hover:bg-orange-400 transition-colors disabled:opacity-50"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Ajouter un repas
+                </button>
               </div>
             )}
 
