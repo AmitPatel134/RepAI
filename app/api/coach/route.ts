@@ -62,6 +62,20 @@ export async function POST(request: NextRequest) {
     const { question, workoutContext, activityContext, nutritionContext } = await request.json()
     if (!question?.trim()) return Response.json({ error: "Question required" }, { status: 400 })
 
+    // Enforce input length limits — prevents prompt injection and token exhaustion
+    const MAX_QUESTION = 2_000
+    const MAX_CONTEXT  = 20_000
+    if (question.trim().length > MAX_QUESTION) {
+      return Response.json({ error: "Question trop longue (max 2 000 caractères)" }, { status: 400 })
+    }
+    if (
+      (workoutContext?.length  ?? 0) > MAX_CONTEXT ||
+      (activityContext?.length ?? 0) > MAX_CONTEXT ||
+      (nutritionContext?.length ?? 0) > MAX_CONTEXT
+    ) {
+      return Response.json({ error: "Contexte trop volumineux" }, { status: 400 })
+    }
+
     const user = await prisma.user.upsert({
       where: { email: authUser.email },
       update: {},

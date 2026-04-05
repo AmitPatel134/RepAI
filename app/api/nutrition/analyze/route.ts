@@ -36,6 +36,10 @@ export async function POST(request: NextRequest) {
     if (!composition || typeof composition !== "string" || !composition.trim()) {
       return Response.json({ error: "Composition required" }, { status: 400 })
     }
+    // Prevent prompt injection and token exhaustion
+    if (composition.length > 5_000) {
+      return Response.json({ error: "Composition trop longue (max 5 000 caractères)" }, { status: 400 })
+    }
 
     const prompt = `You are an expert nutritionist. Your task is to calculate the TOTAL nutritional values for the following list of ingredients.
 
@@ -108,8 +112,7 @@ IMPORTANT: You must compute and return numeric values for calories, proteins, ca
 
     return Response.json(result)
   } catch (e) {
-    const msg = (e as Error)?.message ?? String(e)
     console.error("Nutrition analyze error:", e)
-    return Response.json({ error: `Erreur Groq/analyze : ${msg}` }, { status: 500 })
+    return Response.json({ error: "Analyse impossible. Réessayez." }, { status: 500 })
   }
 }

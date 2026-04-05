@@ -69,6 +69,10 @@ export async function POST(request: NextRequest) {
 
     const { transcript, today } = await request.json()
     if (!transcript?.trim()) return Response.json({ error: "Transcript required" }, { status: 400 })
+    // Prevent prompt injection and token exhaustion
+    if (transcript.trim().length > 10_000) {
+      return Response.json({ error: "Transcript trop long (max 10 000 caractères)" }, { status: 400 })
+    }
 
     const dateContext = today
       ? `Aujourd'hui nous sommes le ${today} (format YYYY-MM-DD). Utilise cette date pour résoudre les références temporelles :

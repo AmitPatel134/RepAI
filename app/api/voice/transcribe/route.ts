@@ -20,6 +20,12 @@ export async function POST(request: NextRequest) {
     const audio = formData.get("audio") as File | null
     if (!audio) return Response.json({ error: "Audio required" }, { status: 400 })
 
+    // Groq Whisper limit is 25 MB — reject early to avoid memory exhaustion
+    const MAX_AUDIO_SIZE = 25 * 1024 * 1024
+    if (audio.size > MAX_AUDIO_SIZE) {
+      return Response.json({ error: "Fichier audio trop volumineux (max 25 Mo)" }, { status: 400 })
+    }
+
     const transcription = await groq.audio.transcriptions.create({
       file: audio,
       model: "whisper-large-v3",

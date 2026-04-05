@@ -5,7 +5,9 @@ import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
 import { NextRequest } from "next/server"
 
-const VALID_PLANS = ["free", "pro"]
+// Only downgrade to free is allowed via this endpoint.
+// Upgrades must go through Stripe checkout (/api/checkout) to ensure payment.
+const VALID_PLANS = ["free"]
 
 export async function PATCH(request: NextRequest) {
   try {

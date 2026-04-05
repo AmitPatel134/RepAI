@@ -72,6 +72,16 @@ export async function POST(request: NextRequest) {
 
     if (!type || !name) return Response.json({ error: "type and name required" }, { status: 400 })
 
+    // Numeric range validation — reject impossible/malicious values
+    const VALID_TYPES = new Set(["running","cycling","swimming","walking","hiking","rowing","elliptical","strength","other"])
+    if (!VALID_TYPES.has(type)) return Response.json({ error: "Type d'activité invalide" }, { status: 400 })
+    if (durationSec   != null && (typeof durationSec   !== "number" || durationSec   <= 0  || durationSec   > 7 * 86_400)) return Response.json({ error: "durationSec invalide" },   { status: 400 })
+    if (distanceM     != null && (typeof distanceM     !== "number" || distanceM     <  0  || distanceM     > 1_000_000))  return Response.json({ error: "distanceM invalide" },     { status: 400 })
+    if (elevationM    != null && (typeof elevationM    !== "number" || elevationM    < -500 || elevationM   > 10_000))     return Response.json({ error: "elevationM invalide" },    { status: 400 })
+    if (avgHeartRate  != null && (typeof avgHeartRate  !== "number" || avgHeartRate  <  20  || avgHeartRate  > 300))       return Response.json({ error: "avgHeartRate invalide" },  { status: 400 })
+    if (maxHeartRate  != null && (typeof maxHeartRate  !== "number" || maxHeartRate  <  20  || maxHeartRate  > 300))       return Response.json({ error: "maxHeartRate invalide" },  { status: 400 })
+    if (calories      != null && (typeof calories      !== "number" || calories      <  0   || calories      > 30_000))    return Response.json({ error: "calories invalide" },      { status: 400 })
+
     const avgSpeedKmh = distanceM && durationSec ? (distanceM / 1000) / (durationSec / 3600) : null
     const avgPaceSecKm = (type === "running" || type === "walking" || type === "hiking") && distanceM && durationSec
       ? Math.round(durationSec / (distanceM / 1000))

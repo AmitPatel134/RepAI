@@ -6,8 +6,14 @@ export const dynamic = "force-dynamic"
 
 function esc(v: unknown): string {
   if (v == null) return ""
-  const s = String(v)
-  if (s.includes(",") || s.includes('"') || s.includes("\n")) return `"${s.replace(/"/g, '""')}"`
+  let s = String(v)
+  // Prevent CSV formula injection: Excel/Sheets execute cells starting with =, +, -, @, |
+  // Prefix with a tab so the value is treated as text, not a formula.
+  if (/^[=+\-@|]/.test(s)) s = "\t" + s
+  // Quote cells that contain commas, quotes, newlines, or the injected leading tab
+  if (s.includes(",") || s.includes('"') || s.includes("\n") || s.includes("\t")) {
+    return `"${s.replace(/"/g, '""')}"`
+  }
   return s
 }
 

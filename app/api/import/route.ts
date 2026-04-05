@@ -108,84 +108,91 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    for (const [, w] of workoutMap) {
-      const exEntries = Array.from(w.exercises.entries())
-      await prisma.workout.create({
-        data: {
-          userId: user.id,
-          date: new Date(w.date),
-          name: w.name,
-          type: w.type,
-          notes: w.notes || null,
-          exercises: {
-            create: exEntries.map(([exName, ex], exIdx) => ({
-              name: exName,
-              category: "strength",
-              isUnilateral: ex.isUnilateral,
-              notes: ex.exNotes || null,
-              order: exIdx,
-              sets: { create: ex.sets },
-            })),
-          },
-        },
-      })
-      workoutsCreated++
-    }
-
-    // ── ACTIVITÉS CARDIO & AUTRES ─────────────────────────────────────────────
-    const actRows = (sections["ACTIVITÉS CARDIO & AUTRES"] ?? []).filter(r => r[0])
-    for (const row of actRows) {
-      const [date, type, name, duration, distanceM, avgHR, calories, pace, avgSpeedKmh, elevationM, notes] = row
-      if (!date || !type) continue
-      await prisma.activity.create({
-        data: {
-          userId: user.id,
-          date: new Date(date),
-          type, name: name || type,
-          durationSec: parseDuration(duration),
-          distanceM: n(distanceM),
-          avgHeartRate: n(avgHR) ? Math.round(n(avgHR)!) : null,
-          calories: n(calories) ? Math.round(n(calories)!) : null,
-          avgPaceSecKm: parsePace(pace),
-          avgSpeedKmh: n(avgSpeedKmh),
-          elevationM: n(elevationM),
-          notes: notes || null,
-        },
-      })
-      activitiesCreated++
-    }
-
-    // ── NUTRITION ─────────────────────────────────────────────────────────────
+    const actRows     = (sections["ACTIVITÉS CARDIO & AUTRES"] ?? []).filter(r => r[0])
     const nutritionRows = (sections["NUTRITION"] ?? []).filter(r => r[0])
-    for (const row of nutritionRows) {
-      const [date, name, calories, proteins, carbs, fats, fiber, notes] = row
-      if (!date || !name) continue
-      await prisma.meal.create({
-        data: {
-          userId: user.id,
-          date: new Date(date),
-          name,
-          calories: n(calories) ? Math.round(n(calories)!) : null,
-          proteins: n(proteins),
-          carbs: n(carbs),
-          fats: n(fats),
-          fiber: n(fiber),
-          notes: notes || null,
-        },
-      })
-      mealsCreated++
-    }
+    const weightRows  = (sections["SUIVI DU POIDS"] ?? []).filter(r => r[0] && r[1])
 
-    // ── SUIVI DU POIDS ────────────────────────────────────────────────────────
-    const weightRows = (sections["SUIVI DU POIDS"] ?? []).filter(r => r[0] && r[1])
-    for (const row of weightRows) {
-      const [date, weightKg] = row
-      if (!date || !weightKg) continue
-      await prisma.weightEntry.create({
-        data: { userId: user.id, recordedAt: new Date(date), weightKg: Number(weightKg) },
-      })
-      weightEntriesCreated++
-    }
+    // ── All inserts in a single transaction — all-or-nothing on failure ────────
+    await prisma.$transaction(async (tx) => {
+
+      // Workouts + exercises + sets
+      for (const [, w] of workoutMap) {
+        const exEntries = Array.from(w.exercises.entries())
+        await tx.workout.create({
+          data: {
+            userId: user.id,
+            date: new Date(w.date),
+            name: w.name,
+            type: w.type,
+            notes: w.notes || null,
+            exercises: {
+              create: exEntries.map(([exName, ex], exIdx) => ({
+                name: exName,
+                category: "strength",
+                isUnilateral: ex.isUnilateral,
+                notes: ex.exNotes || null,
+                order: exIdx,
+                sets: { create: ex.sets },
+              })),
+            },
+          },
+        })
+        workoutsCreated++
+      }
+
+      // Activities
+      for (const row of actRows) {
+        const [date, type, name, duration, distanceM, avgHR, calories, pace, avgSpeedKmh, elevationM, notes] = row
+        if (!date || !type) continue
+        await tx.activity.create({
+          data: {
+            userId: user.id,
+            date: new Date(date),
+            type, name: name || type,
+            durationSec: parseDuration(duration),
+            distanceM: n(distanceM),
+            avgHeartRate: n(avgHR) ? Math.round(n(avgHR)!) : null,
+            calories: n(calories) ? Math.round(n(calories)!) : null,
+            avgPaceSecKm: parsePace(pace),
+            avgSpeedKmh: n(avgSpeedKmh),
+            elevationM: n(elevationM),
+            notes: notes || null,
+          },
+        })
+        activitiesCreated++
+      }
+
+      // Nutrition
+      for (const row of nutritionRows) {
+        const [date, name, calories, proteins, carbs, fats, fiber, notes] = row
+        if (!date || !name) continue
+        await tx.meal.create({
+          data: {
+            userId: user.id,
+            date: new Date(date),
+            name,
+            calories: n(calories) ? Math.round(n(calories)!) : null,
+            proteins: n(proteins),
+            carbs: n(carbs),
+            fats: n(fats),
+            fiber: n(fiber),
+            notes: notes || null,
+          },
+        })
+        mealsCreated++
+      }
+
+      // Weight entries
+      for (const row of weightRows) {
+        const [date, weightKg] = row
+        if (!date || !weightKg) continue
+        await tx.weightEntry.create({
+          data: { userId: user.id, recordedAt: new Date(date), weightKg: Number(weightKg) },
+        })
+        weightEntriesCreated++
+      }
+
+    }, { timeout: 30_000 })
 
     return Response.json({ ok: true, workoutsCreated, activitiesCreated, mealsCreated, weightEntriesCreated })
   } catch (e) {
