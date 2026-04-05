@@ -159,6 +159,6 @@ Règles de calcul :
     return Response.json({ locked: false, reco, generatedAt: now })
   } catch (e) {
     console.error("[nutrition-reco POST]", e)
-    return Response.json({ error: "Server error", detail: String(e) }, { status: 500 })
+    return Response.json({ error: "Server error" }, { status: 500 })
   }
 }

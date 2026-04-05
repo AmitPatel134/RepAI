@@ -3,7 +3,7 @@ import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
-import { getCached, setCached, invalidateCache } from "@/lib/appCache"
+import { getCached, setCached, invalidateCache, setCurrentUser } from "@/lib/appCache"
 import LoadingScreen from "@/components/LoadingScreen"
 
 
@@ -101,6 +101,7 @@ function HomePageInner() {
   const [noSession, setNoSession] = useState(false)
   const [nutritionReco, setNutritionReco] = useState<NutritionReco | null>(null)
   const [generatingReco, setGeneratingReco] = useState(false)
+  const [recoError, setRecoError] = useState<string | null>(null)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
 
   // Detect post-payment redirect
@@ -129,6 +130,7 @@ function HomePageInner() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user?.id ?? null)
       if (!session) { setNoSession(true); setReady(true); return }
       const meta = session.user.user_metadata
       const name = meta?.full_name?.split(" ")[0] ?? meta?.name?.split(" ")[0] ?? null
@@ -164,10 +166,23 @@ function HomePageInner() {
 
   async function generateNutritionReco() {
     setGeneratingReco(true)
+    setRecoError(null)
     try {
       const r = await authFetch("/api/nutrition-reco", { method: "POST" })
       const nr = await r.json()
-      if (nr && !nr.error) { setNutritionReco(nr); setCached("/api/nutrition-reco", nr) }
+      if (nr && !nr.error) {
+        setNutritionReco(nr)
+        setCached("/api/nutrition-reco", nr)
+      } else {
+        const msg = nr?.error === "incomplete_reco"
+          ? "Le calcul a échoué, réessaie dans quelques secondes."
+          : nr?.error === "Too many requests. Please try again in a moment."
+          ? "Trop de tentatives, attends une minute."
+          : "Erreur lors de la génération, réessaie."
+        setRecoError(msg)
+      }
+    } catch {
+      setRecoError("Erreur réseau, réessaie.")
     } finally {
       setGeneratingReco(false)
     }
@@ -424,7 +439,7 @@ function HomePageInner() {
           <div className="relative overflow-hidden bg-white border border-orange-100 rounded-2xl p-5 shadow-sm">
             <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-orange-400" />
             <div className="ml-1">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-black text-orange-500 uppercase tracking-widest">Nutrition IA</span>
                   {nutritionReco.generatedAt && (
@@ -452,6 +467,9 @@ function HomePageInner() {
                   Régénérer
                 </button>
               </div>
+              {recoError && (
+                <p className="text-[11px] text-red-500 font-medium mb-2">{recoError}</p>
+              )}
 
               {nutritionReco.reco ? (
                 (() => {
