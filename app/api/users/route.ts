@@ -28,7 +28,12 @@ export async function PATCH(request: Request) {
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
   const { name, telephone, company } = await request.json()
-  if (!name) return Response.json({ error: "name is required" }, { status: 400 })
+  if (!name || typeof name !== "string" || name.trim().length === 0) {
+    return Response.json({ error: "name is required" }, { status: 400 })
+  }
+  if (name.length > 200)      return Response.json({ error: "name trop long (max 200)"      }, { status: 400 })
+  if (telephone && typeof telephone === "string" && telephone.length > 50)  return Response.json({ error: "telephone trop long (max 50)"   }, { status: 400 })
+  if (company   && typeof company   === "string" && company.length   > 200) return Response.json({ error: "company trop long (max 200)"   }, { status: 400 })
 
   const user = await prisma.user.update({
     where:  { email: authUser.email },

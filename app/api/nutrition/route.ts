@@ -59,7 +59,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, date, calories, proteins, carbs, fats, fiber, notes, imageThumb, imageUrl } = body
 
-    if (!name) return Response.json({ error: "name required" }, { status: 400 })
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      return Response.json({ error: "name requis" }, { status: 400 })
+    }
+    if (name.length > 200) return Response.json({ error: "name trop long (max 200)" }, { status: 400 })
+    if (notes && typeof notes === "string" && notes.length > 2_000) {
+      return Response.json({ error: "notes trop longues (max 2 000)" }, { status: 400 })
+    }
 
     const meal = await prisma.meal.create({
       data: {

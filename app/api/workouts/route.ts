@@ -73,6 +73,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, notes, date, exercises } = body
 
+    // Input length limits — prevent DB bloat and oversized payloads
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      return Response.json({ error: "name requis" }, { status: 400 })
+    }
+    if (name.length > 200) return Response.json({ error: "name trop long (max 200)" }, { status: 400 })
+    if (notes && typeof notes === "string" && notes.length > 2_000) {
+      return Response.json({ error: "notes trop longues (max 2 000)" }, { status: 400 })
+    }
+    if (Array.isArray(exercises)) {
+      for (const ex of exercises) {
+        if (typeof ex.name === "string" && ex.name.length > 200) {
+          return Response.json({ error: "Nom d'exercice trop long (max 200)" }, { status: 400 })
+        }
+      }
+    }
+
     const workout = await prisma.workout.create({
       data: {
         userId: user.id,

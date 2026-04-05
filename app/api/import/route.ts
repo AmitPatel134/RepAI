@@ -59,6 +59,12 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File
     if (!file) return Response.json({ error: "No file" }, { status: 400 })
 
+    // Reject before reading into memory — 10 MB is ample for any CSV export
+    const MAX_CSV_SIZE = 10 * 1024 * 1024
+    if (file.size > MAX_CSV_SIZE) {
+      return Response.json({ error: "Fichier trop volumineux (max 10 Mo)" }, { status: 400 })
+    }
+
     const text = await file.text()
     const lines = text.replace(/^\uFEFF/, "").split("\n").map(l => l.trim()).filter(Boolean)
 

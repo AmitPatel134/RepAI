@@ -16,6 +16,14 @@ export async function POST(request: NextRequest) {
 
   const { item, mode, tone = "professional", length = "standard", instructions = "" } = await request.json()
 
+  // Input length limits — prevent token exhaustion and prompt injection
+  if (!item?.name || typeof item.name !== "string") {
+    return Response.json({ error: "item.name requis" }, { status: 400 })
+  }
+  if (item.name.length        > 200)   return Response.json({ error: "item.name trop long (max 200)"        }, { status: 400 })
+  if ((item.description ?? "").length > 2_000) return Response.json({ error: "item.description trop long (max 2 000)" }, { status: 400 })
+  if (instructions.length     > 1_000) return Response.json({ error: "instructions trop longues (max 1 000)" }, { status: 400 })
+
   const email = authUser.email
 
   const itemDetails = [
