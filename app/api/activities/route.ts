@@ -71,6 +71,12 @@ export async function POST(request: NextRequest) {
     } = body
 
     if (!type || !name) return Response.json({ error: "type and name required" }, { status: 400 })
+    if (typeof name === "string" && name.length > 200) {
+      return Response.json({ error: "name trop long (max 200)" }, { status: 400 })
+    }
+    if (notes && typeof notes === "string" && notes.length > 2_000) {
+      return Response.json({ error: "notes trop longues (max 2 000)" }, { status: 400 })
+    }
 
     // Numeric range validation — reject impossible/malicious values
     const VALID_TYPES = new Set(["running","cycling","swimming","walking","hiking","rowing","elliptical","strength","other"])

@@ -61,8 +61,11 @@ export async function GET(request: NextRequest) {
 }
 
 function csvEscape(val: string): string {
-  if (val.includes(",") || val.includes('"') || val.includes("\n")) {
-    return `"${val.replace(/"/g, '""')}"`
+  // Prevent CSV formula injection (=, +, -, @, | trigger execution in Excel/Sheets)
+  let s = val
+  if (/^[=+\-@|]/.test(s)) s = "\t" + s
+  if (s.includes(",") || s.includes('"') || s.includes("\n") || s.includes("\t")) {
+    return `"${s.replace(/"/g, '""')}"`
   }
-  return val
+  return s
 }

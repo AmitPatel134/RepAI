@@ -45,7 +45,28 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const body = await request.json()
     const { name, notes, date, exercises } = body
 
-    // If exercises provided, replace them all
+    // Input limits — prevent DB bloat
+    if (name !== undefined && (typeof name !== "string" || name.trim().length === 0 || name.length > 200)) {
+      return Response.json({ error: "name invalide (max 200)" }, { status: 400 })
+    }
+    if (notes !== undefined && typeof notes === "string" && notes.length > 2_000) {
+      return Response.json({ error: "notes trop longues (max 2 000)" }, { status: 400 })
+    }
+    if (Array.isArray(exercises)) {
+      if (exercises.length > 50) {
+        return Response.json({ error: "Trop d'exercices (max 50 par séance)" }, { status: 400 })
+      }
+      for (const ex of exercises) {
+        if (typeof ex.name === "string" && ex.name.length > 200) {
+          return Response.json({ error: "Nom d'exercice trop long (max 200)" }, { status: 400 })
+        }
+        if (Array.isArray(ex.sets) && ex.sets.length > 200) {
+          return Response.json({ error: "Trop de séries par exercice (max 200)" }, { status: 400 })
+        }
+      }
+    }
+
+    // If exercises provided, replace them all — ownership already verified above (line 42)
     if (exercises !== undefined) {
       await prisma.exercise.deleteMany({ where: { workoutId: id } })
     }

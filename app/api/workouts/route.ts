@@ -82,9 +82,15 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "notes trop longues (max 2 000)" }, { status: 400 })
     }
     if (Array.isArray(exercises)) {
+      if (exercises.length > 50) {
+        return Response.json({ error: "Trop d'exercices (max 50 par séance)" }, { status: 400 })
+      }
       for (const ex of exercises) {
         if (typeof ex.name === "string" && ex.name.length > 200) {
           return Response.json({ error: "Nom d'exercice trop long (max 200)" }, { status: 400 })
+        }
+        if (Array.isArray(ex.sets) && ex.sets.length > 200) {
+          return Response.json({ error: "Trop de séries par exercice (max 200)" }, { status: 400 })
         }
       }
     }

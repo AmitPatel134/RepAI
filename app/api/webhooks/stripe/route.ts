@@ -96,6 +96,9 @@ export async function POST(request: NextRequest) {
         break
       }
 
+      default:
+        console.log(`[stripe webhook] Unhandled event type: ${event.type}`)
+
     }
   } catch (err) {
     console.error("[stripe webhook] Handler error:", err)

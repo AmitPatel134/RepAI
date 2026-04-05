@@ -24,7 +24,8 @@ const ROUTE_LIMITS: [string, number, number][] = [
   ["/api/support",            5,   60_000],
   ["/api/coach",              15,  60_000],  // own limiter is 10, middleware adds outer 15
   ["/api/generate",           15,  60_000],
-  ["/api/voice",              30,  60_000],
+  ["/api/dashboard",          10,  60_000],
+  ["/api/voice",              20,  60_000],  // matches per-route limiter in voice/parse
   ["/api/nutrition/analyze",  15,  60_000],
   ["/api/nutrition/describe", 15,  60_000],
   ["/api/nutrition-reco",     10,  60_000],

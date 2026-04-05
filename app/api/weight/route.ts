@@ -29,8 +29,9 @@ export async function POST(request: NextRequest) {
   if (!user) return Response.json({ error: "User not found" }, { status: 404 })
 
   const { weightKg, recordedAt } = await request.json()
-  if (!weightKg || isNaN(Number(weightKg))) {
-    return Response.json({ error: "Invalid weight" }, { status: 400 })
+  const w = Number(weightKg)
+  if (!weightKg || isNaN(w) || w < 10 || w > 500) {
+    return Response.json({ error: "Poids invalide (entre 10 et 500 kg)" }, { status: 400 })
   }
 
   const entry = await prisma.weightEntry.create({
