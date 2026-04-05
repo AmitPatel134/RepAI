@@ -203,6 +203,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ ok: true, workoutsCreated, activitiesCreated, mealsCreated, weightEntriesCreated })
   } catch (e) {
     console.error("[import POST]", e)
-    return Response.json({ error: "Import error", detail: String(e) }, { status: 500 })
+    return Response.json({ error: "Import error" }, { status: 500 })
   }
 }

@@ -216,35 +216,37 @@ export async function POST(request: NextRequest) {
     let importedExercises = 0
     let importedSets = 0
 
-    for (const [, wk] of workoutMap) {
-      await prisma.workout.create({
-        data: {
-          userId: user.id,
-          name: wk.name,
-          type: wk.type,
-          notes: wk.notes || null,
-          date: new Date(wk.date),
-          exercises: {
-            create: Array.from(wk.exercises.values()).map((ex, exOrder) => ({
-              name: ex.name,
-              order: exOrder,
-              sets: {
-                create: ex.sets.map(s => ({
-                  reps: s.reps,
-                  weight: s.weight,
-                  rpe: s.rpe,
-                  order: s.order,
-                })),
-              },
-            })),
+    await prisma.$transaction(async (tx) => {
+      for (const [, wk] of workoutMap) {
+        await tx.workout.create({
+          data: {
+            userId: user.id,
+            name: wk.name,
+            type: wk.type,
+            notes: wk.notes || null,
+            date: new Date(wk.date),
+            exercises: {
+              create: Array.from(wk.exercises.values()).map((ex, exOrder) => ({
+                name: ex.name,
+                order: exOrder,
+                sets: {
+                  create: ex.sets.map(s => ({
+                    reps: s.reps,
+                    weight: s.weight,
+                    rpe: s.rpe,
+                    order: s.order,
+                  })),
+                },
+              })),
+            },
           },
-        },
-      })
+        })
 
-      importedWorkouts++
-      importedExercises += wk.exercises.size
-      for (const ex of wk.exercises.values()) importedSets += ex.sets.length
-    }
+        importedWorkouts++
+        importedExercises += wk.exercises.size
+        for (const ex of wk.exercises.values()) importedSets += ex.sets.length
+      }
+    }, { timeout: 30_000 })
 
     return Response.json({
       success: true,
