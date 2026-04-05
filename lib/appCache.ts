@@ -7,6 +7,7 @@
  *   EXPIRED (> 5min) → cache miss, caller must fetch fresh
  *
  * Data is module-level and shared across all components in the same tab session.
+ * Cache is automatically cleared when the authenticated user changes.
  */
 
 const FRESH_TTL  = 60_000        // 1 min  — no refresh needed
@@ -14,6 +15,20 @@ const EXPIRE_TTL = 5 * 60_000   // 5 min  — hard expiry
 
 type Entry = { data: unknown; ts: number; refreshing?: boolean }
 const cache = new Map<string, Entry>()
+
+// Tracks the current user — cache is wiped on user change
+let currentUserId: string | null = null
+
+/**
+ * Call this whenever the authenticated user changes (login/logout/switch).
+ * Clears all cached data so the new user never sees another user's data.
+ */
+export function setCurrentUser(userId: string | null) {
+  if (userId !== currentUserId) {
+    cache.clear()
+    currentUserId = userId
+  }
+}
 
 // ── Core primitives ──────────────────────────────────────────────────────────
 

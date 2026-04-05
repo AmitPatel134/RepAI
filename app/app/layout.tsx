@@ -2,7 +2,8 @@
 import { usePathname, useRouter } from "next/navigation"
 import { useRef, useEffect } from "react"
 import AppSidebar from "@/components/AppSidebar"
-import { prefetchAll, refreshStale } from "@/lib/appCache"
+import { prefetchAll, refreshStale, setCurrentUser } from "@/lib/appCache"
+import { supabase } from "@/lib/supabase"
 import HomePage from "./page"
 import ActivitiesPage from "./activities/page"
 import NutritionPage from "./nutrition/page"
@@ -63,6 +64,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       el.style.transform  = `translateX(${(i - baseIdx) * 100}%)`
     })
   }
+
+  // ── Auth state — clear cache on user change (prevents cross-user data leaks) ──
+  useEffect(() => {
+    // Set the initial user so the cache knows who it belongs to
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user?.id ?? null)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user?.id ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   // ── Prefetch + background refresh on tab focus ───────────────────────────────
   useEffect(() => {
