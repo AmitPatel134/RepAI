@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
+import { invalidateAll } from "@/lib/appCache"
 import LoadingScreen from "@/components/LoadingScreen"
 import Toast from "@/components/Toast"
 
@@ -254,6 +255,7 @@ export default function ProfilPage() {
   }
 
   async function handleLogout() {
+    invalidateAll()
     await supabase.auth.signOut()
     window.location.href = "/"
   }
