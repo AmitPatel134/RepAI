@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
 import { isPro } from "@/lib/plans"
+import { cachedJson } from "@/lib/apiResponse"
 import { NextRequest } from "next/server"
 
 export const dynamic = "force-dynamic"
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
       prisma.activity.count({ where: { userId: user.id, ...(dateFilter ? { date: dateFilter } : {}) } }),
     ])
 
-    return Response.json({ items: activities, total, limit, offset })
+    return cachedJson({ items: activities, total, limit, offset })
   } catch (e) {
     console.error("[activities GET]", e)
     return Response.json({ error: "Database error" }, { status: 500 })

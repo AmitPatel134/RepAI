@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from "next/navigation"
 import { useRef, useEffect } from "react"
 import AppSidebar from "@/components/AppSidebar"
-import { prefetchAll } from "@/lib/appCache"
+import { prefetchAll, refreshStale } from "@/lib/appCache"
 import HomePage from "./page"
 import ActivitiesPage from "./activities/page"
 import NutritionPage from "./nutrition/page"
@@ -64,8 +64,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     })
   }
 
-  // ── Prefetch ─────────────────────────────────────────────────────────────────
-  useEffect(() => { prefetchAll() }, [])
+  // ── Prefetch + background refresh on tab focus ───────────────────────────────
+  useEffect(() => {
+    prefetchAll()
+
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible") refreshStale()
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange)
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange)
+  }, [])
 
   // ── Initial positioning (ref callback handles it per-element) ────────────────
   // Each page div positions itself at mount via the ref callback below so

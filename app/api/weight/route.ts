@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
+import { cachedJson } from "@/lib/apiResponse"
 import { NextRequest } from "next/server"
 
 export const dynamic = "force-dynamic"
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
     select: { id: true, weightKg: true, recordedAt: true },
   })
 
-  return Response.json(entries)
+  return cachedJson(entries)
 }
 
 export async function POST(request: NextRequest) {
