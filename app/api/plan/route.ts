@@ -6,14 +6,21 @@ import { cachedJson } from "@/lib/apiResponse"
 
 export const dynamic = "force-dynamic"
 
+const SYNC_INTERVAL_MS = 60 * 60_000 // 1 hour — avoid hammering Stripe on every GET
+
 export async function GET(request: Request) {
   const authUser = await getAuthUser(request)
   if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
 
-  // Sync plan from Stripe (max once per hour, silently)
-  await syncPlanFromStripe(authUser.email).catch(() => {})
+  // Fetch user first so we can check planSyncedAt before hitting Stripe
+  let user = await prisma.user.findUnique({ where: { email: authUser.email } })
 
-  const user = await prisma.user.findUnique({ where: { email: authUser.email } })
+  // Sync plan from Stripe only if last sync is older than 1 hour
+  const lastSync = user?.planSyncedAt ? new Date(user.planSyncedAt).getTime() : 0
+  if (Date.now() - lastSync > SYNC_INTERVAL_MS) {
+    await syncPlanFromStripe(authUser.email).catch(() => {})
+    user = await prisma.user.findUnique({ where: { email: authUser.email } })
+  }
   if (!user) {
     return Response.json({
       plan: "free",

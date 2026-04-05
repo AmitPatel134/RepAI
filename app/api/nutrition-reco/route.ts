@@ -1,9 +1,11 @@
 import Groq from "groq-sdk"
 import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
+import { createRateLimiter } from "@/lib/rate-limit"
 import { NextRequest } from "next/server"
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+const rateLimit = createRateLimiter({ maxRequests: 5, windowMs: 60_000 })
 
 export const dynamic = "force-dynamic"
 
@@ -56,6 +58,9 @@ export async function GET(request: NextRequest) {
 
 // POST — generate (or regenerate) via AI
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request)
+  if (limited) return limited
+
   try {
     const authUser = await getAuthUser(request)
     if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })

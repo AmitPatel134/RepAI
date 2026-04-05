@@ -12,9 +12,11 @@ export async function POST(request: NextRequest) {
   if (limited) return limited
 
   const authUser = await getAuthUser(request)
+  if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
+
   const { item, mode, tone = "professional", length = "standard", instructions = "" } = await request.json()
 
-  const email = authUser?.email
+  const email = authUser.email
 
   const itemDetails = [
     `Name: ${item.name}`,
