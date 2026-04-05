@@ -37,8 +37,9 @@ export async function POST(request: NextRequest) {
     if (!image || typeof image !== "string") {
       return Response.json({ error: "Image required" }, { status: 400 })
     }
-    if (!image.startsWith("data:image/")) {
-      return Response.json({ error: "Invalid image format" }, { status: 400 })
+    const ALLOWED_MIME = ["data:image/jpeg;", "data:image/jpg;", "data:image/png;", "data:image/webp;", "data:image/gif;"]
+    if (!ALLOWED_MIME.some(m => image.startsWith(m))) {
+      return Response.json({ error: "Invalid image format (jpeg, png, webp, gif only)" }, { status: 400 })
     }
     if (image.length > 4 * 1024 * 1024) {
       return Response.json({ error: "Image too large" }, { status: 413 })
@@ -86,8 +87,7 @@ export async function POST(request: NextRequest) {
     }
     return Response.json(result)
   } catch (e) {
-    const msg = (e as Error)?.message ?? String(e)
     console.error("Nutrition describe error:", e)
-    return Response.json({ error: `Erreur Groq/describe : ${msg}` }, { status: 500 })
+    return Response.json({ error: "Analyse impossible, réessaie." }, { status: 500 })
   }
 }
