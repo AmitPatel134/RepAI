@@ -136,6 +136,8 @@ export async function POST(request: NextRequest) {
     let temperature: number
 
     const baseRules = `
+🚫 HORS-SUJET : Si la question ne porte pas sur le sport, l'entraînement, la nutrition, la santé physique ou la récupération, réponds UNIQUEMENT avec cette phrase, sans titre ni section markdown : "Je suis spécialisé en sport et nutrition — pose-moi une question dans ces domaines et je ferai de mon mieux pour t'aider ! 💪"
+
 ⛔ INTERDIT ABSOLU SUR LA NUTRITION :
 L'utilisateur ne logue PAS tous ses repas — les repas enregistrés sont des exemples, pas un journal complet.
 Il est STRICTEMENT INTERDIT de :

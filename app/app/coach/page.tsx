@@ -119,13 +119,47 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
 }
 
-const QUICK_QUESTIONS = [
-  "Comment améliorer ma force sur le squat ?",
-  "Est-ce que mon volume d'entraînement est adapté ?",
-  "Analyse mon alimentation et mes entraînements",
-  "Quelle fréquence d'entraînement me recommandes-tu ?",
-  "Comment optimiser ma récupération entre les séances ?",
-  "Mon apport en protéines est-il suffisant ?",
+const QUICK_CATEGORIES = [
+  {
+    label: "Muscu",
+    color: { pill: "bg-red-100 text-red-600", active: "bg-red-500 text-white", btn: "hover:border-red-400 hover:text-red-600 hover:bg-red-50" },
+    questions: [
+      "Est-ce que mon volume d'entraînement est adapté ?",
+      "Comment améliorer ma force sur le squat ?",
+      "Quelle fréquence d'entraînement me recommandes-tu ?",
+      "Comment structurer un programme push/pull/legs ?",
+    ],
+  },
+  {
+    label: "Cardio",
+    color: { pill: "bg-blue-100 text-blue-600", active: "bg-blue-500 text-white", btn: "hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50" },
+    questions: [
+      "Comment améliorer mon endurance rapidement ?",
+      "Quelle zone cardiaque pour brûler des graisses ?",
+      "Comment intégrer du cardio sans perdre du muscle ?",
+      "Combien de séances cardio par semaine ?",
+    ],
+  },
+  {
+    label: "Alimentation",
+    color: { pill: "bg-green-100 text-green-600", active: "bg-green-500 text-white", btn: "hover:border-green-400 hover:text-green-600 hover:bg-green-50" },
+    questions: [
+      "Mon apport en protéines est-il suffisant ?",
+      "Analyse mon alimentation et mes entraînements",
+      "Comment calculer mes besoins caloriques ?",
+      "Que manger avant et après l'entraînement ?",
+    ],
+  },
+  {
+    label: "Récupération",
+    color: { pill: "bg-violet-100 text-violet-600", active: "bg-violet-500 text-white", btn: "hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50" },
+    questions: [
+      "Comment optimiser ma récupération entre les séances ?",
+      "Combien de temps de repos entre deux séances muscu ?",
+      "Comment réduire les courbatures après l'effort ?",
+      "Le sommeil impacte-t-il mes performances ?",
+    ],
+  },
 ]
 
 export default function CoachPage() {
@@ -138,6 +172,7 @@ export default function CoachPage() {
   const [question, setQuestion] = useState("")
   const [loading, setLoading] = useState(false)
   const [quickOpen, setQuickOpen] = useState(false)
+  const [quickCategory, setQuickCategory] = useState(0)
   const [workoutContext, setWorkoutContext] = useState("")
   const [activityContext, setActivityContext] = useState("")
   const [nutritionContext, setNutritionContext] = useState("")
@@ -333,12 +368,27 @@ En regardant tes séances récentes, voici mes observations :
               overflow: "hidden",
             }}
           >
+            {/* Category tabs */}
+            <div className="flex gap-2 px-4 pb-3 overflow-x-auto no-scrollbar">
+              {QUICK_CATEGORIES.map((cat, i) => (
+                <button
+                  key={cat.label}
+                  onClick={() => setQuickCategory(i)}
+                  className={`shrink-0 px-3 py-1 rounded-full text-[11px] font-bold transition-all ${
+                    quickCategory === i ? cat.color.active : cat.color.pill
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+            {/* Questions for active category */}
             <div className="px-4 pb-4 flex flex-col gap-2">
-              {QUICK_QUESTIONS.map(q => (
+              {QUICK_CATEGORIES[quickCategory].questions.map(q => (
                 <button
                   key={q}
                   onClick={() => { setQuestion(q); setQuickOpen(false) }}
-                  className="w-full px-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs font-semibold text-gray-600 hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50 hover:shadow-sm transition-all text-center"
+                  className={`w-full px-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs font-semibold text-gray-600 hover:shadow-sm transition-all text-center ${QUICK_CATEGORIES[quickCategory].color.btn}`}
                 >
                   {q}
                 </button>
