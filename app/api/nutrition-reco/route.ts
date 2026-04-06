@@ -123,6 +123,8 @@ Règles de calcul :
           { role: "system", content: "Tu es un calculateur nutritionnel précis. Tu réponds uniquement avec du JSON valide, rien d'autre." },
           { role: "user", content: prompt },
         ],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        response_format: { type: "json_object" } as any,
         max_tokens: 200,
         temperature: 0,
       })
@@ -135,7 +137,7 @@ Règles de calcul :
       try { parsed = JSON.parse(match[0]) } catch { continue }
 
       const { calories, proteins, carbs, fats, fiber, summary } = parsed
-      if (!calories || !proteins || !carbs || !fats) continue
+      if (calories == null || proteins == null || carbs == null || fats == null) continue
 
       reco = {
         calories: Math.round(calories),
