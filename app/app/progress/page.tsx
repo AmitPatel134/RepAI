@@ -11,10 +11,10 @@ import {
 import { DEMO_WORKOUTS } from "@/lib/demoData"
 
 // Y-axis tick rendered inside the chart area so it takes zero left space
-function InsideYTick({ x, y, payload, formatter }: { x?: number; y?: number; payload?: { value: number }; formatter: (v: number) => string }) {
+function InsideYTick({ x, y, payload, formatter }: { x?: number | string; y?: number | string; payload?: { value: number }; formatter: (v: number) => string }) {
   if (payload == null) return null
   return (
-    <text x={(x ?? 0) + 4} y={y ?? 0} dy={4} textAnchor="start" fill="#b0b7c3" fontSize={10} fontWeight={600}>
+    <text x={+(x ?? 0) + 4} y={+(y ?? 0)} dy={4} textAnchor="start" fill="#b0b7c3" fontSize={10} fontWeight={600}>
       {formatter(payload.value)}
     </text>
   )
