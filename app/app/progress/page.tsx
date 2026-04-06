@@ -473,6 +473,7 @@ export default function ProgressPage() {
                 <p className="text-gray-400 text-sm font-medium">Loggez des séances avec des poids pour voir votre progression</p>
               </div>
             ) : (
+              <div data-no-swipe="">
               <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={selectedExercise.data}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
@@ -500,6 +501,7 @@ export default function ProgressPage() {
                   />
                 </LineChart>
               </ResponsiveContainer>
+              </div>
             )}
             </div>
           </div>
@@ -605,6 +607,7 @@ export default function ProgressPage() {
                   <p className="text-gray-400 text-sm font-medium">Ajoutez au moins 2 pesées pour voir la courbe</p>
                 </div>
               ) : (
+                <div data-no-swipe="">
                 <ResponsiveContainer width="100%" height={180}>
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
@@ -631,6 +634,7 @@ export default function ProgressPage() {
                     />
                   </LineChart>
                 </ResponsiveContainer>
+                </div>
               )}
               </div>
             </div>

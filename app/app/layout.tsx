@@ -119,6 +119,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     function onTouchStart(e: TouchEvent) {
       // Block swipe navigation while any modal/overlay is open
       if (document.querySelector("[data-modal]")) return
+      // Block swipe navigation when touch starts inside a chart
+      if ((e.target as Element).closest("[data-no-swipe]")) return
       touchStartX.current  = e.touches[0].clientX
       touchStartY.current  = e.touches[0].clientY
       touchStartMs.current = Date.now()
