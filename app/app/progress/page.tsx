@@ -10,6 +10,16 @@ import {
 } from "recharts"
 import { DEMO_WORKOUTS } from "@/lib/demoData"
 
+// Y-axis tick rendered inside the chart area so it takes zero left space
+function InsideYTick({ x, y, payload, formatter }: { x?: number; y?: number; payload?: { value: number }; formatter: (v: number) => string }) {
+  if (payload == null) return null
+  return (
+    <text x={(x ?? 0) + 4} y={y ?? 0} dy={4} textAnchor="start" fill="#b0b7c3" fontSize={10} fontWeight={600}>
+      {formatter(payload.value)}
+    </text>
+  )
+}
+
 type ActivityPoint = { day: string; dateNum: number; dateStr: string; count: number; isToday: boolean }
 
 function computeWeekData(items: { date: string }[]): ActivityPoint[] {
@@ -473,9 +483,9 @@ export default function ProgressPage() {
                     tickFormatter={(v: string) => v.replace(/\s+\d{4}$/, "")}
                   />
                   <YAxis
-                    tick={{ fill: "#9ca3af", fontSize: 11, fontWeight: 600 }}
+                    width={0}
                     axisLine={false} tickLine={false}
-                    tickFormatter={v => `${v}kg`}
+                    tick={(props) => <InsideYTick {...props} formatter={v => `${v}kg`} />}
                     domain={["auto", "auto"]}
                   />
                   <Tooltip
@@ -604,9 +614,9 @@ export default function ProgressPage() {
                       axisLine={false} tickLine={false}
                     />
                     <YAxis
-                      tick={{ fill: "#9ca3af", fontSize: 11, fontWeight: 600 }}
+                      width={0}
                       axisLine={false} tickLine={false}
-                      tickFormatter={v => `${v}kg`}
+                      tick={(props) => <InsideYTick {...props} formatter={v => `${v}kg`} />}
                       domain={["auto", "auto"]}
                     />
                     <Tooltip
