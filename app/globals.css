@@ -196,6 +196,14 @@ input:focus, textarea:focus, select:focus {
 .stagger > *:nth-child(4) { animation-delay: 120ms; }
 .stagger > *:nth-child(5) { animation-delay: 160ms; }
 .stagger > *:nth-child(6) { animation-delay: 200ms; }
+.stagger > *:nth-child(7) { animation-delay: 240ms; }
+.stagger > *:nth-child(8) { animation-delay: 280ms; }
+
+/* Preset exercise enter — starts invisible, animated via inline animationDelay */
+.preset-ex-enter {
+  opacity: 0;
+  animation: fadeSlideUp 0.28s ease forwards;
+}
 
 @layer base {
   * {

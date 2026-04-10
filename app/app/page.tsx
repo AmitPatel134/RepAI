@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
 import { getCached, setCached, invalidateCache, setCurrentUser } from "@/lib/appCache"
+import { signalReady } from "@/lib/initialLoad"
 import LoadingScreen from "@/components/LoadingScreen"
 
 
@@ -131,7 +132,7 @@ function HomePageInner() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setCurrentUser(session?.user?.id ?? null)
-      if (!session) { setNoSession(true); setReady(true); return }
+      if (!session) { setNoSession(true); setReady(true); signalReady(); return }
       const meta = session.user.user_metadata
       const name = meta?.full_name?.split(" ")[0] ?? meta?.name?.split(" ")[0] ?? null
       setFirstName(name)
@@ -144,7 +145,7 @@ function HomePageInner() {
       if (cD) setData(cD as Parameters<typeof setData>[0])
       if (cPr) setProfile(cPr as Parameters<typeof setProfile>[0])
       if (cNr) setNutritionReco(cNr)
-      if (cD && cPr) setReady(true)
+      if (cD && cPr) { setReady(true); signalReady() }
 
       Promise.all([
         authFetch("/api/dashboard").then(r => r.json()).catch(() => null),
@@ -158,8 +159,8 @@ function HomePageInner() {
         }
         setProfile(prof); setCached("/api/profile", prof)
         if (nr) { setNutritionReco(nr); setCached("/api/nutrition-reco", nr) }
-        setReady(true)
-      }).catch(() => setReady(true))
+        setReady(true); signalReady()
+      }).catch(() => { setReady(true); signalReady() })
         .finally(() => setLoadingReco(false))
     })
   }, [router])

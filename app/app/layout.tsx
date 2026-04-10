@@ -1,8 +1,10 @@
 "use client"
 import { usePathname, useRouter } from "next/navigation"
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 import AppSidebar from "@/components/AppSidebar"
+import LoadingScreen from "@/components/LoadingScreen"
 import { prefetchAll, refreshStale, setCurrentUser } from "@/lib/appCache"
+import { onInitialLoad } from "@/lib/initialLoad"
 import { supabase } from "@/lib/supabase"
 import HomePage from "./page"
 import ActivitiesPage from "./activities/page"
@@ -32,6 +34,10 @@ const DUR  = 280
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router   = useRouter()
   const pathname = usePathname()
+
+  // ── Initial-load progress bar ────────────────────────────────────────────────
+  const [loadProgress, setLoadProgress] = useState(0)
+  const [loadGone, setLoadGone]         = useState(false)
 
   const pathnameRef = useRef(pathname)
   pathnameRef.current = pathname
@@ -64,6 +70,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       el.style.transform  = `translateX(${(i - baseIdx) * 100}%)`
     })
   }
+
+  useEffect(() => {
+    // Exponential-decay progress: each tick fills 18 % of the remaining gap up to 92 %.
+    // The bar never self-completes — signalReady() from the dashboard jumps it to 100 %.
+    let prog = 0
+    let timer: ReturnType<typeof setTimeout>
+
+    const tick = () => {
+      prog = Math.min(92, prog + (92 - prog) * 0.18)
+      setLoadProgress(Math.round(prog))
+      timer = setTimeout(tick, 220)
+    }
+    timer = setTimeout(tick, 80)
+
+    onInitialLoad(() => {
+      clearTimeout(timer)
+      setLoadProgress(100)
+      setTimeout(() => setLoadGone(true), 380)
+    })
+
+    return () => clearTimeout(timer)
+  }, [])
 
   // ── Auth state — clear cache on user change (prevents cross-user data leaks) ──
   useEffect(() => {
@@ -205,6 +233,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
+    <>
+    {!loadGone && (
+      <div
+        className="fixed inset-0 z-50 transition-opacity duration-300"
+        style={{ opacity: loadProgress >= 100 ? 0 : 1, pointerEvents: loadProgress >= 100 ? "none" : "auto" }}
+      >
+        <LoadingScreen progress={loadProgress} />
+      </div>
+    )}
     <div className="flex h-screen overflow-hidden bg-gray-100">
       <AppSidebar />
       <div className="flex-1 md:ml-52 overflow-hidden min-w-0 relative">
@@ -239,5 +276,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       </div>
     </div>
+    </>
   )
 }

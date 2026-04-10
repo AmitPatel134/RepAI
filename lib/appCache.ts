@@ -2,16 +2,16 @@
  * Client-side in-memory cache for instant page transitions.
  * Implements stale-while-revalidate (SWR):
  *
- *   FRESH   (< 60s)  → served instantly, no background fetch
- *   STALE   (1–5min) → served instantly AND refreshed in background
- *   EXPIRED (> 5min) → cache miss, caller must fetch fresh
+ *   FRESH   (< 3min)  → served instantly, no background fetch
+ *   STALE   (3–20min) → served instantly AND refreshed in background
+ *   EXPIRED (> 20min) → cache miss, caller must fetch fresh
  *
  * Data is module-level and shared across all components in the same tab session.
  * Cache is automatically cleared when the authenticated user changes.
  */
 
-const FRESH_TTL  = 60_000        // 1 min  — no refresh needed
-const EXPIRE_TTL = 5 * 60_000   // 5 min  — hard expiry
+const FRESH_TTL  = 3 * 60_000    // 3 min  — no refresh needed
+const EXPIRE_TTL = 20 * 60_000   // 20 min — hard expiry
 
 type Entry = { data: unknown; ts: number; refreshing?: boolean }
 const cache = new Map<string, Entry>()
@@ -117,10 +117,12 @@ const PREFETCH_SPECS: FetchSpec[] = [
     url: "/api/nutrition?limit=20",
     transform: (d: unknown) => (d as { items?: unknown[] })?.items ?? [],
   },
-  { key: "/api/plan",     url: "/api/plan" },
-  { key: "/api/weight",   url: "/api/weight" },
-  { key: "/api/profile",  url: "/api/profile" },
-  { key: "/api/users",    url: "/api/users" },
+  { key: "/api/plan",           url: "/api/plan" },
+  { key: "/api/weight",         url: "/api/weight" },
+  { key: "/api/profile",        url: "/api/profile" },
+  { key: "/api/users",          url: "/api/users" },
+  { key: "/api/dashboard",      url: "/api/dashboard" },
+  { key: "/api/nutrition-reco", url: "/api/nutrition-reco" },
 ]
 
 async function fetchOne(

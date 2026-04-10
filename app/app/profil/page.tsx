@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
-import { invalidateAll } from "@/lib/appCache"
+import { getCached, setCached, invalidateAll } from "@/lib/appCache"
 import LoadingScreen from "@/components/LoadingScreen"
 import Toast from "@/components/Toast"
 
@@ -144,23 +144,41 @@ export default function ProfilPage() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) { window.location.href = "/login"; return }
       setEmail(session.user.email ?? "")
+
+      function applyUser(user: Record<string, unknown> | null) {
+        if (!user) return
+        if (user.name) setName(user.name as string)
+        if (user.telephone) setTelephone(user.telephone as string)
+        if (user.plan) setPlan(user.plan as string)
+      }
+      function applyProfile(prof: Record<string, unknown> | null) {
+        if (!prof) return
+        if (prof.sex) setSex(prof.sex as string)
+        if (prof.birthDate) setBirthDate(prof.birthDate as string)
+        if (prof.heightCm) setHeightCm(String(prof.heightCm))
+        if (prof.weightKg) setWeightKg(String(prof.weightKg))
+        if (prof.goal) setGoal(prof.goal as string)
+        if (prof.activityLevel) setActivityLevel(prof.activityLevel as string)
+        if (prof.restingHR) setRestingHR(String(prof.restingHR))
+        if (prof.dailySteps) setDailySteps(String(prof.dailySteps))
+      }
+
+      // Instant display from cache
+      const cU = getCached<Record<string, unknown>>("/api/users")
+      const cP = getCached<Record<string, unknown>>("/api/profile")
+      applyUser(cU)
+      applyProfile(cP)
+      if (cU && cP) setReady(true)
+
+      // Background refresh
       const [user, prof] = await Promise.all([
         authFetch("/api/users").then(r => r.json()).catch(() => null),
         authFetch("/api/profile").then(r => r.json()).catch(() => null),
       ])
-      if (user?.name) setName(user.name)
-      if (user?.telephone) setTelephone(user.telephone)
-      if (user?.plan) setPlan(user.plan)
-      if (prof) {
-        if (prof.sex) setSex(prof.sex)
-        if (prof.birthDate) setBirthDate(prof.birthDate)
-        if (prof.heightCm) setHeightCm(String(prof.heightCm))
-        if (prof.weightKg) setWeightKg(String(prof.weightKg))
-        if (prof.goal) setGoal(prof.goal)
-        if (prof.activityLevel) setActivityLevel(prof.activityLevel)
-        if (prof.restingHR) setRestingHR(String(prof.restingHR))
-        if (prof.dailySteps) setDailySteps(String(prof.dailySteps))
-      }
+      applyUser(user)
+      applyProfile(prof)
+      if (user) setCached("/api/users", user)
+      if (prof) setCached("/api/profile", prof)
       setReady(true)
     })
   }, [])
@@ -189,6 +207,7 @@ export default function ProfilPage() {
     })
     setSavingFitness(false)
     if (res.ok) {
+      setCached("/api/profile", { sex: sex || null, birthDate: birthDate || null, heightCm: heightCm ? Number(heightCm) : null, weightKg: weightKg ? Number(weightKg) : null, goal: goal || null, activityLevel: activityLevel || null, restingHR: restingHR ? Number(restingHR) : null, dailySteps: dailySteps ? Number(dailySteps) : null })
       showToast("Profil fitness enregistré ✓")
       setOpenSection(null)
     } else {
@@ -207,6 +226,7 @@ export default function ProfilPage() {
     })
     setSavingName(false)
     if (res.ok) {
+      setCached("/api/users", { name: name.trim(), telephone: telephone.trim() || null, plan })
       showToast("Informations enregistrées ✓")
       setOpenSection(null)
     } else {

@@ -5,9 +5,10 @@ const P2 = "M3410 7099 c-380 -34 -756 -206 -1015 -464 -233 -233 -373 -511 -426 -
 
 interface LoadingScreenProps {
   color?: string
+  progress?: number
 }
 
-export default function LoadingScreen({ color = "#7c3aed" }: LoadingScreenProps) {
+export default function LoadingScreen({ color = "#7c3aed", progress }: LoadingScreenProps) {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white">
       <svg viewBox="0 0 1024 1024" width={110} height={110} fill="none">
@@ -59,6 +60,19 @@ export default function LoadingScreen({ color = "#7c3aed" }: LoadingScreenProps)
 
         </g>
       </svg>
+
+      {progress !== undefined && (
+        <div className="mt-8 w-48 h-1 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: `${progress}%`,
+              backgroundColor: color,
+              transition: progress === 0 ? "none" : "width 200ms ease-out",
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }

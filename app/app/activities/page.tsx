@@ -8,7 +8,7 @@ import { getCached, setCached, invalidateCache } from "@/lib/appCache"
 import { DEMO_WORKOUTS } from "@/lib/demoData"
 import UpgradeModal from "@/components/UpgradeModal"
 import LoadingScreen from "@/components/LoadingScreen"
-import { Dumbbell } from "lucide-react"
+import { Dumbbell, ChevronDown, Trash2, Bookmark, BookmarkCheck } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -107,6 +107,46 @@ const CARDIO_TYPES = [
   { key: "other",      label: "Autre",      color: CARDIO_COLOR },
 ]
 
+// ─── Preset workouts ─────────────────────────────────────────────────────────
+
+type PresetWorkout = { key: string; label: string; tag: string; exercises: { name: string; sets: number }[]; sourceWorkoutId?: string }
+
+const PRESET_WORKOUTS: PresetWorkout[] = [
+  {
+    key: "push_a", label: "Push", tag: "Pec · Épaules · Triceps",
+    exercises: [
+      { name: "Développé couché barre",    sets: 4 },
+      { name: "Développé incliné haltères", sets: 3 },
+      { name: "Développé militaire",       sets: 3 },
+      { name: "Élévations latérales",      sets: 3 },
+      { name: "Extension triceps poulie",  sets: 3 },
+      { name: "Dips",                      sets: 3 },
+    ],
+  },
+  {
+    key: "pull_a", label: "Pull", tag: "Dos · Biceps",
+    exercises: [
+      { name: "Tractions pronation",      sets: 4 },
+      { name: "Tirage vertical",          sets: 3 },
+      { name: "Rowing barre",             sets: 3 },
+      { name: "Tirage horizontal poulie", sets: 3 },
+      { name: "Curl barre",               sets: 3 },
+      { name: "Curl marteau",             sets: 3 },
+    ],
+  },
+  {
+    key: "legs_a", label: "Legs", tag: "Quadriceps · Ischio · Mollets",
+    exercises: [
+      { name: "Squat barre",               sets: 4 },
+      { name: "Soulevé de terre roumain",  sets: 3 },
+      { name: "Fentes",                    sets: 3 },
+      { name: "Leg Press",                 sets: 3 },
+      { name: "Leg Curl",                  sets: 3 },
+      { name: "Mollets debout",            sets: 4 },
+    ],
+  },
+]
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtDate(iso: string) {
@@ -178,7 +218,8 @@ function CardioIcon({ type, size = 18 }: { type: string; size?: number }) {
 export default function ActivitiesPage() {
   const router = useRouter()
   const pathname = usePathname()
-  const prevPathnameRef = useRef(pathname)
+  const prevPathnameRef   = useRef(pathname)
+  const workoutModalRef   = useRef<HTMLDivElement>(null)
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
@@ -198,6 +239,12 @@ export default function ActivitiesPage() {
   const [showCardioForm, setShowCardioForm] = useState(false)
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
+
+  // Long-press delete
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
+  const [deleting, setDeleting]           = useState(false)
+  const longPressTimer     = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressTriggered = useRef(false)
 
   // Custom activity form
   const [custName, setCustName] = useState("")
@@ -219,6 +266,18 @@ export default function ActivitiesPage() {
   const audioChunksRef = useRef<Blob[]>([])
 
   // Workout form
+  const [selectedPreset, setSelectedPreset]   = useState<string | null>(null)
+  const [showPresetPicker, setShowPresetPicker] = useState(false)
+  const [customPresets, setCustomPresets] = useState<PresetWorkout[]>(() => {
+    if (typeof window === "undefined") return []
+    try { return JSON.parse(localStorage.getItem("custom-presets") ?? "[]") } catch { return [] }
+  })
+  const [deletedBuiltinKeys, setDeletedBuiltinKeys] = useState<string[]>(() => {
+    if (typeof window === "undefined") return []
+    try { return JSON.parse(localStorage.getItem("deleted-builtin-presets") ?? "[]") } catch { return [] }
+  })
+  const [showPresetList, setShowPresetList] = useState(false)
+  const [presetSavedToast, setPresetSavedToast] = useState<string | null>(null)
   const [wName, setWName] = useState("")
   const [wDate, setWDate] = useState(new Date().toISOString().slice(0, 10))
   const [wNotes, setWNotes] = useState("")
@@ -251,9 +310,9 @@ export default function ActivitiesPage() {
       }
 
       if (forceLoading) {
+        // Invalidate stale keys but keep showing current data — refresh happens below in background
         invalidateCache("/api/workouts")
         invalidateCache("/api/activities")
-        setLoading(true)
       } else {
         const cW = getCached<Workout[]>("/api/workouts")
         const cA = getCached<Activity[]>("/api/activities")
@@ -286,7 +345,7 @@ export default function ActivitiesPage() {
   // Initial load
   useEffect(() => { loadData() }, [loadData])
 
-  // Reload with loading screen when returning from a detail page
+  // Silent refresh when returning from a detail page (no loading screen)
   useEffect(() => {
     const prev = prevPathnameRef.current
     prevPathnameRef.current = pathname
@@ -295,6 +354,23 @@ export default function ActivitiesPage() {
       (prev.startsWith("/app/activities/") || prev.startsWith("/app/workouts/"))
     if (comingBackFromDetail) loadData(true)
   }, [pathname, loadData])
+
+  // Lock background scroll when the preset list modal is open
+  useEffect(() => {
+    if (!showPresetList) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    document.documentElement.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = prev
+      document.documentElement.style.overflow = ""
+    }
+  }, [showPresetList])
+
+  // Focus the modal container (not the input) when the workout form opens
+  useEffect(() => {
+    if (showWorkoutForm) workoutModalRef.current?.focus()
+  }, [showWorkoutForm])
 
   // ─── Unified list ─────────────────────────────────────────────────────────
 
@@ -374,6 +450,91 @@ export default function ActivitiesPage() {
       setWExercises([])
     }
     setWSaving(false)
+  }
+
+  function saveWorkoutAsPreset(w: Workout, e: React.MouseEvent) {
+    e.stopPropagation()
+    const alreadySaved = customPresets.some(p => p.sourceWorkoutId === w.id)
+    if (alreadySaved) {
+      const updated = customPresets.filter(p => p.sourceWorkoutId !== w.id)
+      setCustomPresets(updated)
+      localStorage.setItem("custom-presets", JSON.stringify(updated))
+      return
+    }
+    const preset: PresetWorkout = {
+      key: `custom_${Date.now()}`,
+      label: w.name,
+      tag: "Personnalisée",
+      sourceWorkoutId: w.id,
+      exercises: w.exercises.map(ex => ({
+        name: ex.name,
+        sets: ex.sets.length > 0 ? ex.sets.length : 3,
+      })),
+    }
+    const updated = [...customPresets, preset]
+    setCustomPresets(updated)
+    localStorage.setItem("custom-presets", JSON.stringify(updated))
+    setPresetSavedToast(`"${w.name}" ajouté aux séances préfaites`)
+    setTimeout(() => setPresetSavedToast(null), 2800)
+  }
+
+  // ── Preset helpers ────────────────────────────────────────────────────────────
+
+  const activeBuiltinPresets = PRESET_WORKOUTS.filter(p => !deletedBuiltinKeys.includes(p.key))
+  const allPresets = [...activeBuiltinPresets, ...customPresets]
+
+  function applyPreset(preset: PresetWorkout) {
+    setSelectedPreset(preset.key)
+    setWName(preset.label)
+    setWExercises(preset.exercises.map(ex => ({
+      name: ex.name,
+      sets: Array.from({ length: ex.sets }, () => ({ reps: null, weight: null })),
+    })))
+    setShowPresetPicker(false)
+  }
+
+  function removeCustomPreset(key: string) {
+    const updated = customPresets.filter(p => p.key !== key)
+    setCustomPresets(updated)
+    localStorage.setItem("custom-presets", JSON.stringify(updated))
+    if (selectedPreset === key) { setSelectedPreset(null); setWExercises([]); setWName("") }
+  }
+
+  function removeBuiltinPreset(key: string) {
+    const updated = [...deletedBuiltinKeys, key]
+    setDeletedBuiltinKeys(updated)
+    localStorage.setItem("deleted-builtin-presets", JSON.stringify(updated))
+    if (selectedPreset === key) { setSelectedPreset(null); setWExercises([]); setWName("") }
+  }
+
+  function removePreset(key: string) {
+    if (customPresets.some(p => p.key === key)) removeCustomPreset(key)
+    else removeBuiltinPreset(key)
+  }
+
+  // ── Long-press delete ──────────────────────────────────────────────────────────
+
+  function startLongPress(w: Workout) {
+    longPressTriggered.current = false
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true
+      setDeleteConfirm({ id: w.id, name: w.name })
+    }, 500)
+  }
+
+  function cancelLongPress() {
+    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null }
+  }
+
+  async function handleDeleteWorkout(id: string) {
+    setDeleting(true)
+    const r = await authFetch(`/api/workouts/${id}`, { method: "DELETE" })
+    if (r.ok) {
+      setWorkouts(prev => prev.filter(w => w.id !== id))
+      invalidateCache("/api/workouts")
+    }
+    setDeleting(false)
+    setDeleteConfirm(null)
   }
 
   function openEditActivity(act: Activity) {
@@ -689,6 +850,19 @@ export default function ActivitiesPage() {
             </div>
           </div>
 
+          {/* Preset list shortcut */}
+          {!loading && !isDemo && (
+            <div className="mt-3 flex">
+              <button
+                onClick={() => setShowPresetList(true)}
+                className="flex items-center gap-1.5 text-[11px] font-bold text-blue-200 hover:text-white transition-colors"
+              >
+                <BookmarkCheck size={12} />
+                Liste des séances préfaites
+              </button>
+            </div>
+          )}
+
           {/* Free plan usage */}
           {!loading && !isDemo && plan === "free" && (
             <div className="flex items-center justify-between mt-3">
@@ -802,8 +976,17 @@ export default function ActivitiesPage() {
                         return (
                           <div
                             key={`w-${w.id}`}
-                            className="flex items-center gap-3 py-3 px-4 rounded-2xl cursor-pointer select-none bg-white hover:bg-gray-50"
-                            onClick={() => router.push(`/app/workouts/${w.id}`)}
+                            className="flex items-center gap-3 py-3 px-4 rounded-2xl cursor-pointer select-none bg-white hover:bg-gray-50 active:scale-[0.98] transition-transform"
+                            onTouchStart={() => startLongPress(w)}
+                            onTouchMove={cancelLongPress}
+                            onTouchEnd={cancelLongPress}
+                            onMouseDown={() => startLongPress(w)}
+                            onMouseUp={cancelLongPress}
+                            onMouseLeave={cancelLongPress}
+                            onClick={() => {
+                              if (longPressTriggered.current) { longPressTriggered.current = false; return }
+                              router.push(`/app/workouts/${w.id}`)
+                            }}
                           >
                             <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shrink-0 text-white">
                               <DumbbellIcon />
@@ -814,6 +997,18 @@ export default function ActivitiesPage() {
                                 <p className="text-[11px] text-gray-400 mt-0.5 truncate">{w.exercises.length} exo{w.exercises.length > 1 ? "s" : ""} · {w.exercises.map(e => e.name).join(" · ")}</p>
                               )}
                             </div>
+                            {(() => {
+                              const saved = customPresets.some(p => p.sourceWorkoutId === w.id)
+                              return (
+                                <button
+                                  onClick={e => saveWorkoutAsPreset(w, e)}
+                                  className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors ${saved ? "text-blue-500 bg-blue-50" : "text-gray-300 hover:text-blue-400 hover:bg-blue-50"}`}
+                                  title={saved ? "Retirer des préfaites" : "Enregistrer comme séance préfaite"}
+                                >
+                                  {saved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+                                </button>
+                              )
+                            })()}
                           </div>
                         )
                       } else {
@@ -888,7 +1083,8 @@ export default function ActivitiesPage() {
               <h3 className="text-base font-black text-gray-900 mb-5">Quel type d&apos;activité ?</h3>
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => { setShowTypeSelector(false); setWName(""); setWDate(new Date().toISOString().slice(0, 10)); setWNotes(""); setWExercises([]); setShowWorkoutForm(true) }}
+                  onClick={() => { setShowTypeSelector(false); setWName(""); setWDate(new Date().toISOString().slice(0, 10)); setWNotes(""); setWExercises([]); setSelectedPreset(null); setShowPresetPicker(false); setShowWorkoutForm(true) }}
+
                   className="flex items-center gap-4 p-4 bg-blue-50 border border-blue-200 rounded-2xl text-left hover:border-blue-400 transition-colors"
                 >
                   <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
@@ -936,15 +1132,75 @@ export default function ActivitiesPage() {
           onClick={() => setShowWorkoutForm(false)}
         >
           <div
-            className="modal-enter bg-white rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl"
+            ref={workoutModalRef}
+            tabIndex={-1}
+            className="modal-enter bg-white rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl outline-none"
             onClick={e => e.stopPropagation()}
           >
             <div className="px-5 pb-6 pt-5">
               <h3 className="text-base font-black text-gray-900 mb-4">Nouvelle séance</h3>
+
+              {/* ── Preset picker ── */}
+              {(() => {
+                const activePreset = allPresets.find(p => p.key === selectedPreset)
+                return (
+                  <div className="mb-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowPresetPicker(p => !p)}
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl hover:border-blue-300 transition-colors"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xs font-bold text-gray-600 shrink-0">Séance préfaite</span>
+                        {activePreset ? (
+                          <span className="text-[11px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full truncate">{activePreset.label}</span>
+                        ) : (
+                          <span className="text-[11px] text-gray-400 truncate">optionnel</span>
+                        )}
+                      </div>
+                      <ChevronDown size={15} className={`text-gray-400 shrink-0 transition-transform duration-200 ${showPresetPicker ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {showPresetPicker && (
+                      <div className="mt-2 animate-fade-slide-up">
+                        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+                          {allPresets.map(preset => {
+                            const active = selectedPreset === preset.key
+                            const isCustom = customPresets.some(p => p.key === preset.key)
+                            return (
+                              <button
+                                key={preset.key}
+                                type="button"
+                                onClick={() => active ? (setSelectedPreset(null), setWExercises([]), setWName("")) : applyPreset(preset)}
+                                className={`shrink-0 relative flex flex-col items-start px-3 py-2 rounded-xl border text-left transition-colors ${
+                                  active ? "bg-blue-600 border-blue-600 text-white" : "bg-gray-50 border-gray-200 text-gray-700 hover:border-blue-300"
+                                }`}
+                              >
+                                <span className="text-xs font-extrabold leading-tight whitespace-nowrap pr-4">{preset.label}</span>
+                                <span className={`text-[10px] leading-tight whitespace-nowrap ${active ? "text-blue-100" : "text-gray-400"}`}>{preset.tag}</span>
+                                {isCustom && (
+                                  <span
+                                    role="button"
+                                    onClick={e => { e.stopPropagation(); removeCustomPreset(preset.key) }}
+                                    className={`absolute top-1.5 right-1.5 rounded-full p-0.5 transition-colors ${active ? "text-blue-200 hover:text-white" : "text-gray-300 hover:text-red-400"}`}
+                                  >
+                                    <Trash2 size={10} />
+                                  </span>
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+
               <div className="flex flex-col gap-4">
                 <div>
                   <label className="text-xs font-bold text-gray-500 block mb-1.5">Nom de la séance</label>
-                  <input value={wName} onChange={e => setWName(e.target.value)} placeholder="ex: Push Day A" autoFocus
+                  <input value={wName} onChange={e => setWName(e.target.value)} placeholder="ex: Push Day A"
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500/50"/>
                 </div>
                 <div>
@@ -964,15 +1220,15 @@ export default function ActivitiesPage() {
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                      Exercices détectés ({wExercises.length})
+                      {selectedPreset ? "Exercices de la séance" : "Exercices détectés"} ({wExercises.length})
                     </p>
-                    <button onClick={() => setWExercises([])} className="text-[11px] text-gray-400 hover:text-red-400 transition-colors">
+                    <button onClick={() => { setWExercises([]); setSelectedPreset(null) }} className="text-[11px] text-gray-400 hover:text-red-400 transition-colors">
                       Effacer
                     </button>
                   </div>
                   <div className="flex flex-col gap-2">
                     {wExercises.map((ex, i) => (
-                      <div key={i} className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5">
+                      <div key={`${selectedPreset ?? "voice"}-${i}`} className="preset-ex-enter bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5" style={{ animationDelay: `${i * 45}ms` }}>
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-bold text-gray-900">{ex.name}</p>
                           <span className="text-[11px] font-bold text-blue-500">{ex.sets.length} série{ex.sets.length > 1 ? "s" : ""}</span>
@@ -992,7 +1248,7 @@ export default function ActivitiesPage() {
               )}
 
               <button onClick={handleCreateWorkout} disabled={wSaving || !wName.trim()} className="w-full mt-5 py-3 bg-blue-600 rounded-xl text-sm font-bold text-white hover:bg-blue-500 transition-colors disabled:opacity-50">
-                {wSaving ? "..." : wExercises.length > 0 ? `Créer avec ${wExercises.length} exercice${wExercises.length > 1 ? "s" : ""} →` : "Créer →"}
+                {wSaving ? "..." : selectedPreset ? `Créer · ${wExercises.length} exercices →` : wExercises.length > 0 ? `Créer avec ${wExercises.length} exercice${wExercises.length > 1 ? "s" : ""} →` : "Créer →"}
               </button>
             </div>
           </div>
@@ -1187,6 +1443,134 @@ export default function ActivitiesPage() {
           <div className="text-center">
             <p className="text-white font-bold text-lg mb-1">Enregistrement…</p>
             <p className="text-gray-400 text-sm">Sauvegarde de toutes les activités</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete workout confirmation ── */}
+      {deleteConfirm && (
+        <div
+          data-modal=""
+          className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
+          onClick={() => !deleting && setDeleteConfirm(null)}
+        >
+          <div
+            className="modal-enter bg-white rounded-3xl w-full max-w-sm shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-6 pt-6 pb-5">
+              <p className="text-base font-black text-gray-900 mb-1">Supprimer cette séance ?</p>
+              <p className="text-sm text-gray-500 mb-6 leading-snug">
+                <span className="font-semibold text-gray-700">&ldquo;{deleteConfirm.name}&rdquo;</span> sera définitivement supprimée.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  disabled={deleting}
+                  className="flex-1 py-3 rounded-2xl border border-gray-200 text-sm font-bold text-gray-600 hover:border-gray-300 transition-colors disabled:opacity-40"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => handleDeleteWorkout(deleteConfirm.id)}
+                  disabled={deleting}
+                  className="flex-1 py-3 rounded-2xl bg-red-500 text-sm font-bold text-white hover:bg-red-400 transition-colors disabled:opacity-40"
+                >
+                  {deleting ? "…" : "Supprimer"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Preset list modal ── */}
+      {showPresetList && (() => {
+        const sortedPresets = [
+          ...[...customPresets].sort((a, b) => {
+            const ta = parseInt(a.key.replace("custom_", "")) || 0
+            const tb = parseInt(b.key.replace("custom_", "")) || 0
+            return tb - ta
+          }),
+          ...activeBuiltinPresets,
+        ]
+        return (
+          <div
+            data-modal=""
+            className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
+            onClick={() => setShowPresetList(false)}
+          >
+            <div
+              className="modal-enter bg-white rounded-3xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 shrink-0">
+                <h3 className="text-base font-black text-gray-900">Séances préfaites</h3>
+                <button onClick={() => setShowPresetList(false)} className="text-gray-400 hover:text-gray-700 transition-colors">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="overflow-y-auto flex-1 px-4 py-3">
+                {sortedPresets.length === 0 ? (
+                  <div className="flex flex-col items-center py-10 text-center">
+                    <BookmarkCheck size={32} className="text-gray-200 mb-3" />
+                    <p className="text-sm font-bold text-gray-400">Aucune séance préfaite</p>
+                    <p className="text-xs text-gray-400 mt-1">Enregistre une séance depuis l&apos;historique</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-1.5">
+                    {sortedPresets.map((preset, idx) => {
+                      const isCustom = customPresets.some(p => p.key === preset.key)
+                      return (
+                        <div
+                          key={preset.key}
+                          className="preset-ex-enter flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-2xl"
+                          style={{ animationDelay: `${idx * 35}ms` }}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-bold text-gray-900 truncate">{preset.label}</p>
+                              {isCustom && (
+                                <span className="text-[10px] font-bold bg-blue-100 text-blue-500 px-1.5 py-0.5 rounded-full shrink-0">Perso</span>
+                              )}
+                            </div>
+                            <div className="mt-1 flex flex-col gap-0.5">
+                              {preset.exercises.map((ex, i) => (
+                                <p key={i} className="text-[11px] text-gray-400 leading-tight">
+                                  {ex.name} <span className="text-gray-300">·</span> {ex.sets} série{ex.sets > 1 ? "s" : ""}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => removePreset(preset.key)}
+                            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── Preset saved toast ── */}
+      {presetSavedToast && (
+        <div
+          className="fixed left-0 right-0 z-50 flex justify-center px-4 pointer-events-none animate-fade-slide-up"
+          style={{ bottom: "calc(env(safe-area-inset-bottom) + 80px)" }}
+        >
+          <div className="bg-blue-500/20 border border-blue-500/40 backdrop-blur-md rounded-2xl px-5 py-3 flex items-center gap-3 shadow-2xl">
+            <BookmarkCheck size={16} className="text-blue-400 shrink-0" />
+            <p className="text-sm font-bold text-blue-700">{presetSavedToast}</p>
           </div>
         </div>
       )}
