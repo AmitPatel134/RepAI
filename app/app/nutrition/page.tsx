@@ -126,6 +126,23 @@ export default function NutritionPage() {
   const [showMealDeleteConfirm, setShowMealDeleteConfirm] = useState(false)
   const [deletingMeal, setDeletingMeal] = useState(false)
 
+  // Repas IA
+  type MealSuggestion = { type: string; name: string; kcal: number; proteins: number; description: string }
+  type ShakerSuggestion = { name: string; kcal: number; proteins: number; description: string }
+  type MealPlanData = { kcalTarget: number; proteinsTarget: number; meals: MealSuggestion[]; shaker?: ShakerSuggestion | null }
+  const MEAL_ACCENTS: Record<string, { bar: string; label: string; dot: string }> = {
+    "Petit-déjeuner": { bar: "bg-orange-400",  label: "text-orange-500",  dot: "bg-orange-400"  },
+    "Déjeuner":       { bar: "bg-emerald-400", label: "text-emerald-600", dot: "bg-emerald-400" },
+    "Collation":      { bar: "bg-blue-400",    label: "text-blue-500",    dot: "bg-blue-400"    },
+    "Dîner":          { bar: "bg-violet-400",  label: "text-violet-600",  dot: "bg-violet-400"  },
+  }
+  const [rPlan, setRPlan]               = useState<MealPlanData | null>(null)
+  const [rPlanAt, setRPlanAt]           = useState<string | null>(null)
+  const [rLoading, setRLoading]         = useState(false)
+  const [rGenerating, setRGenerating]   = useState(false)
+  const [rError, setRError]             = useState<string | null>(null)
+  const [nutTab, setNutTab]              = useState<"journal"|"repas">("journal")
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { setIsDemo(true); setLoading(false); return }
@@ -150,6 +167,28 @@ export default function NutritionPage() {
       }).catch(() => {}).finally(() => setLoading(false))
     })
   }, [])
+
+  // Load Repas IA on mount
+  useEffect(() => {
+    setRLoading(true)
+    const cached = getCached<{ plan: MealPlanData | null; generatedAt: string | null }>("/api/coach/meal-plan")
+    if (cached) { setRPlan(cached.plan); setRPlanAt(cached.generatedAt); setRLoading(false) }
+    authFetch("/api/coach/meal-plan").then(r => r.json()).then(data => {
+      setRPlan(data.plan ?? null); setRPlanAt(data.generatedAt ?? null)
+      setCached("/api/coach/meal-plan", data)
+    }).catch(() => {}).finally(() => setRLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function generateRPlan() {
+    setRGenerating(true); setRError(null)
+    try {
+      const r = await authFetch("/api/coach/meal-plan", { method: "POST" })
+      const data = await r.json()
+      if (!r.ok || data.error) { setRError("Erreur lors de la génération."); return }
+      if (data.plan) { setRPlan(data.plan); setRPlanAt(data.generatedAt ?? new Date().toISOString()); setCached("/api/coach/meal-plan", data) }
+    } catch { setRError("Erreur réseau.") } finally { setRGenerating(false) }
+  }
 
   // Lock scroll when meal detail is open
   useEffect(() => {
@@ -427,6 +466,20 @@ export default function NutritionPage() {
               <span className="text-[10px] text-orange-100 ml-auto">Aujourd&apos;hui</span>
             </div>
           )}
+
+          {/* Tab bar */}
+          {!isDemo && (
+            <div className="flex gap-1 bg-white/15 rounded-xl p-0.5 mt-3">
+              <button
+                onClick={() => setNutTab("journal")}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-[10px] transition-all ${nutTab === "journal" ? "bg-white text-orange-600 shadow-sm" : "text-white/70 hover:text-white"}`}
+              >Journal</button>
+              <button
+                onClick={() => setNutTab("repas")}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-[10px] transition-all ${nutTab === "repas" ? "bg-white text-orange-600 shadow-sm" : "text-white/70 hover:text-white"}`}
+              >Idées de Repas</button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -436,7 +489,86 @@ export default function NutritionPage() {
         capture="environment" className="hidden" onChange={handleFileChange}
       />
 
-      {/* List */}
+      {/* Repas IA tab */}
+      {!isDemo && nutTab === "repas" && (
+        <div className="max-w-3xl mx-auto px-3 md:px-4 pt-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            {rLoading ? (
+              <div className="px-4 py-4 flex flex-col gap-2">
+                {[1,2,3].map(i => <div key={i} className="h-8 bg-gray-100 rounded-xl animate-pulse" />)}
+              </div>
+            ) : !rPlan ? (
+              <div className="px-4 py-8 flex flex-col items-center text-center gap-3">
+                <span className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center mb-1">
+                  <svg className="w-6 h-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                  </svg>
+                </span>
+                <p className="text-sm font-bold text-gray-800">Idées de repas du jour</p>
+                <p className="text-xs text-gray-400 font-medium max-w-xs">L'IA génère une journée de repas adaptée à tes objectifs caloriques et protéiques.</p>
+                <button
+                  onClick={generateRPlan} disabled={rGenerating}
+                  className="px-5 py-2.5 bg-orange-500 hover:bg-orange-400 rounded-2xl font-bold text-sm text-white transition-colors disabled:opacity-50 flex items-center gap-2 mt-1"
+                >
+                  {rGenerating && <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
+                  {rGenerating ? "Génération…" : "Générer mes repas →"}
+                </button>
+                {rError && <p className="text-xs text-red-500 font-medium">{rError}</p>}
+              </div>
+            ) : (
+              <div>
+                {/* Targets */}
+                <div className="flex items-center gap-5 px-4 py-3 border-b border-gray-50">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                    <span className="text-sm font-black text-gray-900">{rPlan.kcalTarget.toLocaleString("fr-FR")}</span>
+                    <span className="text-xs text-gray-400">kcal</span>
+                  </div>
+                  <div className="w-px h-4 bg-gray-200" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                    <span className="text-sm font-black text-gray-900">{rPlan.proteinsTarget}g</span>
+                    <span className="text-xs text-gray-400">protéines</span>
+                  </div>
+                </div>
+                {/* Meals */}
+                {[...rPlan.meals, ...(rPlan.shaker?.name ? [{ type: "Complément", name: rPlan.shaker.name, kcal: rPlan.shaker.kcal, proteins: rPlan.shaker.proteins, description: rPlan.shaker.description }] : [])].map((meal, mi) => {
+                  const acc = MEAL_ACCENTS[meal.type] ?? { bar: "bg-gray-700", label: "text-gray-600", dot: "bg-gray-500" }
+                  return (
+                    <div key={mi} className={`flex ${mi > 0 ? "border-t-4 border-gray-100" : ""}`}>
+                      <div className={`w-1 shrink-0 ${acc.bar}`} />
+                      <div className="flex-1 px-4 py-3">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${acc.dot}`} />
+                          <span className={`text-[10px] font-bold uppercase tracking-widest ${acc.label}`}>{meal.type}</span>
+                        </div>
+                        <p className="text-[14px] font-bold text-gray-900 leading-snug">{meal.name}</p>
+                        <p className="text-xs text-gray-400 font-medium mt-1 leading-relaxed">{meal.description}</p>
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-xs font-extrabold text-gray-700">{meal.kcal} kcal</span>
+                          {meal.proteins > 0 && <><span className="text-[10px] text-gray-300">·</span><span className="text-xs font-extrabold text-emerald-600">{meal.proteins}g prot.</span></>}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+                {/* Footer */}
+                <div className="px-4 py-2.5 border-t border-gray-100 flex items-center justify-between bg-gray-50">
+                  {rPlanAt && <p className="text-[11px] text-gray-400">Généré le {new Date(rPlanAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</p>}
+                  <button onClick={generateRPlan} disabled={rGenerating}
+                    className="text-[11px] font-bold text-orange-500 hover:text-orange-400 disabled:opacity-50 transition-colors ml-auto">
+                    {rGenerating ? "Génération…" : "Nouveaux repas →"}
+                  </button>
+                </div>
+                {rError && <p className="text-xs text-red-500 font-medium px-4 pb-3">{rError}</p>}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Journal tab */}
+      {(isDemo || nutTab === "journal") && (
       <div className="pt-4 md:pb-8 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         {loading ? (
           <div className="max-w-3xl mx-auto px-4 pt-4 flex flex-col gap-3">
@@ -573,6 +705,7 @@ export default function NutritionPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* ── Step 1: Analyzing image overlay ── */}
       {analyzingStep === "describe" && (

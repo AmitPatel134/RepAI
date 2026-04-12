@@ -33,6 +33,10 @@ model User {
   profileComplete  Boolean        @default(false)
   nutritionReco    Json?          // { calories, proteins, carbs, fats, fiber, summary }
   nutritionRecoAt  DateTime?
+  trainingPlan     Json?          // { weekGoal, sessions: [{ name, exercises: [{ name, sets, reps, weightKg, note }] }] }
+  trainingPlanAt   DateTime?
+  mealPlan         Json?          // { kcalTarget, proteinsTarget, meals: [{ type, name, kcal, proteins, description }] }
+  mealPlanAt       DateTime?
   workouts         Workout[]
   coachSessions   CoachSession[]
   activities      Activity[]

@@ -287,6 +287,17 @@ export default function ActivitiesPage() {
   // Voice preview
   const [voicePreview, setVoicePreview] = useState<VoiceItem[] | null>(null)
 
+  // Programme IA
+  type TrainingExercise = { name: string; sets: number; reps: string; weightKg: number | null }
+  type TrainingSession  = { name: string; exercises: TrainingExercise[] }
+  type TrainingPlan     = { weekGoal: string; sessions: TrainingSession[] }
+  const [progPlan, setProgPlan]             = useState<TrainingPlan | null>(null)
+  const [progPlanAt, setProgPlanAt]         = useState<string | null>(null)
+  const [progLoading, setProgLoading]       = useState(false)
+  const [progGenerating, setProgGenerating] = useState(false)
+  const [progError, setProgError]           = useState<string | null>(null)
+  const [actTab, setActTab]                 = useState<"journal"|"programme">("journal")
+
   // Cardio form
   const [cType, setCType] = useState("running")
   const [cDate, setCDate] = useState(new Date().toISOString().slice(0, 10))
@@ -371,6 +382,28 @@ export default function ActivitiesPage() {
   useEffect(() => {
     if (showWorkoutForm) workoutModalRef.current?.focus()
   }, [showWorkoutForm])
+
+  // Load Programme IA on mount
+  useEffect(() => {
+    setProgLoading(true)
+    const cached = getCached<{ plan: TrainingPlan | null; generatedAt: string | null }>("/api/coach/training-plan")
+    if (cached) { setProgPlan(cached.plan); setProgPlanAt(cached.generatedAt); setProgLoading(false) }
+    authFetch("/api/coach/training-plan").then(r => r.json()).then(data => {
+      setProgPlan(data.plan ?? null); setProgPlanAt(data.generatedAt ?? null)
+      setCached("/api/coach/training-plan", data)
+    }).catch(() => {}).finally(() => setProgLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function generateProgPlan() {
+    setProgGenerating(true); setProgError(null)
+    try {
+      const r = await authFetch("/api/coach/training-plan", { method: "POST" })
+      const data = await r.json()
+      if (!r.ok || data.error) { setProgError("Erreur lors de la génération."); return }
+      if (data.plan) { setProgPlan(data.plan); setProgPlanAt(data.generatedAt ?? new Date().toISOString()); setCached("/api/coach/training-plan", data) }
+    } catch { setProgError("Erreur réseau.") } finally { setProgGenerating(false) }
+  }
 
   // ─── Unified list ─────────────────────────────────────────────────────────
 
@@ -877,10 +910,120 @@ export default function ActivitiesPage() {
               <a href="/pricing" className="text-[10px] font-bold text-white/70 hover:text-white">Passer Pro →</a>
             </div>
           )}
+
+          {/* Tab bar */}
+          {!isDemo && (
+            <div className="flex gap-1 bg-white/15 rounded-xl p-0.5 mt-3">
+              <button
+                onClick={() => setActTab("journal")}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-[10px] transition-all ${actTab === "journal" ? "bg-white text-blue-700 shadow-sm" : "text-white/70 hover:text-white"}`}
+              >Journal</button>
+              <button
+                onClick={() => setActTab("programme")}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-[10px] transition-all ${actTab === "programme" ? "bg-white text-blue-700 shadow-sm" : "text-white/70 hover:text-white"}`}
+              >Programme</button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* List */}
+      {/* Programme IA tab */}
+      {!isDemo && actTab === "programme" && (
+        <div className="max-w-3xl mx-auto px-3 md:px-4 pt-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+          {progLoading ? (
+            <div className="flex flex-col gap-2 px-1">
+              {[1,2,3,4,5].map(i => <div key={i} className="h-8 bg-gray-100 rounded-lg animate-pulse" />)}
+            </div>
+          ) : !progPlan ? (
+            <div className="py-10 flex flex-col items-center text-center gap-3">
+              <span className="w-12 h-12 rounded-2xl bg-violet-100 flex items-center justify-center mb-1">
+                <svg className="w-6 h-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </span>
+              <p className="text-sm font-bold text-gray-800">Programme d&apos;entraînement</p>
+              <p className="text-xs text-gray-400 font-medium max-w-xs">L'IA analyse tes séances et génère un programme avec les charges et séries recommandées.</p>
+              <button
+                onClick={generateProgPlan} disabled={progGenerating}
+                className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-2xl font-bold text-sm text-white transition-colors disabled:opacity-50 flex items-center gap-2 mt-1"
+              >
+                {progGenerating && <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
+                {progGenerating ? "Génération…" : "Générer mon programme →"}
+              </button>
+              {progError && <p className="text-xs text-red-500 font-medium">{progError}</p>}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {/* Coach advice */}
+              <div className="bg-violet-50 rounded-2xl px-4 py-3 flex items-start gap-2.5">
+                <svg className="w-4 h-4 text-violet-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                <p className="text-sm text-gray-700 leading-snug">{progPlan.weekGoal}</p>
+              </div>
+
+              {/* Sessions */}
+              {progPlan.sessions.map((session, si) => {
+                const isCardioSession = session.exercises.every(ex => ex.weightKg === null)
+                return (
+                <div key={si} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  {/* Session header */}
+                  <div className={`flex items-center gap-2.5 px-4 py-2.5 ${isCardioSession ? "bg-orange-50" : "bg-gray-50"}`}>
+                    <span className={`w-5 h-5 rounded-md text-white text-[10px] font-black flex items-center justify-center shrink-0 ${isCardioSession ? "bg-orange-500" : "bg-violet-600"}`}>{si + 1}</span>
+                    <p className="text-xs font-bold text-gray-700 flex-1">{session.name}</p>
+                    <span className="text-[10px] text-gray-400">{session.exercises.length} exos</span>
+                  </div>
+                  {/* Column headers */}
+                  <div className="flex items-center px-4 pt-2 pb-1">
+                    <div className="flex-1" />
+                    <div className="w-12 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wide">Séries</div>
+                    <div className="w-14 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wide">Reps</div>
+                    <div className="w-14 text-right text-[10px] font-bold text-gray-400 uppercase tracking-wide">Charge</div>
+                  </div>
+                  {/* Exercise rows */}
+                  {session.exercises.map((ex, ei) => {
+                    const isCardio = ex.weightKg === null && ex.sets <= 1
+                    return (
+                    <div key={ei} className={`flex items-center py-2 px-4 ${ei < session.exercises.length - 1 ? "border-b border-gray-50" : ""}`}>
+                      <div className="flex-1 min-w-0 pr-2">
+                        <p className="text-[13px] font-medium text-gray-900 leading-tight truncate">{ex.name}</p>
+                      </div>
+                      {isCardio ? (
+                        <div className="w-40 text-right">
+                          <span className="text-[11px] font-bold text-orange-600">{ex.reps}</span>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="w-12 text-center text-[13px] font-bold text-gray-700">{ex.sets}</div>
+                          <div className="w-14 text-center text-[13px] font-bold text-gray-700">{ex.reps}</div>
+                          <div className="w-14 text-right text-[13px] font-bold text-violet-600">
+                            {ex.weightKg != null ? `${ex.weightKg} kg` : <span className="text-gray-400 font-medium text-[11px]">pdc</span>}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    )
+                  })}
+                </div>
+                )
+              })}
+
+              {/* Footer */}
+              <div className="flex items-center justify-between px-1">
+                {progPlanAt && <p className="text-[11px] text-gray-400">Généré le {new Date(progPlanAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</p>}
+                <button onClick={generateProgPlan} disabled={progGenerating}
+                  className="text-[11px] font-bold text-violet-600 hover:text-violet-500 disabled:opacity-50 transition-colors ml-auto">
+                  {progGenerating ? "Génération…" : "Mettre à jour →"}
+                </button>
+              </div>
+              {progError && <p className="text-xs text-red-500 font-medium px-1">{progError}</p>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Journal tab */}
+      {(isDemo || actTab === "journal") && (
       <div className="pt-4 md:pb-8 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         {loading ? (
           <div className="max-w-3xl mx-auto px-4 pt-4 flex flex-col gap-3">
@@ -1068,6 +1211,7 @@ export default function ActivitiesPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* ── Type Selector modal ── */}
       {showTypeSelector && (

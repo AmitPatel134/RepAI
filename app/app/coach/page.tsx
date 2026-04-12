@@ -3,13 +3,11 @@ import { useEffect, useRef, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { authFetch } from "@/lib/authFetch"
 import { getCached, setCached } from "@/lib/appCache"
-import LoadingScreen from "@/components/LoadingScreen"
 import { DEMO_WORKOUTS } from "@/lib/demoData"
 
 type Session = { question: string; response: string; createdAt: string }
 
 function lsKey(email: string) { return `repai_last_coach_${email}` }
-
 function loadStored(email: string): Session | null {
   if (typeof window === "undefined") return null
   try { return JSON.parse(localStorage.getItem(lsKey(email)) ?? "null") } catch { return null }
@@ -24,27 +22,21 @@ function parseResponseSections(text: string): ResponseSection[] {
   const lines = text.split("\n")
   const sections: ResponseSection[] = []
   let current: ResponseSection = { title: null, subtitle: null, defaultOpen: false, body: "" }
-
   for (const line of lines) {
     const h2 = line.match(/^##\s+(.+)$/)
     const h3 = line.match(/^###\s+(.+)$/)
     const heading = h2?.[1] ?? h3?.[1]
     const blockquote = line.match(/^>\s*(.+)$/)
-
     if (heading) {
       if (current.body.trim() || current.title) sections.push(current)
       current = { title: heading, subtitle: null, defaultOpen: false, body: "" }
     } else if (blockquote && current.title && current.subtitle === null) {
       const content = blockquote[1].trim()
       if (content.toLowerCase().startsWith("false")) {
-        // No useful subtitle — still closed by default
-        current.defaultOpen = false
-        current.subtitle = null
+        current.defaultOpen = false; current.subtitle = null
       } else {
-        // "true | phrase" or just "phrase"
         const phrase = content.replace(/^true\s*[|:]\s*/i, "").trim()
-        current.subtitle = phrase || null
-        current.defaultOpen = false
+        current.subtitle = phrase || null; current.defaultOpen = false
       }
     } else {
       current.body += (current.body ? "\n" : "") + line
@@ -57,58 +49,45 @@ function parseResponseSections(text: string): ResponseSection[] {
 function escapeHtml(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
 }
-
 function renderBody(text: string) {
   return escapeHtml(text)
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/^\* (.*$)/gm, "<li class='ml-4 list-disc text-gray-600 mb-0.5'>$1</li>")
     .replace(/^- (.*$)/gm, "<li class='ml-4 list-disc text-gray-600 mb-0.5'>$1</li>")
     .replace(/^\d+\. (.*$)/gm, "<li class='ml-4 list-decimal text-gray-600 mb-0.5'>$1</li>")
-    .replace(/\n\n/g, "<br/>")
-    .replace(/\n/g, "<br/>")
+    .replace(/\n\n/g, "<br/>").replace(/\n/g, "<br/>")
 }
 
-function AccordionSection({ index, title, subtitle, body, defaultOpen }: { index: number; title: string; subtitle: string | null; body: string; defaultOpen: boolean }) {
+function AccordionSection({ index, title, subtitle, body, defaultOpen }: {
+  index: number; title: string; subtitle: string | null; body: string; defaultOpen: boolean
+}) {
   const [open, setOpen] = useState(defaultOpen)
   const contentRef = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState(defaultOpen ? "auto" : "0px")
-
   useEffect(() => {
-    if (contentRef.current) {
-      setHeight(open ? contentRef.current.scrollHeight + "px" : "0px")
-    }
+    if (contentRef.current) setHeight(open ? contentRef.current.scrollHeight + "px" : "0px")
   }, [open])
-
   return (
     <div>
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50/80 transition-colors"
-      >
+      <button type="button" onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50/80 transition-colors">
         <span className="w-7 h-7 rounded-xl bg-violet-600 text-white text-xs font-black flex items-center justify-center shrink-0 shadow-md shadow-violet-300/40">
           {index + 1}
         </span>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-gray-900 leading-snug">{title}</p>
-          {!open && subtitle && (
-            <p className="text-xs text-gray-500 mt-0.5 leading-snug">{subtitle}</p>
-          )}
+          {!open && subtitle && <p className="text-xs text-gray-500 mt-0.5 leading-snug">{subtitle}</p>}
         </div>
-        <svg
-          className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-300 shrink-0 ${open ? "rotate-180" : ""}`}
-          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-        >
+        <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-300 shrink-0 ${open ? "rotate-180" : ""}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
       <div style={{ height, overflow: "hidden", transition: "height 0.28s ease" }}>
         <div ref={contentRef} className="px-4 pb-4 pt-0">
-          <div className="h-px bg-gray-100 mb-3 mx-0" />
-          <div
-            className="text-sm text-gray-700 font-medium leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: renderBody(body) }}
-          />
+          <div className="h-px bg-gray-100 mb-3" />
+          <div className="text-sm text-gray-700 font-medium leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: renderBody(body) }} />
         </div>
       </div>
     </div>
@@ -163,17 +142,17 @@ const QUICK_CATEGORIES = [
 ]
 
 export default function CoachPage() {
-  const [ready, setReady] = useState(false)
+  const [ready, setReady]   = useState(false)
   const [isDemo, setIsDemo] = useState(false)
-  const [plan, setPlan] = useState("free")
+  const [plan, setPlan]     = useState("free")
   const [coachQuestionsThisWeek, setCoachQuestionsThisWeek] = useState(0)
-  const [weekResetDate, setWeekResetDate] = useState<string | null>(null)
-  const [lastSession, setLastSession] = useState<Session | null>(null)
-  const [question, setQuestion] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [quickOpen, setQuickOpen] = useState(false)
-  const [quickCategory, setQuickCategory] = useState(0)
-  const [workoutContext, setWorkoutContext] = useState("")
+  const [weekResetDate, setWeekResetDate]   = useState<string | null>(null)
+  const [lastSession, setLastSession]       = useState<Session | null>(null)
+  const [question, setQuestion]             = useState("")
+  const [loading, setLoading]               = useState(false)
+  const [quickOpen, setQuickOpen]           = useState(false)
+  const [quickCategory, setQuickCategory]   = useState(0)
+  const [workoutContext, setWorkoutContext]  = useState("")
   const [activityContext, setActivityContext] = useState("")
   const [nutritionContext, setNutritionContext] = useState("")
 
@@ -192,20 +171,12 @@ export default function CoachPage() {
       }
 
       const email = session.user.email ?? ""
-
-      // Instant display from localStorage (user-scoped key)
       const stored = loadStored(email)
       if (stored) setLastSession(stored)
 
-      // Instant display from cache
       const cached = getCached<{
-        plan: string
-        usage: { coachQuestionsThisWeek: number }
-        weekResetDate: string
-        workoutContext: string
-        activityContext: string
-        nutritionContext: string
-        lastSession: Session | null
+        plan: string; usage: { coachQuestionsThisWeek: number }; weekResetDate: string
+        workoutContext: string; activityContext: string; nutritionContext: string; lastSession: Session | null
       }>("/api/coach/context")
       if (cached) {
         setPlan(cached.plan ?? "free")
@@ -222,25 +193,21 @@ export default function CoachPage() {
         setReady(true)
       }
 
-      authFetch("/api/coach/context")
-        .then(r => r.json())
-        .then(ctx => {
-          if (!ctx || ctx.error) { setIsDemo(true); return }
-          setPlan(ctx.plan ?? "free")
-          setCoachQuestionsThisWeek(ctx.usage?.coachQuestionsThisWeek ?? 0)
-          setWeekResetDate(ctx.weekResetDate ?? null)
-          setWorkoutContext(ctx.workoutContext ?? "")
-          setActivityContext(ctx.activityContext ?? "")
-          setNutritionContext(ctx.nutritionContext ?? "")
-          if (ctx.lastSession) {
-            const storedTs = stored ? new Date(stored.createdAt).getTime() : 0
-            const apiTs = new Date(ctx.lastSession.createdAt).getTime()
-            if (apiTs > storedTs) { setLastSession(ctx.lastSession); saveStored(email, ctx.lastSession) }
-          }
-          setCached("/api/coach/context", ctx)
-        })
-        .catch(() => setIsDemo(true))
-        .finally(() => setReady(true))
+      authFetch("/api/coach/context").then(r => r.json()).then(ctx => {
+        if (!ctx || ctx.error) { setIsDemo(true); return }
+        setPlan(ctx.plan ?? "free")
+        setCoachQuestionsThisWeek(ctx.usage?.coachQuestionsThisWeek ?? 0)
+        setWeekResetDate(ctx.weekResetDate ?? null)
+        setWorkoutContext(ctx.workoutContext ?? "")
+        setActivityContext(ctx.activityContext ?? "")
+        setNutritionContext(ctx.nutritionContext ?? "")
+        if (ctx.lastSession) {
+          const storedTs = stored ? new Date(stored.createdAt).getTime() : 0
+          const apiTs = new Date(ctx.lastSession.createdAt).getTime()
+          if (apiTs > storedTs) { setLastSession(ctx.lastSession); saveStored(email, ctx.lastSession) }
+        }
+        setCached("/api/coach/context", ctx)
+      }).catch(() => setIsDemo(true)).finally(() => setReady(true))
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -270,7 +237,6 @@ En regardant tes séances récentes, voici mes observations :
 3. Maintiens un surplus calorique modéré (+200-300 kcal/jour)
 
 *Note : Ceci est une réponse de démonstration. Connecte-toi pour des conseils personnalisés.*`
-
       const s: Session = { question: q, response: demoResponse, createdAt: new Date().toISOString() }
       setLastSession(s)
       setLoading(false)
@@ -278,18 +244,13 @@ En regardant tes séances récentes, voici mes observations :
     }
 
     const email = (await supabase.auth.getSession()).data.session?.user.email ?? ""
-
     try {
       const r = await authFetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q, workoutContext, activityContext, nutritionContext }),
       })
-      if (r.status === 429) {
-        setCoachQuestionsThisWeek(1)
-        setLoading(false)
-        return
-      }
+      if (r.status === 429) { setCoachQuestionsThisWeek(1); setLoading(false); return }
       const data = await r.json()
       const s: Session = { question: q, response: data.response, createdAt: data.createdAt ?? new Date().toISOString() }
       setLastSession(s)
@@ -316,7 +277,6 @@ En regardant tes séances récentes, voici mes observations :
         </div>
       )}
 
-      {/* Sticky header */}
       <div className="sticky top-3 z-30 px-3 md:px-4 pt-3">
         <div className="max-w-3xl mx-auto bg-violet-600/85 backdrop-blur-xl rounded-2xl shadow-lg shadow-violet-900/20 px-4 md:px-5 pt-4 pb-4">
           <p className="text-xs font-medium text-white/60 mb-1">Entraîneur IA personnalisé</p>
@@ -348,48 +308,30 @@ En regardant tes séances récentes, voici mes observations :
 
         {/* Quick questions */}
         <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-          <button
-            onClick={() => setQuickOpen(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-colors"
-          >
+          <button onClick={() => setQuickOpen(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 transition-colors">
             <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Questions rapides</span>
-            <svg
-              className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${quickOpen ? "rotate-180" : ""}`}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-            >
+            <svg className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${quickOpen ? "rotate-180" : ""}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-          <div
-            style={{
-              maxHeight: quickOpen ? "500px" : "0px",
-              opacity: quickOpen ? 1 : 0,
-              transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease",
-              overflow: "hidden",
-            }}
-          >
-            {/* Category tabs */}
+          <div style={{
+            maxHeight: quickOpen ? "500px" : "0px", opacity: quickOpen ? 1 : 0,
+            transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease", overflow: "hidden",
+          }}>
             <div className="flex gap-2 px-4 pb-3 overflow-x-auto no-scrollbar">
               {QUICK_CATEGORIES.map((cat, i) => (
-                <button
-                  key={cat.label}
-                  onClick={() => setQuickCategory(i)}
-                  className={`shrink-0 px-3 py-1 rounded-full text-[11px] font-bold transition-all ${
-                    quickCategory === i ? cat.color.active : cat.color.pill
-                  }`}
-                >
+                <button key={cat.label} onClick={() => setQuickCategory(i)}
+                  className={`shrink-0 px-3 py-1 rounded-full text-[11px] font-bold transition-all ${quickCategory === i ? cat.color.active : cat.color.pill}`}>
                   {cat.label}
                 </button>
               ))}
             </div>
-            {/* Questions for active category */}
             <div className="px-4 pb-4 flex flex-col gap-2">
               {QUICK_CATEGORIES[quickCategory].questions.map(q => (
-                <button
-                  key={q}
-                  onClick={() => { setQuestion(q); setQuickOpen(false) }}
-                  className={`w-full px-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs font-semibold text-gray-600 hover:shadow-sm transition-all text-center ${QUICK_CATEGORIES[quickCategory].color.btn}`}
-                >
+                <button key={q} onClick={() => { setQuestion(q); setQuickOpen(false) }}
+                  className={`w-full px-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs font-semibold text-gray-600 hover:shadow-sm transition-all text-center ${QUICK_CATEGORIES[quickCategory].color.btn}`}>
                   {q}
                 </button>
               ))}
@@ -397,7 +339,7 @@ En regardant tes séances récentes, voici mes observations :
           </div>
         </div>
 
-        {/* Plan tier indicator */}
+        {/* Plan tier */}
         {!isDemo && plan !== "free" && (
           <div className="flex items-center gap-2 -mb-3">
             <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${plan === "premium_plus" ? "bg-violet-100 text-violet-700" : "bg-gray-100 text-gray-600"}`}>
@@ -411,20 +353,14 @@ En regardant tes séances récentes, voici mes observations :
 
         {/* Ask input */}
         <div className="flex flex-col sm:flex-row gap-2">
-          <textarea
-            value={question}
-            onChange={e => setQuestion(e.target.value)}
+          <textarea value={question} onChange={e => setQuestion(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAsk() } }}
             placeholder={weeklyLimitReached ? "Limite hebdomadaire atteinte — passez Pro pour des questions illimitées" : "Posez votre question au coach…"}
-            rows={3}
-            disabled={weeklyLimitReached}
+            rows={3} disabled={weeklyLimitReached}
             className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 font-medium outline-none focus:border-violet-400 transition-colors resize-none disabled:opacity-60 disabled:cursor-not-allowed"
           />
-          <button
-            onClick={handleAsk}
-            disabled={!question.trim() || loading || weeklyLimitReached}
-            className="sm:self-end px-5 py-3 bg-violet-600 hover:bg-violet-500 rounded-2xl font-bold text-sm text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
+          <button onClick={handleAsk} disabled={!question.trim() || loading || weeklyLimitReached}
+            className="sm:self-end px-5 py-3 bg-violet-600 hover:bg-violet-500 rounded-2xl font-bold text-sm text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
             {loading ? (
               <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -458,7 +394,7 @@ En regardant tes séances récentes, voici mes observations :
           </div>
         )}
 
-        {/* Last session / Empty state / Skeleton */}
+        {/* Skeleton */}
         {!ready && (
           <div className="flex flex-col gap-3">
             <div className="h-10 bg-gray-200 rounded-2xl animate-pulse" />
@@ -472,12 +408,10 @@ En regardant tes séances récentes, voici mes observations :
           const sections = parseResponseSections(lastSession.response)
           return (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              {/* Question header */}
               <div className="px-4 pt-4 pb-3 border-b border-gray-100 text-center">
                 <p className="text-sm font-bold text-gray-900 leading-snug">{lastSession.question}</p>
                 <p className="text-[11px] text-gray-400 mt-1 font-medium">{formatDate(lastSession.createdAt)}</p>
               </div>
-              {/* Sections */}
               <div className="flex flex-col divide-y divide-gray-100">
                 {sections.filter(s => s.title).map((s, i) => (
                   <AccordionSection key={i} index={i} title={s.title!} subtitle={s.subtitle} body={s.body} defaultOpen={s.defaultOpen} />
