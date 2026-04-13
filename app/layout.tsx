@@ -42,6 +42,10 @@ export const metadata: Metadata = {
     title: "RepAI — Suivi & Performance",
     description: "Trackez vos séances, visualisez vos progrès et progressez avec votre coach IA.",
   },
+  icons: {
+    icon: "/logo_couleur_rmbg.png",
+    apple: "/logo_couleur_rmbg.png",
+  },
   robots: {
     index: true,
     follow: true,
