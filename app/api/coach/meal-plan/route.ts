@@ -138,7 +138,13 @@ export async function POST(request: NextRequest) {
     const kcalSnack     = Math.round(kcalTarget * 0.10)
     const kcalDinner    = kcalTarget - kcalBreakfast - kcalLunch - kcalSnack
 
-    const prompt = `Tu es un nutritionniste expert du sport. Génère des idées de repas pour une journée complète.
+    const optionsCount = isPremiumPlus(userPlan) ? 3 : 2
+
+    // Build meal template for prompt
+    const mealTpl = (type: string, kcal: number) =>
+      `{"type":"${type}","options":[${Array.from({ length: optionsCount }, () => `{"name":"...","kcal":${kcal},"proteins":0,"description":"..."}`).join(",")}]}`
+
+    const prompt = `Tu es un nutritionniste expert du sport. Génère ${optionsCount} alternatives de repas différentes pour chaque moment de la journée.
 
 Profil :
 ${profileLines.join("\n")}
@@ -146,28 +152,27 @@ Objectif calorique TOTAL : ${kcalTarget} kcal/jour
 Protéines cibles TOTAL : ${proteinsTarget}g/jour
 
 Répartition calorique OBLIGATOIRE (respecte ces valeurs exactes) :
-- Petit-déjeuner : ${kcalBreakfast} kcal
-- Déjeuner : ${kcalLunch} kcal
-- Collation : ${kcalSnack} kcal
-- Dîner : ${kcalDinner} kcal
-TOTAL : ${kcalTarget} kcal
+- Petit-déjeuner : ${kcalBreakfast} kcal (chaque option)
+- Déjeuner : ${kcalLunch} kcal (chaque option)
+- Collation : ${kcalSnack} kcal (chaque option)
+- Dîner : ${kcalDinner} kcal (chaque option)
 
-RÈGLE CRITIQUE : les 4 valeurs "kcal" dans le JSON doivent sommer à EXACTEMENT ${kcalTarget} kcal. Adapte les quantités d'ingrédients pour atteindre ces valeurs précises.
+RÈGLES :
+- Chaque option d'un même type doit avoir des plats DIFFÉRENTS (noms et ingrédients variés).
+- Chaque option doit respecter les kcal indiquées pour ce type de repas.
+- Si l'objectif est élevé (>2500 kcal), utilise des quantités généreuses.
+- Si l'objectif est de prise de masse, ajoute un shaker protéiné dans le champ "shaker".
+- Repas simples, courants en France, faciles à préparer.
+- description : ingrédients principaux avec quantités précises (ex: "200g poulet, 150g riz cuit, 2 cs huile d'olive").
 
-Si l'objectif est élevé (>2500 kcal), utilise des quantités généreuses : 200-300g de viande, 150-200g de féculents, huile d'olive, fromage, noix, etc.
+Réponds UNIQUEMENT avec du JSON valide (structure exacte) :
+{"kcalTarget":${kcalTarget},"proteinsTarget":${proteinsTarget},"meals":[${mealTpl("Petit-déjeuner", kcalBreakfast)},${mealTpl("Déjeuner", kcalLunch)},${mealTpl("Collation", kcalSnack)},${mealTpl("Dîner", kcalDinner)}],"shaker":{"name":"...","kcal":0,"proteins":0,"description":"..."}}`
 
-Si l'objectif est de prise de masse, ajoute un shaker protéiné ou calorique (whey + lait entier, gainer, etc.) dans le champ "shaker".
-
-Repas simples, courants en France, faciles à préparer.
-description : ingrédients principaux avec quantités précises (ex: "200g poulet, 150g riz cuit, 2 cs huile d'olive").
-
-Réponds UNIQUEMENT avec du JSON valide :
-{"kcalTarget":${kcalTarget},"proteinsTarget":${proteinsTarget},"meals":[{"type":"Petit-déjeuner","name":"...","kcal":${kcalBreakfast},"proteins":0,"description":"..."},{"type":"Déjeuner","name":"...","kcal":${kcalLunch},"proteins":0,"description":"..."},{"type":"Collation","name":"...","kcal":${kcalSnack},"proteins":0,"description":"..."},{"type":"Dîner","name":"...","kcal":${kcalDinner},"proteins":0,"description":"..."}],"shaker":{"name":"...","kcal":0,"proteins":0,"description":"..."}}`
-
+    type MealOption = { name: string; kcal: number; proteins: number; description: string }
     type MealPlanPayload = {
       kcalTarget: number
       proteinsTarget: number
-      meals: Array<{ type: string; name: string; kcal: number; proteins: number; description: string }>
+      meals: Array<{ type: string; options: MealOption[] }>
       shaker?: { name: string; kcal: number; proteins: number; description: string } | null
     }
 
@@ -182,8 +187,8 @@ Réponds UNIQUEMENT avec du JSON valide :
         ],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         response_format: { type: "json_object" } as any,
-        max_tokens: 700,
-        temperature: 0.3,
+        max_tokens: 2000,
+        temperature: 0.5,
       })
 
       const raw = completion.choices[0]?.message?.content?.trim() ?? ""
@@ -193,8 +198,11 @@ Réponds UNIQUEMENT avec du JSON valide :
         const parsed = JSON.parse(match[0]) as Partial<MealPlanPayload>
         if (!parsed.meals || parsed.meals.length === 0) continue
 
-        // Validate calorie total — must be within 15% of target
-        const total = parsed.meals.reduce((s, m) => s + (m.kcal ?? 0), 0)
+        // Validate: each meal must have at least 1 option
+        if (parsed.meals.some(m => !m.options || m.options.length === 0)) continue
+
+        // Validate calorie total of first options — must be within 15% of target
+        const total = parsed.meals.reduce((s, m) => s + (m.options[0]?.kcal ?? 0), 0)
         if (Math.abs(total - kcalTarget) > kcalTarget * 0.15) continue
 
         resultPlan = parsed as MealPlanPayload

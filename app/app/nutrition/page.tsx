@@ -127,7 +127,9 @@ export default function NutritionPage() {
   const [deletingMeal, setDeletingMeal] = useState(false)
 
   // Repas IA
-  type MealSuggestion = { type: string; name: string; kcal: number; proteins: number; description: string }
+  type MealOption = { name: string; kcal: number; proteins: number; description: string }
+  // Support both new (options[]) and legacy (flat) formats
+  type MealSuggestion = { type: string; options?: MealOption[]; name?: string; kcal?: number; proteins?: number; description?: string }
   type ShakerSuggestion = { name: string; kcal: number; proteins: number; description: string }
   type MealPlanData = { kcalTarget: number; proteinsTarget: number; meals: MealSuggestion[]; shaker?: ShakerSuggestion | null }
   const MEAL_ACCENTS: Record<string, { bar: string; label: string; dot: string }> = {
@@ -142,6 +144,7 @@ export default function NutritionPage() {
   const [rGenerating, setRGenerating]   = useState(false)
   const [rError, setRError]             = useState<string | null>(null)
   const [rCooldownUntil, setRCooldownUntil] = useState<string | null>(null)
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, number>>({})
   const [nutTab, setNutTab]              = useState<"journal"|"repas">("journal")
 
   useEffect(() => {
@@ -195,6 +198,7 @@ export default function NutritionPage() {
         setRPlan(data.plan)
         setRPlanAt(data.generatedAt ?? new Date().toISOString())
         setRCooldownUntil(null)
+        setSelectedOptions({})
         setCached("/api/coach/meal-plan", data)
       }
     } catch { setRError("Erreur réseau.") } finally { setRGenerating(false) }
@@ -570,21 +574,49 @@ export default function NutritionPage() {
                 </div>
               </div>
               {/* Meals */}
-              {[...rPlan.meals, ...(rPlan.shaker?.name ? [{ type: "Complément", name: rPlan.shaker.name, kcal: rPlan.shaker.kcal, proteins: rPlan.shaker.proteins, description: rPlan.shaker.description }] : [])].map((meal, mi) => {
+              {[...rPlan.meals, ...(rPlan.shaker?.name ? [{ type: "Complément", options: [{ name: rPlan.shaker.name, kcal: rPlan.shaker.kcal, proteins: rPlan.shaker.proteins, description: rPlan.shaker.description }] }] : [])].map((meal, mi) => {
+                // Support legacy flat format
+                const options: MealOption[] = meal.options && meal.options.length > 0
+                  ? meal.options
+                  : [{ name: meal.name ?? "", kcal: meal.kcal ?? 0, proteins: meal.proteins ?? 0, description: meal.description ?? "" }]
+                const totalOptions = options.length
+                const curIdx = Math.min(selectedOptions[meal.type] ?? 0, totalOptions - 1)
+                const opt = options[curIdx]
                 const acc = MEAL_ACCENTS[meal.type] ?? { bar: "bg-gray-700", label: "text-gray-600", dot: "bg-gray-500" }
                 return (
                   <div key={mi} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex">
                     <div className={`w-1 shrink-0 ${acc.bar}`} />
                     <div className="flex-1 px-4 py-3">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${acc.dot}`} />
-                        <span className={`text-[10px] font-bold uppercase tracking-widest ${acc.label}`}>{meal.type}</span>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${acc.dot}`} />
+                          <span className={`text-[10px] font-bold uppercase tracking-widest ${acc.label}`}>{meal.type}</span>
+                        </div>
+                        {totalOptions > 1 && (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => setSelectedOptions(prev => ({ ...prev, [meal.type]: Math.max(0, (prev[meal.type] ?? 0) - 1) }))}
+                              disabled={curIdx === 0}
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"
+                            >
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                            </button>
+                            <span className="text-[10px] font-bold text-gray-400">{curIdx + 1}/{totalOptions}</span>
+                            <button
+                              onClick={() => setSelectedOptions(prev => ({ ...prev, [meal.type]: Math.min(totalOptions - 1, (prev[meal.type] ?? 0) + 1) }))}
+                              disabled={curIdx === totalOptions - 1}
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"
+                            >
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-[14px] font-bold text-gray-900 leading-snug">{meal.name}</p>
-                      <p className="text-xs text-gray-400 font-medium mt-1 leading-relaxed">{meal.description}</p>
+                      <p className="text-[14px] font-bold text-gray-900 leading-snug">{opt.name}</p>
+                      <p className="text-xs text-gray-400 font-medium mt-1 leading-relaxed">{opt.description}</p>
                       <div className="flex items-center gap-3 mt-2">
-                        <span className="text-xs font-extrabold text-gray-700">{meal.kcal} kcal</span>
-                        {meal.proteins > 0 && <><span className="text-[10px] text-gray-300">·</span><span className="text-xs font-extrabold text-emerald-600">{meal.proteins}g prot.</span></>}
+                        <span className="text-xs font-extrabold text-gray-700">{opt.kcal} kcal</span>
+                        {opt.proteins > 0 && <><span className="text-[10px] text-gray-300">·</span><span className="text-xs font-extrabold text-emerald-600">{opt.proteins}g prot.</span></>}
                       </div>
                     </div>
                   </div>
