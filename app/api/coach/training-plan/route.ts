@@ -212,6 +212,12 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.findUnique({ where: { email: authUser.email } })
     if (!user) return Response.json({ error: "User not found" }, { status: 404 })
 
+    // Free plan: block AI programme generation
+    const { isPro } = await import("@/lib/plans")
+    if (!isPro(user.plan ?? "free")) {
+      return Response.json({ error: "pro_required" }, { status: 403 })
+    }
+
     // Fetch last 16 workouts + last 20 cardio activities
     const [workouts, activities] = await Promise.all([
       prisma.workout.findMany({
@@ -352,7 +358,15 @@ CHAQUE SÉANCE DOIT AVOIR 6 À 9 EXERCICES MINIMUM.
 2. Si l'utilisateur fait du cardio (running, natation, vélo) → intègre des conseils spécifiques (allure cible, distance, intervalles) dans les exercices de ces séances.
 3. Pour chaque séance muscu : commence par 1-2 mouvements polyarticulaires lourds, puis composés secondaires, puis isolations. MINIMUM 6 exercices par séance.
 4. weekGoal doit être un conseil personnalisé de 1-2 phrases basé sur l'analyse (progression détectée, plateau à corriger, point fort/faible).
-5. Pour les exercices cardio (running, natation, vélo), utilise weightKg:null et reps comme "5 km" ou "30 min", note comme "allure : 5:30/km".
+5. Pour les exercices cardio (running, natation, vélo), utilise weightKg:null et reps comme "5 km" ou "30 min".
+
+═══ RÈGLE ABSOLUE — GROUPES MUSCULAIRES PAR SÉANCE ═══
+PUSH → UNIQUEMENT : pectoraux, épaules (deltoïdes), triceps. Exercices autorisés : développé couché/incliné/décliné, écarté, dips, développé militaire, élévations latérales/frontales, extension triceps, pushdown, overhead press.
+PULL → UNIQUEMENT : dos (grand dorsal, trapèzes, rhomboïdes), biceps, arrière des épaules. Exercices autorisés : tractions, tirage vertical/horizontal, rowing, curl barre/haltères/poulie, face pull, shrug.
+LEGS → UNIQUEMENT : quadriceps, ischio-jambiers, fessiers, mollets, abdominaux. Exercices autorisés : squat, leg press, fentes, leg extension, leg curl, hip thrust, soulevé de terre roumain, extension mollet, gainage, crunch.
+FULL BODY → peut mélanger, mais 1 composé par grand groupe (squat OU leg press, bench OU dips, row OU traction).
+UPPER → pectoraux + dos + épaules + bras. LOWER → jambes + fessiers + mollets + abdos.
+INTERDICTION ABSOLUE : ne jamais mettre un exercice de pec/épaule/triceps dans une séance Legs, ni un squat/leg press dans une séance Push ou Pull.
 
 FORMAT JSON :
 {"weekGoal":"Conseil personnalisé basé sur l'analyse","sessions":[{"name":"Push – Pec, Épaules, Triceps","exercises":[{"name":"Développé couché barre","sets":4,"reps":"6-8","weightKg":82.5},{"name":"Développé incliné haltères","sets":4,"reps":"8-10","weightKg":28},{"name":"Élévations latérales","sets":3,"reps":"12-15","weightKg":12},{"name":"Développé militaire","sets":4,"reps":"8-10","weightKg":50},{"name":"Dips","sets":3,"reps":"10-12","weightKg":null},{"name":"Extension triceps poulie","sets":3,"reps":"12-15","weightKg":20}]}]}`
@@ -390,10 +404,35 @@ FORMAT JSON :
         const parsed = JSON.parse(match[0]) as Partial<PlanPayload>
         if (!parsed.sessions || !parsed.weekGoal) continue
         // Validate: at least one session with meaningful exercises
-        if (parsed.sessions.some(s => s.exercises && s.exercises.length >= 4)) {
-          plan = parsed as PlanPayload
-          break
+        if (!parsed.sessions.some(s => s.exercises && s.exercises.length >= 4)) continue
+
+        // Validate: no upper-body exercises in Legs sessions (all comparisons use normalize())
+        const LEGS_KEYWORDS = ["legs", "jambe", "leg", "cuisses", "fessiers", "mollets", "squat", "quad"]
+        const PUSH_KEYWORDS = ["push", "pouss", "pec", "chest"]
+        const PULL_KEYWORDS = ["pull", "tir", "dos", "back"]
+        const UPPER_CONTAM  = ["developpe", "bench", "curl", "elevation", "triceps", "ecarte", "dips", "shoulder", "epaule", "overhead", "pec"]
+        const LOWER_CONTAM  = ["squat", "leg press", "fentes", "hip thrust", "leg extension", "leg curl"]
+
+        let contaminated = false
+        for (const session of parsed.sessions) {
+          const sName = normalize(session.name)
+          const isLegs = LEGS_KEYWORDS.some(k => sName.includes(k))
+          const isPush = PUSH_KEYWORDS.some(k => sName.includes(k))
+          const isPull = PULL_KEYWORDS.some(k => sName.includes(k))
+
+          for (const ex of session.exercises) {
+            const eName = normalize(ex.name)
+            // "leg curl" et "nordic curl" sont autorisés dans Legs malgré le mot "curl"
+            const isLegCurl = eName.includes("leg curl") || eName.includes("nordic") || eName.includes("ischio")
+            if (isLegs && !isLegCurl && UPPER_CONTAM.some(k => eName.includes(k))) { contaminated = true; break }
+            if ((isPush || isPull) && LOWER_CONTAM.some(k => eName.includes(k))) { contaminated = true; break }
+          }
+          if (contaminated) break
         }
+        if (contaminated) continue
+
+        plan = parsed as PlanPayload
+        break
       } catch { continue }
     }
 

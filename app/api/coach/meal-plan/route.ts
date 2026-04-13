@@ -76,6 +76,12 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.findUnique({ where: { email: authUser.email } })
     if (!user) return Response.json({ error: "User not found" }, { status: 404 })
 
+    // Free plan: block AI meal plan generation
+    const { isPro } = await import("@/lib/plans")
+    if (!isPro(user.plan ?? "free")) {
+      return Response.json({ error: "pro_required" }, { status: 403 })
+    }
+
     // Compute calorie/protein targets
     function calcAge(bd: Date) {
       const today = new Date(); let a = today.getFullYear() - bd.getFullYear()

@@ -381,7 +381,7 @@ export default function NutritionPage() {
   const mealLimitReached = plan === "free" && mealsThisMonth >= mealLimit
 
   return (
-    <div className={`${(meals.length === 0 && !loading) ? "h-screen overflow-hidden" : "min-h-screen"} bg-gray-100 text-gray-900`}>
+    <div className="min-h-screen bg-gray-100 text-gray-900">
 
       {/* Demo banner */}
       {isDemo && (
@@ -432,9 +432,9 @@ export default function NutritionPage() {
           {!isDemo && plan === "free" && (
             <div className="flex items-center justify-between mt-3">
               <div className="flex items-center gap-2">
-                <div className="flex gap-1">
+                <div className="flex gap-0.5">
                   {Array.from({ length: mealLimit }).map((_, i) => (
-                    <div key={i} className={`w-7 h-3 rounded ${i < mealsThisMonth ? "bg-white" : "bg-white/30"}`} />
+                    <div key={i} className={`w-4 h-2.5 rounded ${i < mealsThisMonth ? "bg-white" : "bg-white/30"}`} />
                   ))}
                 </div>
                 <span className="text-[11px] font-bold text-orange-100">{mealsThisMonth}/{mealLimit} repas ce mois</span>
@@ -476,8 +476,11 @@ export default function NutritionPage() {
               >Journal</button>
               <button
                 onClick={() => setNutTab("repas")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-[10px] transition-all ${nutTab === "repas" ? "bg-white text-orange-600 shadow-sm" : "text-white/70 hover:text-white"}`}
-              >Idées de Repas</button>
+                className={`flex-1 py-1.5 text-xs font-bold rounded-[10px] transition-all flex items-center justify-center gap-1 ${nutTab === "repas" ? "bg-white text-orange-600 shadow-sm" : "text-white/70 hover:text-white"}`}
+              >
+                Repas IA
+                {plan === "free" && <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>}
+              </button>
             </div>
           )}
         </div>
@@ -492,78 +495,102 @@ export default function NutritionPage() {
       {/* Repas IA tab */}
       {!isDemo && nutTab === "repas" && (
         <div className="max-w-3xl mx-auto px-3 md:px-4 pt-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            {rLoading ? (
-              <div className="px-4 py-4 flex flex-col gap-2">
-                {[1,2,3].map(i => <div key={i} className="h-8 bg-gray-100 rounded-xl animate-pulse" />)}
+          {plan === "free" ? (
+            <div className="flex flex-col items-center text-center px-4 pt-8 pb-10 gap-5">
+              <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-300/40">
+                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
               </div>
-            ) : !rPlan ? (
-              <div className="px-4 py-8 flex flex-col items-center text-center gap-3">
-                <span className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center mb-1">
-                  <svg className="w-6 h-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                  </svg>
-                </span>
-                <p className="text-sm font-bold text-gray-800">Idées de repas du jour</p>
-                <p className="text-xs text-gray-400 font-medium max-w-xs">L'IA génère une journée de repas adaptée à tes objectifs caloriques et protéiques.</p>
-                <button
-                  onClick={generateRPlan} disabled={rGenerating}
-                  className="px-5 py-2.5 bg-orange-500 hover:bg-orange-400 rounded-2xl font-bold text-sm text-white transition-colors disabled:opacity-50 flex items-center gap-2 mt-1"
-                >
-                  {rGenerating && <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
-                  {rGenerating ? "Génération…" : "Générer mes repas →"}
-                </button>
-                {rError && <p className="text-xs text-red-500 font-medium">{rError}</p>}
-              </div>
-            ) : (
               <div>
-                {/* Targets */}
-                <div className="flex items-center gap-5 px-4 py-3 border-b border-gray-50">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-                    <span className="text-sm font-black text-gray-900">{rPlan.kcalTarget.toLocaleString("fr-FR")}</span>
-                    <span className="text-xs text-gray-400">kcal</span>
+                <p className="text-base font-extrabold text-gray-900 mb-1">Repas IA · Pro</p>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-xs">L'IA génère une journée de repas complète adaptée à tes objectifs caloriques, tes macros et ton profil sportif.</p>
+              </div>
+              <div className="flex flex-col gap-2 w-full max-w-xs text-left">
+                {["Repas calibrés selon tes besoins caloriques", "Répartition protéines / glucides / lipides", "Idées simples et courants en France", "Suggestion de shaker protéiné si besoin"].map(f => (
+                  <div key={f} className="flex items-center gap-2.5">
+                    <span className="w-4 h-4 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                      <svg className="w-2.5 h-2.5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span className="text-sm text-gray-600">{f}</span>
                   </div>
-                  <div className="w-px h-4 bg-gray-200" />
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                    <span className="text-sm font-black text-gray-900">{rPlan.proteinsTarget}g</span>
-                    <span className="text-xs text-gray-400">protéines</span>
-                  </div>
+                ))}
+              </div>
+              <a href="/pricing" className="w-full max-w-xs bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm py-3 rounded-2xl transition-colors text-center shadow-md shadow-orange-200">
+                Passer Pro →
+              </a>
+              <p className="text-[11px] text-gray-400">Plan Gratuit · 1 question coach/semaine</p>
+            </div>
+          ) : rLoading ? (
+            <div className="flex flex-col gap-2">
+              {[1,2,3,4].map(i => <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse" />)}
+            </div>
+          ) : !rPlan ? (
+            <div className="py-10 flex flex-col items-center text-center gap-3">
+              <span className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center mb-1">
+                <svg className="w-6 h-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+              </span>
+              <p className="text-sm font-bold text-gray-800">Idées de repas du jour</p>
+              <p className="text-xs text-gray-400 font-medium max-w-xs">L'IA génère une journée de repas adaptée à tes objectifs caloriques et protéiques.</p>
+              <button
+                onClick={generateRPlan} disabled={rGenerating}
+                className="px-5 py-2.5 bg-orange-500 hover:bg-orange-400 rounded-2xl font-bold text-sm text-white transition-colors disabled:opacity-50 flex items-center gap-2 mt-1"
+              >
+                {rGenerating && <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
+                {rGenerating ? "Génération…" : "Générer mes repas →"}
+              </button>
+              {rError && <p className="text-xs text-red-500 font-medium">{rError}</p>}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {/* Targets */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-3 flex items-center gap-5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                  <span className="text-sm font-black text-gray-900">{rPlan.kcalTarget.toLocaleString("fr-FR")}</span>
+                  <span className="text-xs text-gray-400">kcal</span>
                 </div>
-                {/* Meals */}
-                {[...rPlan.meals, ...(rPlan.shaker?.name ? [{ type: "Complément", name: rPlan.shaker.name, kcal: rPlan.shaker.kcal, proteins: rPlan.shaker.proteins, description: rPlan.shaker.description }] : [])].map((meal, mi) => {
-                  const acc = MEAL_ACCENTS[meal.type] ?? { bar: "bg-gray-700", label: "text-gray-600", dot: "bg-gray-500" }
-                  return (
-                    <div key={mi} className={`flex ${mi > 0 ? "border-t-4 border-gray-100" : ""}`}>
-                      <div className={`w-1 shrink-0 ${acc.bar}`} />
-                      <div className="flex-1 px-4 py-3">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${acc.dot}`} />
-                          <span className={`text-[10px] font-bold uppercase tracking-widest ${acc.label}`}>{meal.type}</span>
-                        </div>
-                        <p className="text-[14px] font-bold text-gray-900 leading-snug">{meal.name}</p>
-                        <p className="text-xs text-gray-400 font-medium mt-1 leading-relaxed">{meal.description}</p>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className="text-xs font-extrabold text-gray-700">{meal.kcal} kcal</span>
-                          {meal.proteins > 0 && <><span className="text-[10px] text-gray-300">·</span><span className="text-xs font-extrabold text-emerald-600">{meal.proteins}g prot.</span></>}
-                        </div>
+                <div className="w-px h-4 bg-gray-200" />
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                  <span className="text-sm font-black text-gray-900">{rPlan.proteinsTarget}g</span>
+                  <span className="text-xs text-gray-400">protéines</span>
+                </div>
+              </div>
+              {/* Meals */}
+              {[...rPlan.meals, ...(rPlan.shaker?.name ? [{ type: "Complément", name: rPlan.shaker.name, kcal: rPlan.shaker.kcal, proteins: rPlan.shaker.proteins, description: rPlan.shaker.description }] : [])].map((meal, mi) => {
+                const acc = MEAL_ACCENTS[meal.type] ?? { bar: "bg-gray-700", label: "text-gray-600", dot: "bg-gray-500" }
+                return (
+                  <div key={mi} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex">
+                    <div className={`w-1 shrink-0 ${acc.bar}`} />
+                    <div className="flex-1 px-4 py-3">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${acc.dot}`} />
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${acc.label}`}>{meal.type}</span>
+                      </div>
+                      <p className="text-[14px] font-bold text-gray-900 leading-snug">{meal.name}</p>
+                      <p className="text-xs text-gray-400 font-medium mt-1 leading-relaxed">{meal.description}</p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <span className="text-xs font-extrabold text-gray-700">{meal.kcal} kcal</span>
+                        {meal.proteins > 0 && <><span className="text-[10px] text-gray-300">·</span><span className="text-xs font-extrabold text-emerald-600">{meal.proteins}g prot.</span></>}
                       </div>
                     </div>
-                  )
-                })}
-                {/* Footer */}
-                <div className="px-4 py-2.5 border-t border-gray-100 flex items-center justify-between bg-gray-50">
-                  {rPlanAt && <p className="text-[11px] text-gray-400">Généré le {new Date(rPlanAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</p>}
-                  <button onClick={generateRPlan} disabled={rGenerating}
-                    className="text-[11px] font-bold text-orange-500 hover:text-orange-400 disabled:opacity-50 transition-colors ml-auto">
-                    {rGenerating ? "Génération…" : "Nouveaux repas →"}
-                  </button>
-                </div>
-                {rError && <p className="text-xs text-red-500 font-medium px-4 pb-3">{rError}</p>}
+                  </div>
+                )
+              })}
+              {/* Footer */}
+              <div className="flex items-center justify-between px-1">
+                {rPlanAt && <p className="text-[11px] text-gray-400">Généré le {new Date(rPlanAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</p>}
+                <button onClick={generateRPlan} disabled={rGenerating}
+                  className="text-[11px] font-bold text-orange-500 hover:text-orange-400 disabled:opacity-50 transition-colors ml-auto">
+                  {rGenerating ? "Génération…" : "Nouveaux repas →"}
+                </button>
               </div>
-            )}
-          </div>
+              {rError && <p className="text-xs text-red-500 font-medium px-1">{rError}</p>}
+            </div>
+          )}
         </div>
       )}
 
@@ -576,30 +603,6 @@ export default function NutritionPage() {
             {[1, 2, 3].map(i => (
               <div key={i} className="h-16 bg-gray-200 rounded-2xl animate-pulse" />
             ))}
-          </div>
-        ) : meals.length === 0 ? (
-          <div className="flex flex-col items-center py-20 px-4">
-            <div className="relative mb-8">
-              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-xl shadow-orange-200">
-                <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-                </svg>
-              </div>
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-amber-400 flex items-center justify-center shadow-md">
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-              </div>
-            </div>
-            <h2 className="text-xl font-extrabold text-gray-900 mb-2">Journal alimentaire</h2>
-            <p className="text-gray-400 text-sm mb-8 max-w-xs text-center leading-relaxed">Photographiez votre assiette pour analyser les calories et macronutriments en quelques secondes</p>
-            <button
-              onClick={() => !isDemo && fileInputRef.current?.click()}
-              className="bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm px-7 py-3.5 rounded-2xl transition-colors shadow-lg shadow-orange-200"
-            >
-              Analyser un repas
-            </button>
           </div>
         ) : (
           <div className="flex flex-col gap-0 pb-3 mt-2">
@@ -637,7 +640,32 @@ export default function NutritionPage() {
               )}
             </div>
 
-            {currentMonth && currentMonth.days.length === 0 && (
+            {currentMonth && currentMonth.days.length === 0 && meals.length === 0 && (
+              <div className="flex flex-col items-center py-16 px-4">
+                <div className="relative mb-8">
+                  <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-xl shadow-orange-200">
+                    <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                    </svg>
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-amber-400 flex items-center justify-center shadow-md">
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </div>
+                </div>
+                <h2 className="text-xl font-extrabold text-gray-900 mb-2">Journal alimentaire</h2>
+                <p className="text-gray-400 text-sm mb-8 max-w-xs text-center leading-relaxed">Photographiez votre assiette pour analyser les calories et macronutriments en quelques secondes</p>
+                <button
+                  onClick={() => !isDemo && fileInputRef.current?.click()}
+                  className="bg-orange-500 hover:bg-orange-400 text-white font-bold text-sm px-7 py-3.5 rounded-2xl transition-colors shadow-lg shadow-orange-200"
+                >
+                  Analyser un repas
+                </button>
+              </div>
+            )}
+            {currentMonth && currentMonth.days.length === 0 && meals.length > 0 && (
               <div className="text-center py-12 px-4 flex flex-col items-center gap-4">
                 <p className="text-gray-400 text-sm">Aucun repas enregistré ce mois</p>
                 <button

@@ -372,9 +372,12 @@ export default function ActivitiesPage() {
     const prev = document.body.style.overflow
     document.body.style.overflow = "hidden"
     document.documentElement.style.overflow = "hidden"
+    const prevent = (e: TouchEvent) => { e.preventDefault() }
+    document.addEventListener("touchmove", prevent, { passive: false })
     return () => {
       document.body.style.overflow = prev
       document.documentElement.style.overflow = ""
+      document.removeEventListener("touchmove", prevent)
     }
   }, [showPresetList])
 
@@ -513,8 +516,7 @@ export default function ActivitiesPage() {
 
   // ── Preset helpers ────────────────────────────────────────────────────────────
 
-  const activeBuiltinPresets = PRESET_WORKOUTS.filter(p => !deletedBuiltinKeys.includes(p.key))
-  const allPresets = [...activeBuiltinPresets, ...customPresets]
+  const allPresets = [...customPresets]
 
   function applyPreset(preset: PresetWorkout) {
     setSelectedPreset(preset.key)
@@ -883,26 +885,13 @@ export default function ActivitiesPage() {
             </div>
           </div>
 
-          {/* Preset list shortcut */}
-          {!loading && !isDemo && (
-            <div className="mt-3 flex">
-              <button
-                onClick={() => setShowPresetList(true)}
-                className="flex items-center gap-1.5 text-[11px] font-bold text-blue-200 hover:text-white transition-colors"
-              >
-                <BookmarkCheck size={12} />
-                Liste des séances préfaites
-              </button>
-            </div>
-          )}
-
           {/* Free plan usage */}
           {!loading && !isDemo && plan === "free" && (
             <div className="flex items-center justify-between mt-3">
               <div className="flex items-center gap-2">
-                <div className="flex gap-1">
+                <div className="flex gap-0.5">
                   {Array.from({ length: sessionLimit }).map((_, i) => (
-                    <div key={i} className={`w-7 h-3 rounded ${i < sessionsThisMonth ? "bg-white" : "bg-white/30"}`} />
+                    <div key={i} className={`w-4 h-2.5 rounded-sm ${i < sessionsThisMonth ? "bg-white" : "bg-white/30"}`} />
                   ))}
                 </div>
                 <span className="text-[11px] font-bold text-blue-100">{sessionsThisMonth}/{sessionLimit} séances ce mois</span>
@@ -911,17 +900,33 @@ export default function ActivitiesPage() {
             </div>
           )}
 
-          {/* Tab bar */}
+          {/* Tab bar + bookmark button */}
           {!isDemo && (
-            <div className="flex gap-1 bg-white/15 rounded-xl p-0.5 mt-3">
-              <button
-                onClick={() => setActTab("journal")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-[10px] transition-all ${actTab === "journal" ? "bg-white text-blue-700 shadow-sm" : "text-white/70 hover:text-white"}`}
-              >Journal</button>
-              <button
-                onClick={() => setActTab("programme")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-[10px] transition-all ${actTab === "programme" ? "bg-white text-blue-700 shadow-sm" : "text-white/70 hover:text-white"}`}
-              >Programme</button>
+            <div className="flex items-center gap-1.5 mt-3">
+              {/* Bookmark — separate pill */}
+              {!loading && (
+                <button
+                  onClick={() => setShowPresetList(true)}
+                  className="w-8 h-8 shrink-0 flex items-center justify-center bg-white/20 hover:bg-white/30 rounded-xl transition-colors"
+                  title="Séances enregistrées"
+                >
+                  <BookmarkCheck size={14} className="text-white" />
+                </button>
+              )}
+              {/* Tabs */}
+              <div className="flex-1 flex gap-1 bg-white/15 rounded-xl p-0.5">
+                <button
+                  onClick={() => setActTab("journal")}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-[10px] transition-all ${actTab === "journal" ? "bg-white text-blue-700 shadow-sm" : "text-white/70 hover:text-white"}`}
+                >Journal</button>
+                <button
+                  onClick={() => setActTab("programme")}
+                  className={`flex-1 py-1.5 text-xs font-bold rounded-[10px] transition-all flex items-center justify-center gap-1 ${actTab === "programme" ? "bg-white text-blue-700 shadow-sm" : "text-white/70 hover:text-white"}`}
+                >
+                  Programme IA
+                  {plan === "free" && <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -930,7 +935,33 @@ export default function ActivitiesPage() {
       {/* Programme IA tab */}
       {!isDemo && actTab === "programme" && (
         <div className="max-w-3xl mx-auto px-3 md:px-4 pt-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
-          {progLoading ? (
+          {plan === "free" ? (
+            <div className="flex flex-col items-center text-center px-4 pt-8 pb-10 gap-5">
+              <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-lg shadow-violet-300/40">
+                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-base font-extrabold text-gray-900 mb-1">Programme IA · Pro</p>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-xs">Le coach analyse tes séances, détecte ton split (PPL, Full Body…) et génère un programme complet avec les charges exactes à utiliser.</p>
+              </div>
+              <div className="flex flex-col gap-2 w-full max-w-xs text-left">
+                {["Programme personnalisé selon ton historique", "Charges adaptées à ta progression réelle", "Détection automatique Push / Pull / Legs", "Séances complètes avec 6–9 exercices"].map(f => (
+                  <div key={f} className="flex items-center gap-2.5">
+                    <span className="w-4 h-4 rounded-full bg-violet-100 flex items-center justify-center shrink-0">
+                      <svg className="w-2.5 h-2.5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </span>
+                    <span className="text-sm text-gray-600">{f}</span>
+                  </div>
+                ))}
+              </div>
+              <a href="/pricing" className="w-full max-w-xs bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm py-3 rounded-2xl transition-colors text-center shadow-md shadow-violet-200">
+                Passer Pro →
+              </a>
+              <p className="text-[11px] text-gray-400">Plan Gratuit · 1 question coach/semaine</p>
+            </div>
+          ) : progLoading ? (
             <div className="flex flex-col gap-2 px-1">
               {[1,2,3,4,5].map(i => <div key={i} className="h-8 bg-gray-100 rounded-lg animate-pulse" />)}
             </div>
@@ -1021,6 +1052,7 @@ export default function ActivitiesPage() {
           )}
         </div>
       )}
+
 
       {/* Journal tab */}
       {(isDemo || actTab === "journal") && (
@@ -1310,7 +1342,6 @@ export default function ActivitiesPage() {
                         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
                           {allPresets.map(preset => {
                             const active = selectedPreset === preset.key
-                            const isCustom = customPresets.some(p => p.key === preset.key)
                             return (
                               <button
                                 key={preset.key}
@@ -1320,17 +1351,14 @@ export default function ActivitiesPage() {
                                   active ? "bg-blue-600 border-blue-600 text-white" : "bg-gray-50 border-gray-200 text-gray-700 hover:border-blue-300"
                                 }`}
                               >
-                                <span className="text-xs font-extrabold leading-tight whitespace-nowrap pr-4">{preset.label}</span>
-                                <span className={`text-[10px] leading-tight whitespace-nowrap ${active ? "text-blue-100" : "text-gray-400"}`}>{preset.tag}</span>
-                                {isCustom && (
-                                  <span
-                                    role="button"
-                                    onClick={e => { e.stopPropagation(); removeCustomPreset(preset.key) }}
-                                    className={`absolute top-1.5 right-1.5 rounded-full p-0.5 transition-colors ${active ? "text-blue-200 hover:text-white" : "text-gray-300 hover:text-red-400"}`}
-                                  >
-                                    <Trash2 size={10} />
-                                  </span>
-                                )}
+                                <span className="text-xs font-extrabold leading-tight whitespace-nowrap pr-5">{preset.label}</span>
+                                <span
+                                  role="button"
+                                  onClick={e => { e.stopPropagation(); removeCustomPreset(preset.key) }}
+                                  className={`absolute top-1.5 right-1.5 rounded-full p-0.5 transition-colors ${active ? "text-blue-200 hover:text-white" : "text-gray-300 hover:text-red-400"}`}
+                                >
+                                  <Trash2 size={10} />
+                                </span>
                               </button>
                             )
                           })}
@@ -1629,82 +1657,64 @@ export default function ActivitiesPage() {
       )}
 
       {/* ── Preset list modal ── */}
-      {showPresetList && (() => {
-        const sortedPresets = [
-          ...[...customPresets].sort((a, b) => {
-            const ta = parseInt(a.key.replace("custom_", "")) || 0
-            const tb = parseInt(b.key.replace("custom_", "")) || 0
-            return tb - ta
-          }),
-          ...activeBuiltinPresets,
-        ]
-        return (
+      {showPresetList && (
+        <div
+          data-modal=""
+          className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
+          onClick={() => setShowPresetList(false)}
+        >
           <div
-            data-modal=""
-            className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
-            onClick={() => setShowPresetList(false)}
+            className="modal-enter bg-white rounded-3xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
+            onClick={e => e.stopPropagation()}
           >
-            <div
-              className="modal-enter bg-white rounded-3xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 shrink-0">
-                <h3 className="text-base font-black text-gray-900">Séances préfaites</h3>
-                <button onClick={() => setShowPresetList(false)} className="text-gray-400 hover:text-gray-700 transition-colors">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 shrink-0">
+              <h3 className="text-base font-black text-gray-900">Séances enregistrées</h3>
+              <button onClick={() => setShowPresetList(false)} className="text-gray-400 hover:text-gray-700 transition-colors">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-              <div className="overflow-y-auto flex-1 px-4 py-3">
-                {sortedPresets.length === 0 ? (
-                  <div className="flex flex-col items-center py-10 text-center">
-                    <BookmarkCheck size={32} className="text-gray-200 mb-3" />
-                    <p className="text-sm font-bold text-gray-400">Aucune séance préfaite</p>
-                    <p className="text-xs text-gray-400 mt-1">Enregistre une séance depuis l&apos;historique</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-1.5">
-                    {sortedPresets.map((preset, idx) => {
-                      const isCustom = customPresets.some(p => p.key === preset.key)
-                      return (
-                        <div
-                          key={preset.key}
-                          className="preset-ex-enter flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-2xl"
-                          style={{ animationDelay: `${idx * 35}ms` }}
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-bold text-gray-900 truncate">{preset.label}</p>
-                              {isCustom && (
-                                <span className="text-[10px] font-bold bg-blue-100 text-blue-500 px-1.5 py-0.5 rounded-full shrink-0">Perso</span>
-                              )}
-                            </div>
-                            <div className="mt-1 flex flex-col gap-0.5">
-                              {preset.exercises.map((ex, i) => (
-                                <p key={i} className="text-[11px] text-gray-400 leading-tight">
-                                  {ex.name} <span className="text-gray-300">·</span> {ex.sets} série{ex.sets > 1 ? "s" : ""}
-                                </p>
-                              ))}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => removePreset(preset.key)}
-                            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
-                          >
-                            <Trash2 size={15} />
-                          </button>
+            <div className="overflow-y-auto flex-1 px-4 py-3 overscroll-contain" onTouchMove={e => e.stopPropagation()}>
+              {customPresets.length === 0 ? (
+                <div className="flex flex-col items-center py-10 text-center">
+                  <BookmarkCheck size={32} className="text-gray-200 mb-3" />
+                  <p className="text-sm font-bold text-gray-400">Aucune séance enregistrée</p>
+                  <p className="text-xs text-gray-400 mt-1">Appuie sur le signet <BookmarkCheck size={11} className="inline" /> depuis l&apos;historique pour sauvegarder une séance</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  {[...customPresets].sort((a, b) => (parseInt(b.key.replace("custom_", "")) || 0) - (parseInt(a.key.replace("custom_", "")) || 0)).map((preset, idx) => (
+                    <div
+                      key={preset.key}
+                      className="preset-ex-enter flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-2xl"
+                      style={{ animationDelay: `${idx * 35}ms` }}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-900 truncate">{preset.label}</p>
+                        <div className="mt-1 flex flex-col gap-0.5">
+                          {preset.exercises.map((ex, i) => (
+                            <p key={i} className="text-[11px] text-gray-400 leading-tight">
+                              {ex.name} <span className="text-gray-300">·</span> {ex.sets} série{ex.sets > 1 ? "s" : ""}
+                            </p>
+                          ))}
                         </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
+                      </div>
+                      <button
+                        onClick={() => removeCustomPreset(preset.key)}
+                        className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        )
-      })()}
+        </div>
+      )}
 
       {/* ── Preset saved toast ── */}
       {presetSavedToast && (

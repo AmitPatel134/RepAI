@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
-import { isPro } from "@/lib/plans"
 import { cachedJson } from "@/lib/apiResponse"
 import { NextRequest } from "next/server"
 
@@ -14,18 +13,13 @@ export async function GET(request: NextRequest) {
     const user = await prisma.user.findUnique({ where: { email: authUser.email } })
     if (!user) return Response.json([])
 
-    // Free plan: only last 7 days of history
-    const dateFilter = !isPro(user.plan ?? "free")
-      ? { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
-      : undefined
-
     const url = new URL(request.url)
     const limit  = Math.min(parseInt(url.searchParams.get("limit")  ?? "20"), 100)
     const offset = Math.max(parseInt(url.searchParams.get("offset") ?? "0"),  0)
 
     const [meals, total] = await Promise.all([
       prisma.meal.findMany({
-        where: { userId: user.id, ...(dateFilter ? { date: dateFilter } : {}) },
+        where: { userId: user.id },
         orderBy: { date: "desc" },
         skip: offset,
         take: limit,
@@ -35,7 +29,7 @@ export async function GET(request: NextRequest) {
           notes: true, imageThumb: true,
         },
       }),
-      prisma.meal.count({ where: { userId: user.id, ...(dateFilter ? { date: dateFilter } : {}) } }),
+      prisma.meal.count({ where: { userId: user.id } }),
     ])
 
     return cachedJson({ items: meals, total, limit, offset })

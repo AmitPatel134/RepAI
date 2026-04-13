@@ -52,9 +52,9 @@ export async function GET(request: Request) {
     prisma.coachSession.count({ where: { userId: user.id, createdAt: { gte: startOfWeek } } }),
   ])
 
-  // Use the higher of the two: permanent events counter OR actual saved records
-  // — Events count deletions as consumed; records catch legacy data before events existed
-  const sessionsThisMonth = Math.max(sessionEvents, actualWorkouts + actualActivities)
+  // Sessions: count only currently existing records (deleting frees up the slot)
+  // Meals: permanent event counter — deleting a meal does NOT free up the slot
+  const sessionsThisMonth = actualWorkouts + actualActivities
   const mealsThisMonth = Math.max(mealEvents, actualMeals)
   const plan = user.plan ?? "free"
   const pro = isPro(plan)
