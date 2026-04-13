@@ -177,7 +177,7 @@ export default function CoachPage() {
       if (stored) setLastSession(stored)
 
       const cached = getCached<{
-        plan: string; usage: { coachQuestionsThisWeek: number }; weekResetDate: string
+        plan: string; usage: { coachQuestionsThisWeek: number; coachQuestionsToday?: number }; weekResetDate: string; dayResetDate?: string
         workoutContext: string; activityContext: string; nutritionContext: string; lastSession: Session | null
       }>("/api/coach/context")
       if (cached) {
