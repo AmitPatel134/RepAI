@@ -43,13 +43,17 @@ export async function GET(request: Request) {
   startOfWeek.setDate(now.getDate() - dayOfWeek)
   startOfWeek.setHours(0, 0, 0, 0)
 
-  const [sessionEvents, mealEvents, actualWorkouts, actualActivities, actualMeals, coachQuestionsThisWeek] = await Promise.all([
+  const startOfDay = new Date(now)
+  startOfDay.setHours(0, 0, 0, 0)
+
+  const [sessionEvents, mealEvents, actualWorkouts, actualActivities, actualMeals, coachQuestionsThisWeek, coachQuestionsToday] = await Promise.all([
     prisma.usageEvent.count({ where: { userId: user.id, type: "session_created", createdAt: { gte: firstOfMonth } } }).catch(() => 0),
     prisma.usageEvent.count({ where: { userId: user.id, type: "meal_analyzed", createdAt: { gte: firstOfMonth } } }).catch(() => 0),
     prisma.workout.count({ where: { userId: user.id, createdAt: { gte: firstOfMonth } } }),
     prisma.activity.count({ where: { userId: user.id, createdAt: { gte: firstOfMonth } } }),
     prisma.meal.count({ where: { userId: user.id, createdAt: { gte: firstOfMonth } } }),
     prisma.coachSession.count({ where: { userId: user.id, createdAt: { gte: startOfWeek } } }),
+    prisma.coachSession.count({ where: { userId: user.id, createdAt: { gte: startOfDay } } }),
   ])
 
   // Sessions: count only currently existing records (deleting frees up the slot)
@@ -62,7 +66,7 @@ export async function GET(request: Request) {
 
   return cachedJson({
     plan,
-    usage: { sessionsThisMonth, mealsThisMonth, coachQuestionsThisWeek },
+    usage: { sessionsThisMonth, mealsThisMonth, coachQuestionsThisWeek, coachQuestionsToday },
     limits: {
       sessionsPerMonth: pro ? null : 5,
       mealsPerMonth: pro ? null : 5,

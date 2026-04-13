@@ -77,9 +77,19 @@ export async function POST(request: NextRequest) {
     if (!user) return Response.json({ error: "User not found" }, { status: 404 })
 
     // Free plan: block AI meal plan generation
-    const { isPro } = await import("@/lib/plans")
-    if (!isPro(user.plan ?? "free")) {
+    const { isPro, isPremiumPlus } = await import("@/lib/plans")
+    const userPlan = user.plan ?? "free"
+    if (!isPro(userPlan)) {
       return Response.json({ error: "pro_required" }, { status: 403 })
+    }
+
+    // Premium (not Premium+): 7-day cooldown between regenerations
+    if (!isPremiumPlus(userPlan) && user.mealPlanAt) {
+      const daysSince = (Date.now() - new Date(user.mealPlanAt).getTime()) / (1000 * 60 * 60 * 24)
+      if (daysSince < 7) {
+        const availableAt = new Date(new Date(user.mealPlanAt).getTime() + 7 * 24 * 60 * 60 * 1000)
+        return Response.json({ error: "cooldown_active", availableAt }, { status: 403 })
+      }
     }
 
     // Compute calorie/protein targets
@@ -161,7 +171,7 @@ Réponds UNIQUEMENT avec du JSON valide :
       shaker?: { name: string; kcal: number; proteins: number; description: string } | null
     }
 
-    let plan: MealPlanPayload | null = null
+    let resultPlan: MealPlanPayload | null = null
 
     for (let attempt = 0; attempt < 3; attempt++) {
       const completion = await groq.chat.completions.create({
@@ -187,20 +197,20 @@ Réponds UNIQUEMENT avec du JSON valide :
         const total = parsed.meals.reduce((s, m) => s + (m.kcal ?? 0), 0)
         if (Math.abs(total - kcalTarget) > kcalTarget * 0.15) continue
 
-        plan = parsed as MealPlanPayload
+        resultPlan = parsed as MealPlanPayload
         break
       } catch { continue }
     }
 
-    if (!plan) return Response.json({ error: "generation_failed" }, { status: 500 })
+    if (!resultPlan) return Response.json({ error: "generation_failed" }, { status: 500 })
 
     const now = new Date()
     await prisma.user.update({
       where: { email: authUser.email },
-      data: { mealPlan: plan, mealPlanAt: now },
+      data: { mealPlan: resultPlan, mealPlanAt: now },
     })
 
-    return Response.json({ plan, generatedAt: now })
+    return Response.json({ plan: resultPlan, generatedAt: now })
   } catch (e) {
     console.error("[meal-plan POST]", e)
     return Response.json({ error: "Server error" }, { status: 500 })

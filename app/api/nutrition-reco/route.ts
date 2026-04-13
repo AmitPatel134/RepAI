@@ -35,7 +35,9 @@ function isPremium(plan: string) {
   return plan === "pro" || plan === "premium" || plan === "premium_plus"
 }
 
-// GET — return stored reco (or locked status)
+const RECO_STALE_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
+
+// GET — return stored reco, auto-generating if missing or stale
 export async function GET(request: NextRequest) {
   try {
     const authUser = await getAuthUser(request)
@@ -46,6 +48,30 @@ export async function GET(request: NextRequest) {
 
     if (!isPremium(user.plan)) return Response.json({ locked: true })
 
+    const isStale = !user.nutritionRecoAt ||
+      Date.now() - new Date(user.nutritionRecoAt).getTime() > RECO_STALE_MS
+
+    // Return cached reco immediately, trigger background regeneration if stale
+    if (!isStale && user.nutritionReco) {
+      return Response.json({
+        locked: false,
+        reco: user.nutritionReco ?? null,
+        generatedAt: user.nutritionRecoAt ?? null,
+      })
+    }
+
+    // Auto-generate (missing or stale)
+    const freshReco = await generateReco(user)
+    if (freshReco) {
+      const now = new Date()
+      await prisma.user.update({
+        where: { email: authUser.email },
+        data: { nutritionReco: freshReco, nutritionRecoAt: now },
+      })
+      return Response.json({ locked: false, reco: freshReco, generatedAt: now })
+    }
+
+    // Generation failed — return stale data if available
     return Response.json({
       locked: false,
       reco: user.nutritionReco ?? null,
@@ -56,48 +82,43 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST — generate (or regenerate) via AI
-export async function POST(request: NextRequest) {
-  const limited = rateLimit(request)
-  if (limited) return limited
+type RecoPayload = { calories: number; proteins: number; carbs: number; fats: number; fiber: number; summary: string }
+type UserForReco = {
+  weightKg: number | null; heightCm: number | null; birthDate: Date | null
+  sex: string | null; goal: string | null; activityLevel: string | null
+  restingHR: number | null; dailySteps: number | null
+}
 
-  try {
-    const authUser = await getAuthUser(request)
-    if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
+async function generateReco(user: UserForReco): Promise<RecoPayload | null> {
+  function calcAge(bd: Date) {
+    const today = new Date(); let a = today.getFullYear() - bd.getFullYear()
+    const m = today.getMonth() - bd.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) a--
+    return a
+  }
 
-    const user = await prisma.user.findUnique({ where: { email: authUser.email } })
-    if (!user) return Response.json({ error: "User not found" }, { status: 404 })
-    if (!isPremium(user.plan)) return Response.json({ error: "Premium required" }, { status: 403 })
+  const weight = user.weightKg ?? null
+  const height = user.heightCm ?? null
+  const age    = user.birthDate ? calcAge(new Date(user.birthDate)) : null
+  const sex    = user.sex ?? null
+  const goal   = user.goal ?? "maintien"
+  const level  = user.activityLevel ?? "modere"
 
-    function calcAge(bd: Date) {
-      const today = new Date(); let a = today.getFullYear() - bd.getFullYear()
-      const m = today.getMonth() - bd.getMonth()
-      if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) a--
-      return a
-    }
+  const profileLines: string[] = []
+  if (sex)    profileLines.push(`Sexe : ${sex}`)
+  if (age)    profileLines.push(`Âge : ${age} ans`)
+  if (weight) profileLines.push(`Poids : ${weight} kg`)
+  if (height) profileLines.push(`Taille : ${height} cm`)
+  if (weight && height) {
+    const bmi = (weight / Math.pow(height / 100, 2)).toFixed(1)
+    profileLines.push(`IMC : ${bmi}`)
+  }
+  profileLines.push(`Objectif : ${GOAL_LABELS[goal] ?? goal}`)
+  profileLines.push(`Niveau d'activité : ${ACTIVITY_LABELS[level] ?? level}`)
+  if (user.restingHR)  profileLines.push(`Fréquence cardiaque au repos : ${user.restingHR} bpm`)
+  if (user.dailySteps) profileLines.push(`Pas par jour : ${user.dailySteps}`)
 
-    const weight = user.weightKg ?? null
-    const height = user.heightCm ?? null
-    const age    = user.birthDate ? calcAge(new Date(user.birthDate)) : null
-    const sex    = user.sex ?? null
-    const goal   = user.goal ?? "maintien"
-    const level  = user.activityLevel ?? "modere"
-
-    const profileLines: string[] = []
-    if (sex)    profileLines.push(`Sexe : ${sex}`)
-    if (age)    profileLines.push(`Âge : ${age} ans`)
-    if (weight) profileLines.push(`Poids : ${weight} kg`)
-    if (height) profileLines.push(`Taille : ${height} cm`)
-    if (weight && height) {
-      const bmi = (weight / Math.pow(height / 100, 2)).toFixed(1)
-      profileLines.push(`IMC : ${bmi}`)
-    }
-    profileLines.push(`Objectif : ${GOAL_LABELS[goal] ?? goal}`)
-    profileLines.push(`Niveau d'activité : ${ACTIVITY_LABELS[level] ?? level}`)
-    if (user.restingHR)  profileLines.push(`Fréquence cardiaque au repos : ${user.restingHR} bpm`)
-    if (user.dailySteps) profileLines.push(`Pas par jour : ${user.dailySteps}`)
-
-    const prompt = `Tu es un nutritionniste expert du sport. Calcule les besoins nutritionnels journaliers exacts pour ce profil :
+  const prompt = `Tu es un nutritionniste expert du sport. Calcule les besoins nutritionnels journaliers exacts pour ce profil :
 
 ${profileLines.join("\n")}
 
@@ -112,11 +133,8 @@ Règles de calcul :
 - Fibres : environ 14g par 1000 kcal
 - summary : 1 phrase en français expliquant les valeurs, sans citer les chiffres`
 
-    type RecoPayload = { calories: number; proteins: number; carbs: number; fats: number; fiber: number; summary: string }
-
-    let reco: RecoPayload | null = null
-
-    for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
       const completion = await groq.chat.completions.create({
         model: "llama-3.3-70b-versatile",
         messages: [
@@ -139,7 +157,7 @@ Règles de calcul :
       const { calories, proteins, carbs, fats, fiber, summary } = parsed
       if (calories == null || proteins == null || carbs == null || fats == null) continue
 
-      reco = {
+      return {
         calories: Math.round(calories),
         proteins: Math.round(proteins),
         carbs:    Math.round(carbs),
@@ -147,9 +165,25 @@ Règles de calcul :
         fiber:    Math.round(fiber ?? Math.round((calories / 1000) * 14)),
         summary:  summary ?? "",
       }
-      break
-    }
+    } catch { continue }
+  }
+  return null
+}
 
+// POST — force regeneration (called after profile save)
+export async function POST(request: NextRequest) {
+  const limited = rateLimit(request)
+  if (limited) return limited
+
+  try {
+    const authUser = await getAuthUser(request)
+    if (!authUser) return Response.json({ error: "Unauthorized" }, { status: 401 })
+
+    const user = await prisma.user.findUnique({ where: { email: authUser.email } })
+    if (!user) return Response.json({ error: "User not found" }, { status: 404 })
+    if (!isPremium(user.plan)) return Response.json({ error: "Premium required" }, { status: 403 })
+
+    const reco = await generateReco(user)
     if (!reco) return Response.json({ error: "incomplete_reco" }, { status: 500 })
 
     const now = new Date()

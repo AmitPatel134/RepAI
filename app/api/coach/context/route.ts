@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { getAuthUser } from "@/lib/authServer"
-import { isPro } from "@/lib/plans"
+import { isPro, isPremiumPlus } from "@/lib/plans"
 import { NextRequest } from "next/server"
 
 export const dynamic = "force-dynamic"
@@ -34,15 +34,18 @@ export async function GET(request: NextRequest) {
 
     const plan = user.plan ?? "free"
     const pro = isPro(plan)
+    const plus = isPremiumPlus(plan)
 
-    // Quota check
+    // Quota check windows
     const now = new Date()
     const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1
     const startOfWeek = new Date(now)
     startOfWeek.setDate(now.getDate() - dayOfWeek)
     startOfWeek.setHours(0, 0, 0, 0)
+    const startOfDay = new Date(now)
+    startOfDay.setHours(0, 0, 0, 0)
 
-    const [workouts, activities, meals, coachSessions, coachQuestionsThisWeek] = await Promise.all([
+    const [workouts, activities, meals, coachSessions, coachQuestionsThisWeek, coachQuestionsToday] = await Promise.all([
       prisma.workout.findMany({
         where: { userId: user.id },
         orderBy: { date: "desc" },
@@ -72,6 +75,7 @@ export async function GET(request: NextRequest) {
         take: 1,
       }),
       prisma.coachSession.count({ where: { userId: user.id, createdAt: { gte: startOfWeek } } }),
+      prisma.coachSession.count({ where: { userId: user.id, createdAt: { gte: startOfDay } } }),
     ])
 
     // Build workout context string
@@ -109,13 +113,19 @@ export async function GET(request: NextRequest) {
     // Profile info for premium+ context
     const age = user.birthDate ? calcAge(new Date(user.birthDate)) : null
 
+    // Tomorrow midnight for daily reset display
+    const tomorrow = new Date(startOfDay)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+
     return Response.json({
       plan,
-      usage: { coachQuestionsThisWeek },
+      usage: { coachQuestionsThisWeek, coachQuestionsToday },
       weekResetDate: nextMonday(),
+      dayResetDate: tomorrow.toISOString().slice(0, 10),
+      // Premium: workouts only. Premium+: full cross-analysis context.
       workoutContext: pro ? workoutContext : workouts.slice(0, 3).map(w => `Séance: ${w.name} (${w.date.toISOString().slice(0, 10)})`).join("\n"),
-      activityContext: pro ? activityContext : "",
-      nutritionContext: pro ? nutritionContext : "",
+      activityContext: plus ? activityContext : "",
+      nutritionContext: plus ? nutritionContext : "",
       lastSession: coachSessions[0] ?? null,
       profile: pro ? {
         sex: user.sex, age, heightCm: user.heightCm, weightKg: user.weightKg,

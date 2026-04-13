@@ -141,6 +141,7 @@ export default function NutritionPage() {
   const [rLoading, setRLoading]         = useState(false)
   const [rGenerating, setRGenerating]   = useState(false)
   const [rError, setRError]             = useState<string | null>(null)
+  const [rCooldownUntil, setRCooldownUntil] = useState<string | null>(null)
   const [nutTab, setNutTab]              = useState<"journal"|"repas">("journal")
 
   useEffect(() => {
@@ -185,8 +186,17 @@ export default function NutritionPage() {
     try {
       const r = await authFetch("/api/coach/meal-plan", { method: "POST" })
       const data = await r.json()
+      if (r.status === 403 && data.error === "cooldown_active") {
+        setRCooldownUntil(data.availableAt)
+        return
+      }
       if (!r.ok || data.error) { setRError("Erreur lors de la génération."); return }
-      if (data.plan) { setRPlan(data.plan); setRPlanAt(data.generatedAt ?? new Date().toISOString()); setCached("/api/coach/meal-plan", data) }
+      if (data.plan) {
+        setRPlan(data.plan)
+        setRPlanAt(data.generatedAt ?? new Date().toISOString())
+        setRCooldownUntil(null)
+        setCached("/api/coach/meal-plan", data)
+      }
     } catch { setRError("Erreur réseau.") } finally { setRGenerating(false) }
   }
 
@@ -583,10 +593,17 @@ export default function NutritionPage() {
               {/* Footer */}
               <div className="flex items-center justify-between px-1">
                 {rPlanAt && <p className="text-[11px] text-gray-400">Généré le {new Date(rPlanAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</p>}
-                <button onClick={generateRPlan} disabled={rGenerating}
-                  className="text-[11px] font-bold text-orange-500 hover:text-orange-400 disabled:opacity-50 transition-colors ml-auto">
-                  {rGenerating ? "Génération…" : "Nouveaux repas →"}
-                </button>
+                {rCooldownUntil ? (
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    <span className="text-[11px] text-gray-400">Dispo le {new Date(rCooldownUntil).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</span>
+                    <a href="/pricing" className="text-[11px] font-bold text-orange-500 hover:text-orange-400 transition-colors">Premium+ →</a>
+                  </div>
+                ) : (
+                  <button onClick={generateRPlan} disabled={rGenerating}
+                    className="text-[11px] font-bold text-orange-500 hover:text-orange-400 disabled:opacity-50 transition-colors ml-auto">
+                    {rGenerating ? "Génération…" : "Nouveaux repas →"}
+                  </button>
+                )}
               </div>
               {rError && <p className="text-xs text-red-500 font-medium px-1">{rError}</p>}
             </div>

@@ -200,7 +200,7 @@ function HomePageInner() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
+    <div className="min-h-screen bg-gray-900 text-gray-900 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8">
 
       {/* ── POST-PAYMENT SUCCESS BANNER ─────────────────────────────── */}
       {paymentSuccess && (
@@ -223,14 +223,12 @@ function HomePageInner() {
       )}
 
       {/* ── HERO HEADER ─────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gray-900 px-4 pt-8 pb-20">
+      <div className="sticky top-0 z-0 overflow-hidden bg-gray-900 px-4 pt-8 pb-20">
         {/* Dot pattern */}
         <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
         {/* Decorative glows */}
         <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-violet-700/30 blur-2xl" />
         <div className="absolute top-4 left-1/3 w-32 h-32 rounded-full bg-blue-700/20 blur-2xl" />
-        {/* Curve at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gray-100 rounded-t-[2rem]" />
 
         <div className="relative max-w-2xl mx-auto flex items-start justify-between">
           <div>
@@ -247,11 +245,12 @@ function HomePageInner() {
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 flex flex-col gap-4">
+      <div className="relative z-10 bg-gray-100 rounded-t-[2rem] -mt-4 min-h-screen">
+      <div className="max-w-2xl mx-auto px-4 flex flex-col gap-4 pt-4">
 
         {/* ── STATS — pulled up over hero ─────────────────────────── */}
         {!ready ? (
-          <div className="grid grid-cols-2 gap-3 -mt-10 relative z-10">
+          <div className="grid grid-cols-2 gap-3 relative z-10">
             <div className="h-24 bg-gray-800/40 rounded-2xl animate-pulse" />
             <div className="h-24 bg-gray-800/40 rounded-2xl animate-pulse" />
           </div>
@@ -402,9 +401,6 @@ function HomePageInner() {
               <p className="text-sm text-gray-400 font-medium">Continue comme ça, tu gères ta programmation.</p>
             )}
 
-            <a href="/app/coach" className="inline-flex items-center gap-1.5 mt-4 text-xs font-bold text-violet-400 hover:text-violet-300 transition-colors">
-              Poser une question →
-            </a>
           </div>
         </div>
         )}
@@ -429,7 +425,7 @@ function HomePageInner() {
                 </div>
                 <p className="text-sm font-semibold text-gray-900 leading-snug">Besoins nutritionnels personnalisés</p>
                 <p className="text-xs text-gray-400 mt-1 leading-relaxed">Passe en Premium pour recevoir tes recommandations journalières en calories, protéines, glucides et lipides, calculées par l'IA selon ton profil et tes objectifs.</p>
-                <a href="/app/profil" className="inline-flex items-center gap-1.5 mt-3 text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors">
+                <a href="/pricing" className="inline-flex items-center gap-1.5 mt-3 text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors">
                   Passer Premium →
                 </a>
               </div>
@@ -440,33 +436,20 @@ function HomePageInner() {
           <div className="relative overflow-hidden bg-white border border-orange-100 rounded-2xl p-5 shadow-sm">
             <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-orange-400" />
             <div className="ml-1">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-black text-orange-500 uppercase tracking-widest">Nutrition IA</span>
-                  {nutritionReco.generatedAt && (
-                    <span className="text-[10px] text-gray-400">
-                      {new Date(nutritionReco.generatedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
-                    </span>
-                  )}
-                </div>
-                <button
-                  onClick={generateNutritionReco}
-                  disabled={generatingReco}
-                  className="flex items-center gap-1.5 text-[11px] font-bold text-orange-500 hover:text-orange-600 transition-colors disabled:opacity-50"
-                >
-                  {generatingReco ? (
-                    <div className="flex gap-0.5">
-                      {[0, 1, 2].map(i => (
-                        <div key={i} className="w-1 h-1 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                      ))}
-                    </div>
-                  ) : (
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  )}
-                  Régénérer
-                </button>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] font-black text-orange-500 uppercase tracking-widest">Nutrition IA</span>
+                {nutritionReco.generatedAt && (
+                  <span className="text-[10px] text-gray-400">
+                    {new Date(nutritionReco.generatedAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                  </span>
+                )}
+                {generatingReco && (
+                  <div className="flex gap-0.5 ml-1">
+                    {[0, 1, 2].map(i => (
+                      <div key={i} className="w-1 h-1 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                    ))}
+                  </div>
+                )}
               </div>
               {recoError && (
                 <p className="text-[11px] text-red-500 font-medium mb-2">{recoError}</p>
@@ -533,6 +516,7 @@ function HomePageInner() {
         ) : null}
 
 
+      </div>
       </div>
     </div>
   )

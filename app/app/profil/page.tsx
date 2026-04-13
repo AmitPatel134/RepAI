@@ -141,34 +141,34 @@ export default function ProfilPage() {
   }
 
   useEffect(() => {
+    function applyUser(user: Record<string, unknown> | null) {
+      if (!user) return
+      if (user.name) setName(user.name as string)
+      if (user.telephone) setTelephone(user.telephone as string)
+      if (user.plan) setPlan(user.plan as string)
+    }
+    function applyProfile(prof: Record<string, unknown> | null) {
+      if (!prof) return
+      if (prof.sex) setSex(prof.sex as string)
+      if (prof.birthDate) setBirthDate(prof.birthDate as string)
+      if (prof.heightCm) setHeightCm(String(prof.heightCm))
+      if (prof.weightKg) setWeightKg(String(prof.weightKg))
+      if (prof.goal) setGoal(prof.goal as string)
+      if (prof.activityLevel) setActivityLevel(prof.activityLevel as string)
+      if (prof.restingHR) setRestingHR(String(prof.restingHR))
+      if (prof.dailySteps) setDailySteps(String(prof.dailySteps))
+    }
+
+    // Read cache immediately — before auth round-trip
+    const cU = getCached<Record<string, unknown>>("/api/users")
+    const cP = getCached<Record<string, unknown>>("/api/profile")
+    applyUser(cU)
+    applyProfile(cP)
+    if (cU || cP) setReady(true)
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) { window.location.href = "/login"; return }
       setEmail(session.user.email ?? "")
-
-      function applyUser(user: Record<string, unknown> | null) {
-        if (!user) return
-        if (user.name) setName(user.name as string)
-        if (user.telephone) setTelephone(user.telephone as string)
-        if (user.plan) setPlan(user.plan as string)
-      }
-      function applyProfile(prof: Record<string, unknown> | null) {
-        if (!prof) return
-        if (prof.sex) setSex(prof.sex as string)
-        if (prof.birthDate) setBirthDate(prof.birthDate as string)
-        if (prof.heightCm) setHeightCm(String(prof.heightCm))
-        if (prof.weightKg) setWeightKg(String(prof.weightKg))
-        if (prof.goal) setGoal(prof.goal as string)
-        if (prof.activityLevel) setActivityLevel(prof.activityLevel as string)
-        if (prof.restingHR) setRestingHR(String(prof.restingHR))
-        if (prof.dailySteps) setDailySteps(String(prof.dailySteps))
-      }
-
-      // Instant display from cache
-      const cU = getCached<Record<string, unknown>>("/api/users")
-      const cP = getCached<Record<string, unknown>>("/api/profile")
-      applyUser(cU)
-      applyProfile(cP)
-      if (cU && cP) setReady(true)
 
       // Background refresh
       const [user, prof] = await Promise.all([
@@ -208,8 +208,11 @@ export default function ProfilPage() {
     setSavingFitness(false)
     if (res.ok) {
       setCached("/api/profile", { sex: sex || null, birthDate: birthDate || null, heightCm: heightCm ? Number(heightCm) : null, weightKg: weightKg ? Number(weightKg) : null, goal: goal || null, activityLevel: activityLevel || null, restingHR: restingHR ? Number(restingHR) : null, dailySteps: dailySteps ? Number(dailySteps) : null })
+      invalidateAll()
       showToast("Profil fitness enregistré ✓")
       setOpenSection(null)
+      // Regenerate nutrition reco in background (fire & forget)
+      authFetch("/api/nutrition-reco", { method: "POST" }).catch(() => {})
     } else {
       showToast("Erreur lors de l'enregistrement")
     }

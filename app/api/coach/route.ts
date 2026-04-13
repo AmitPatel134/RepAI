@@ -87,8 +87,9 @@ export async function POST(request: NextRequest) {
     const pro = isPro(plan)
     const plus = isPremiumPlus(plan)
 
-    // Enforce weekly question limit for free plan
+    // Enforce question limits per plan tier
     if (!pro) {
+      // Free: 1/week
       const dayOfWeek = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
       const startOfWeek = new Date()
       startOfWeek.setDate(new Date().getDate() - dayOfWeek)
@@ -99,7 +100,18 @@ export async function POST(request: NextRequest) {
       if (questionsThisWeek >= 1) {
         return Response.json({ error: "weekly_limit_reached" }, { status: 429 })
       }
+    } else if (!plus) {
+      // Premium: 1/day
+      const startOfDay = new Date()
+      startOfDay.setHours(0, 0, 0, 0)
+      const questionsToday = await prisma.coachSession.count({
+        where: { userId: user.id, createdAt: { gte: startOfDay } },
+      })
+      if (questionsToday >= 1) {
+        return Response.json({ error: "daily_limit_reached" }, { status: 429 })
+      }
     }
+    // Premium+: unlimited
 
     // Build profile context
     function calcAge(bd: Date) {
@@ -194,12 +206,12 @@ Max 250 mots. Calcule des valeurs concrètes (charges, fréquences, calories) qu
       temperature = 0.5
     }
 
-    // Context depth varies by plan
+    // Context depth varies by plan: premium+ gets full cross-analysis, premium gets workouts only
     const contextParts: string[] = []
     if (pro && profileContext) contextParts.push(profileContext)
     if (workoutContext) contextParts.push(`--- Séances musculation ---\n${workoutContext}`)
-    if (pro && activityContext) contextParts.push(`--- Activités cardio ---\n${activityContext}`)
-    if (pro && nutritionContext) contextParts.push(`--- Alimentation ---\n${nutritionContext}`)
+    if (plus && activityContext) contextParts.push(`--- Activités cardio ---\n${activityContext}`)
+    if (plus && nutritionContext) contextParts.push(`--- Alimentation ---\n${nutritionContext}`)
     const fullContext = contextParts.join("\n\n")
 
     const userPrompt = fullContext

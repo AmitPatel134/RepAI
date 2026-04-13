@@ -296,6 +296,7 @@ export default function ActivitiesPage() {
   const [progLoading, setProgLoading]       = useState(false)
   const [progGenerating, setProgGenerating] = useState(false)
   const [progError, setProgError]           = useState<string | null>(null)
+  const [progCooldownUntil, setProgCooldownUntil] = useState<string | null>(null)
   const [actTab, setActTab]                 = useState<"journal"|"programme">("journal")
 
   // Cardio form
@@ -403,8 +404,17 @@ export default function ActivitiesPage() {
     try {
       const r = await authFetch("/api/coach/training-plan", { method: "POST" })
       const data = await r.json()
+      if (r.status === 403 && data.error === "cooldown_active") {
+        setProgCooldownUntil(data.availableAt)
+        return
+      }
       if (!r.ok || data.error) { setProgError("Erreur lors de la génération."); return }
-      if (data.plan) { setProgPlan(data.plan); setProgPlanAt(data.generatedAt ?? new Date().toISOString()); setCached("/api/coach/training-plan", data) }
+      if (data.plan) {
+        setProgPlan(data.plan)
+        setProgPlanAt(data.generatedAt ?? new Date().toISOString())
+        setProgCooldownUntil(null)
+        setCached("/api/coach/training-plan", data)
+      }
     } catch { setProgError("Erreur réseau.") } finally { setProgGenerating(false) }
   }
 
@@ -1042,10 +1052,17 @@ export default function ActivitiesPage() {
               {/* Footer */}
               <div className="flex items-center justify-between px-1">
                 {progPlanAt && <p className="text-[11px] text-gray-400">Généré le {new Date(progPlanAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</p>}
-                <button onClick={generateProgPlan} disabled={progGenerating}
-                  className="text-[11px] font-bold text-violet-600 hover:text-violet-500 disabled:opacity-50 transition-colors ml-auto">
-                  {progGenerating ? "Génération…" : "Mettre à jour →"}
-                </button>
+                {progCooldownUntil ? (
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    <span className="text-[11px] text-gray-400">Dispo le {new Date(progCooldownUntil).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</span>
+                    <a href="/pricing" className="text-[11px] font-bold text-violet-600 hover:text-violet-500 transition-colors">Premium+ →</a>
+                  </div>
+                ) : (
+                  <button onClick={generateProgPlan} disabled={progGenerating}
+                    className="text-[11px] font-bold text-violet-600 hover:text-violet-500 disabled:opacity-50 transition-colors ml-auto">
+                    {progGenerating ? "Génération…" : "Mettre à jour →"}
+                  </button>
+                )}
               </div>
               {progError && <p className="text-xs text-red-500 font-medium px-1">{progError}</p>}
             </div>

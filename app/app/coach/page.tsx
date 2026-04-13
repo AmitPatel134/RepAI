@@ -146,7 +146,9 @@ export default function CoachPage() {
   const [isDemo, setIsDemo] = useState(false)
   const [plan, setPlan]     = useState("free")
   const [coachQuestionsThisWeek, setCoachQuestionsThisWeek] = useState(0)
+  const [coachQuestionsToday, setCoachQuestionsToday]       = useState(0)
   const [weekResetDate, setWeekResetDate]   = useState<string | null>(null)
+  const [dayResetDate, setDayResetDate]     = useState<string | null>(null)
   const [lastSession, setLastSession]       = useState<Session | null>(null)
   const [question, setQuestion]             = useState("")
   const [loading, setLoading]               = useState(false)
@@ -181,7 +183,9 @@ export default function CoachPage() {
       if (cached) {
         setPlan(cached.plan ?? "free")
         setCoachQuestionsThisWeek(cached.usage?.coachQuestionsThisWeek ?? 0)
+        setCoachQuestionsToday(cached.usage?.coachQuestionsToday ?? 0)
         setWeekResetDate(cached.weekResetDate ?? null)
+        setDayResetDate(cached.dayResetDate ?? null)
         setWorkoutContext(cached.workoutContext ?? "")
         setActivityContext(cached.activityContext ?? "")
         setNutritionContext(cached.nutritionContext ?? "")
@@ -197,7 +201,9 @@ export default function CoachPage() {
         if (!ctx || ctx.error) { setIsDemo(true); return }
         setPlan(ctx.plan ?? "free")
         setCoachQuestionsThisWeek(ctx.usage?.coachQuestionsThisWeek ?? 0)
+        setCoachQuestionsToday(ctx.usage?.coachQuestionsToday ?? 0)
         setWeekResetDate(ctx.weekResetDate ?? null)
+        setDayResetDate(ctx.dayResetDate ?? null)
         setWorkoutContext(ctx.workoutContext ?? "")
         setActivityContext(ctx.activityContext ?? "")
         setNutritionContext(ctx.nutritionContext ?? "")
@@ -213,9 +219,11 @@ export default function CoachPage() {
   }, [])
 
   const weeklyLimitReached = !isDemo && plan === "free" && coachQuestionsThisWeek >= 1
+  const dailyLimitReached  = !isDemo && plan === "premium" && coachQuestionsToday >= 1
+  const limitReached = weeklyLimitReached || dailyLimitReached
 
   async function handleAsk() {
-    if (!question.trim() || loading || weeklyLimitReached) return
+    if (!question.trim() || loading || limitReached) return
     const q = question.trim()
     setQuestion("")
     setLoading(true)
@@ -250,12 +258,18 @@ En regardant tes séances récentes, voici mes observations :
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q, workoutContext, activityContext, nutritionContext }),
       })
-      if (r.status === 429) { setCoachQuestionsThisWeek(1); setLoading(false); return }
+      if (r.status === 429) {
+        setCoachQuestionsThisWeek(prev => prev + 1)
+        setCoachQuestionsToday(prev => prev + 1)
+        setLoading(false)
+        return
+      }
       const data = await r.json()
       const s: Session = { question: q, response: data.response, createdAt: data.createdAt ?? new Date().toISOString() }
       setLastSession(s)
       saveStored(email, s)
       setCoachQuestionsThisWeek(prev => prev + 1)
+      setCoachQuestionsToday(prev => prev + 1)
     } catch {
       const s: Session = { question: q, response: "Désolé, une erreur s'est produite. Vérifiez votre connexion et réessayez.", createdAt: new Date().toISOString() }
       setLastSession(s)
@@ -288,7 +302,7 @@ En regardant tes séances récentes, voici mes observations :
                   <div className="flex gap-1">
                     <div className={`w-7 h-2.5 rounded ${coachQuestionsThisWeek >= 1 ? "bg-white" : "bg-white/30"}`} />
                   </div>
-                  <span className="text-[11px] font-bold text-white/70">{coachQuestionsThisWeek}/1</span>
+                  <span className="text-[11px] font-bold text-white/70">{coachQuestionsThisWeek}/1 sem.</span>
                   {weeklyLimitReached && (
                     <a href="/pricing" className="text-[11px] font-bold text-white bg-white/20 hover:bg-white/30 px-2 py-1 rounded-lg transition-colors shrink-0">Passer Pro →</a>
                   )}
@@ -296,6 +310,24 @@ En regardant tes séances récentes, voici mes observations :
                 {weekResetDate && (
                   <span className="text-[10px] text-white/40 font-medium">
                     Recharge le {new Date(weekResetDate).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "short" })}
+                  </span>
+                )}
+              </div>
+            )}
+            {ready && !isDemo && plan === "premium" && (
+              <div className="flex flex-col items-end gap-0.5">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <div className={`w-7 h-2.5 rounded ${coachQuestionsToday >= 1 ? "bg-white" : "bg-white/30"}`} />
+                  </div>
+                  <span className="text-[11px] font-bold text-white/70">{coachQuestionsToday}/1 jour</span>
+                  {dailyLimitReached && (
+                    <a href="/pricing" className="text-[11px] font-bold text-white bg-white/20 hover:bg-white/30 px-2 py-1 rounded-lg transition-colors shrink-0">Premium+ →</a>
+                  )}
+                </div>
+                {dailyLimitReached && dayResetDate && (
+                  <span className="text-[10px] text-white/40 font-medium">
+                    Recharge demain
                   </span>
                 )}
               </div>
@@ -346,7 +378,7 @@ En regardant tes séances récentes, voici mes observations :
               {plan === "premium_plus" ? "IA Premium+" : "IA Premium"}
             </span>
             <span className="text-[10px] text-gray-400 font-medium">
-              {plan === "premium_plus" ? "Analyse croisée · Détection de patterns" : "Conseils personnalisés · Données complètes"}
+              {plan === "premium_plus" ? "Analyse croisée entraîn. + nutrition" : "Conseils personnalisés · 1 question/jour"}
             </span>
           </div>
         )}
@@ -355,11 +387,11 @@ En regardant tes séances récentes, voici mes observations :
         <div className="flex flex-col sm:flex-row gap-2">
           <textarea value={question} onChange={e => setQuestion(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAsk() } }}
-            placeholder={weeklyLimitReached ? "Limite hebdomadaire atteinte — passez Pro pour des questions illimitées" : "Posez votre question au coach…"}
-            rows={3} disabled={weeklyLimitReached}
+            placeholder={weeklyLimitReached ? "Limite hebdomadaire atteinte — passez Premium pour des questions illimitées" : dailyLimitReached ? "Limite quotidienne atteinte — passez Premium+ pour des questions illimitées" : "Posez votre question au coach…"}
+            rows={3} disabled={limitReached}
             className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 font-medium outline-none focus:border-violet-400 transition-colors resize-none disabled:opacity-60 disabled:cursor-not-allowed"
           />
-          <button onClick={handleAsk} disabled={!question.trim() || loading || weeklyLimitReached}
+          <button onClick={handleAsk} disabled={!question.trim() || loading || limitReached}
             className="sm:self-end px-5 py-3 bg-violet-600 hover:bg-violet-500 rounded-2xl font-bold text-sm text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
             {loading ? (
               <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">

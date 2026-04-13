@@ -213,9 +213,19 @@ export async function POST(request: NextRequest) {
     if (!user) return Response.json({ error: "User not found" }, { status: 404 })
 
     // Free plan: block AI programme generation
-    const { isPro } = await import("@/lib/plans")
-    if (!isPro(user.plan ?? "free")) {
+    const { isPro, isPremiumPlus } = await import("@/lib/plans")
+    const userPlan = user.plan ?? "free"
+    if (!isPro(userPlan)) {
       return Response.json({ error: "pro_required" }, { status: 403 })
+    }
+
+    // Premium (not Premium+): 7-day cooldown between regenerations
+    if (!isPremiumPlus(userPlan) && user.trainingPlanAt) {
+      const daysSince = (Date.now() - new Date(user.trainingPlanAt).getTime()) / (1000 * 60 * 60 * 24)
+      if (daysSince < 7) {
+        const availableAt = new Date(new Date(user.trainingPlanAt).getTime() + 7 * 24 * 60 * 60 * 1000)
+        return Response.json({ error: "cooldown_active", availableAt }, { status: 403 })
+      }
     }
 
     // Fetch last 16 workouts + last 20 cardio activities
@@ -379,7 +389,7 @@ FORMAT JSON :
       }>
     }
 
-    let plan: PlanPayload | null = null
+    let resultPlan: PlanPayload | null = null
 
     for (let attempt = 0; attempt < 2; attempt++) {
       const completion = await groq.chat.completions.create({
@@ -431,20 +441,20 @@ FORMAT JSON :
         }
         if (contaminated) continue
 
-        plan = parsed as PlanPayload
+        resultPlan = parsed as PlanPayload
         break
       } catch { continue }
     }
 
-    if (!plan) return Response.json({ error: "generation_failed" }, { status: 500 })
+    if (!resultPlan) return Response.json({ error: "generation_failed" }, { status: 500 })
 
     const now = new Date()
     await prisma.user.update({
       where: { email: authUser.email },
-      data: { trainingPlan: plan, trainingPlanAt: now },
+      data: { trainingPlan: resultPlan, trainingPlanAt: now },
     })
 
-    return Response.json({ plan, generatedAt: now })
+    return Response.json({ plan: resultPlan, generatedAt: now })
   } catch (e) {
     console.error("[training-plan POST]", e)
     return Response.json({ error: "Server error" }, { status: 500 })
